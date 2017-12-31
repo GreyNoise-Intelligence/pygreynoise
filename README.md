@@ -6,6 +6,7 @@ To install:
 ```
 git clone https://github.com/Te-k/pygreynoise.git
 cd pygreynoise
+pip install -r requirements.txt
 pip install .
 ```
 
@@ -13,15 +14,19 @@ pip install .
 
 ```
 $ greynoise -h
-usage: greynoise [-h] [--list] [--ip IP] [--tag TAG]
+usage: greynoise [-h] {ip,list,tag,config} ...
 
 Request GreyNoise
 
+positional arguments:
+  {ip,list,tag,config}  Subcommand
+    ip                  Request info on an IP
+    list                List GreyNoise Tags
+    tag                 Query data for a tag
+    config              Configure key file
+
 optional arguments:
-  -h, --help         show this help message and exit
-  --list, -l         List tags
-  --ip IP, -i IP     Query an IP address
-  --tag TAG, -t TAG  Query a tag
+  -h, --help            show this help message and exit
 ```
 
 ## Library
@@ -42,4 +47,3 @@ try:
 except GreyNoiseError:
     print('This tag does not exist')
 ```
-
