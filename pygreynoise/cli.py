@@ -1,5 +1,6 @@
 import argparse
 import json
+from collections import Counter
 from .api import GreyNoise, GreyNoiseError
 
 def main():
@@ -7,7 +8,7 @@ def main():
     parser.add_argument('--list', '-l', help="List tags", action='store_true')
     parser.add_argument('--ip', '-i', help="Query an IP address")
     parser.add_argument('--tag', '-t', help="Query a tag")
-    parser.add_argument('--format', '-f', help="Output format", choices=["csv", "json", "text"], default="text")
+    parser.add_argument('--format', '-f', help="Output format", choices=["csv", "json", "text", "asn"], default="text")
     args = parser.parse_args()
 
     gn = GreyNoise()
@@ -29,8 +30,9 @@ def main():
             elif args.format == "text":
                 r = res[0]
                 print("[+] %s - %s" % (r["metadata"]["asn"], r["metadata"]["org"]))
-                print("[+] %s" % r["metadata"]["os"])
-                if r["metadata"]["rdns"] != "":
+                if r["metadata"]["os"]:
+                    print("[+] %s" % r["metadata"]["os"])
+                if r["metadata"]["rdns"]:
                     print("[+] %s" % r["metadata"]["rdns"])
                 if r["metadata"]["tor"]:
                     print("[+] Tor relay")
@@ -81,6 +83,15 @@ def main():
                                 r["metadata"]["os"]
                             )
                         )
+            elif args.format == "asn":
+                asn_names = dict([(r["metadata"]["asn"], r["metadata"]["org"]) for r in res])
+                asns = [r["metadata"]["asn"] for r in res]
+                asn_count = Counter(asns)
+                for r in asn_count.most_common():
+                    if r[0] == "":
+                        print("Unknown - %i entries" % r[1])
+                    else:
+                        print("%s %s - %i entries" % (r[0], asn_names[r[0]], r[1]))
             else:
                 print("IP;Tag;Category;Confidence;Intention;First Seen;Last Seen;ASN;Datacenter;Link;Org;OS;RDNS;Tor")
                 for r in res:
