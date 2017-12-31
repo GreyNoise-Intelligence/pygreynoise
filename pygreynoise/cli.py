@@ -1,67 +1,80 @@
 import argparse
+import os
 import json
+import subprocess
 from collections import Counter
 from .api import GreyNoise, GreyNoiseError
 
 def main():
     parser = argparse.ArgumentParser(description='Request GreyNoise')
-    parser.add_argument('--list', '-l', help="List tags", action='store_true')
-    parser.add_argument('--ip', '-i', help="Query an IP address")
-    parser.add_argument('--tag', '-t', help="Query a tag")
-    parser.add_argument('--format', '-f', help="Output format", choices=["csv", "json", "text", "asn"], default="text")
+    subparsers = parser.add_subparsers(help='Subcommand')
+    parser_a = subparsers.add_parser('ip', help='Request info on an IP')
+    parser_a.add_argument('IP',  help='IP')
+    parser_a.add_argument('--format', '-f', help="Output format", choices=["csv", "json", "text"], default="text")
+    parser_a.set_defaults(subcommand='ip')
+    parser_b = subparsers.add_parser('list', help='List GreyNoise Tags')
+    parser_b.add_argument('--format', '-f', help="Output format", choices=["json", "text"], default="text")
+    parser_b.set_defaults(subcommand='list')
+    parser_c = subparsers.add_parser('tag', help='Query data for a tag')
+    parser_c.add_argument('TAG',  help='Tag')
+    parser_c.add_argument('--format', '-f', help="Output format", choices=["csv", "json", "text", "asn"], default="text")
+    parser_c.set_defaults(subcommand='tag')
+    parser_d = subparsers.add_parser('config', help='Configure key file')
+    parser_d.set_defaults(subcommand='config')
     args = parser.parse_args()
 
     gn = GreyNoise()
-    if args.list:
-        res = gn.tags()
-        if args.format == "json":
-            print(json.dumps(res, indent=4, sort_keys=True))
-        else:
-            for i in res:
-                print(i)
-    elif args.ip:
-        try:
-            res = gn.query_ip(args.ip)
-        except GreyNoiseError:
-            print("IP not found")
-        else:
+    if 'subcommand' in args:
+        if args.subcommand == "list":
+            res = gn.tags()
             if args.format == "json":
                 print(json.dumps(res, indent=4, sort_keys=True))
-            elif args.format == "text":
-                r = res[0]
-                print("[+] %s - %s" % (r["metadata"]["asn"], r["metadata"]["org"]))
-                if r["metadata"]["os"]:
-                    print("[+] %s" % r["metadata"]["os"])
-                if r["metadata"]["rdns"]:
-                    print("[+] %s" % r["metadata"]["rdns"])
-                if r["metadata"]["tor"]:
-                    print("[+] Tor relay")
-                print("[+] Detection: %s" % ", ".join(set([i["name"] for i in res])))
             else:
-                print("Tag;Category;Confidence;Intention;First Seen;Last Seen;ASN;Datacenter;Link;Org;OS;RDNS;Tor")
-                for r in res:
-                    print("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-                            r["name"],
-                            r["category"],
-                            r["confidence"],
-                            r["intention"],
-                            r["first_seen"],
-                            r["last_updated"],
-                            r["metadata"]["asn"],
-                            r["metadata"]["datacenter"],
-                            r["metadata"]["link"],
-                            r["metadata"]["os"],
-                            r["metadata"]["org"],
-                            r["metadata"]["rdns"],
-                            r["metadata"]["tor"]
+                for i in res:
+                    print(i)
+        elif args.subcommand == "ip":
+            try:
+                res = gn.query_ip(args.IP)
+            except GreyNoiseError:
+                print("IP not found")
+            else:
+                if args.format == "json":
+                    print(json.dumps(res, indent=4, sort_keys=True))
+                elif args.format == "text":
+                    r = res[0]
+                    print("[+] %s - %s" % (r["metadata"]["asn"], r["metadata"]["org"]))
+                    if r["metadata"]["os"]:
+                        print("[+] %s" % r["metadata"]["os"])
+                    if r["metadata"]["rdns"]:
+                        print("[+] %s" % r["metadata"]["rdns"])
+                    if r["metadata"]["tor"]:
+                        print("[+] Tor relay")
+                    print("[+] Detection: %s" % ", ".join(set([i["name"] for i in res])))
+                else:
+                    print("Tag;Category;Confidence;Intention;First Seen;Last Seen;ASN;Datacenter;Link;Org;OS;RDNS;Tor")
+                    for r in res:
+                        print("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+                                r["name"],
+                                r["category"],
+                                r["confidence"],
+                                r["intention"],
+                                r["first_seen"],
+                                r["last_updated"],
+                                r["metadata"]["asn"],
+                                r["metadata"]["datacenter"],
+                                r["metadata"]["link"],
+                                r["metadata"]["os"],
+                                r["metadata"]["org"],
+                                r["metadata"]["rdns"],
+                                r["metadata"]["tor"]
+                            )
                         )
-                    )
-    elif args.tag:
-        try:
-            res = gn.query_tag(args.tag)
-        except GreyNoiseError:
-            print("TAG does not exist")
-        else:
+        elif args.subcommand == "tag":
+            try:
+                res = gn.query_tag(args.TAG)
+            except GreyNoiseError:
+                print("TAG does not exist")
+
             if args.format == "json":
                 print(json.dumps(res, indent=4, sort_keys=True))
             elif args.format == "text":
@@ -112,6 +125,15 @@ def main():
                             r["metadata"]["tor"]
                         )
                     )
+        elif args.subcommand == "config":
+            config_path = os.path.join(os.path.expanduser("~"), ".greynoise")
+            if not os.path.isfile(config_path):
+                with open(config_path, 'w') as f:
+                    f.write("[GreyNoise]\nkey:")
+                    f.close()
+            subprocess.call(os.environ.get('EDITOR', 'vi') + ' ' + config_path, shell=True)
 
+        else:
+            parser.print_help()
     else:
         parser.print_help()

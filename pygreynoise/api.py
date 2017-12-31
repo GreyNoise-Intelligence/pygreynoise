@@ -1,3 +1,5 @@
+import os
+import configparser
 import requests
 
 
@@ -19,6 +21,15 @@ class GreyNoise(object):
     def __init__(self):
         self.ua = "PyGreyNoise"
         self.base_url = "http://api.greynoise.io:8888/v1/"
+        self.key = None
+        if os.path.isfile(os.path.join(os.path.expanduser("~"), ".greynoise")):
+            config = configparser.ConfigParser()
+            config.read(os.path.join(os.path.expanduser("~"), ".greynoise"))
+            try:
+                self.key = config['GreyNoise']['key']
+            except KeyError:
+                # bad config format
+                pass
 
     def _request(self, path, params, type="GET"):
         headers = {'User-Agent': self.ua}
@@ -29,6 +40,8 @@ class GreyNoise(object):
                 params=params
             )
         else:
+            if self.key:
+                params["key"] = self.key
             r = requests.post(
                     self.base_url + path,
                     headers=headers,
