@@ -47,3 +47,7 @@ try:
 except GreyNoiseError:
     print('This tag does not exist')
 ```
+
+## Author and license
+
+Pygreynoise was started by [Tek](https://github.com/Te-k) and is published under MIT license. Feel free to open issues and pull requests.
