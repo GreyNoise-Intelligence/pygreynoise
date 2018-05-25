@@ -11,7 +11,7 @@ Python GreyNoise
 
 This is an abstract python library built on top of the `GreyNoise`_ service. It is preferred that users use this library when implementing integrations or plan to use GreyNoise within their code. The library includes a small client to interact with the API.
 
-.. _GreyNoise:
+.. _GreyNoise: https://greynoise.io/
 
 Quick Start
 -----------
