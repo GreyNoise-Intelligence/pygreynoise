@@ -1,10 +1,10 @@
 Python GreyNoise
 ================
 .. image:: https://readthedocs.org/projects/greynoise/badge/?version=latest
-    :target: http://google-alerts.readthedocs.io/en/latest/?badge=latest
+    :target: http://greynoise.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://badge.fury.io/py/greynoise.svg
-    :target: https://badge.fury.io/py/google-alerts
+    :target: https://badge.fury.io/py/greynoise
 
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
