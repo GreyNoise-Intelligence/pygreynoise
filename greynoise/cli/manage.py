@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 """Interact with the GreyNoise service."""
-import base64
 import json
 import os
-import logging
 from argparse import ArgumentParser
 from greynoise import GreyNoise
-import sys
 
 
 __author__ = "Brandon Dixon"
@@ -45,7 +42,7 @@ def main():
     if config['api_key'] == '':
         raise Exception("Run setup before any other actions!")
 
-    gn = GreyNoise(config['api_key'])
+    GreyNoise(config['api_key'])
     raise NotImplementedError
 
 
