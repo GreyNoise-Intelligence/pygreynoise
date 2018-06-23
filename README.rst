@@ -1,7 +1,7 @@
 Python GreyNoise
 ================
-.. image:: https://readthedocs.org/projects/greynoise/badge/?version=latest
-    :target: http://greynoise.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pygreynoise/badge/?version=latest
+    :target: http://pygreynoise.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://badge.fury.io/py/greynoise.svg
     :target: https://badge.fury.io/py/greynoise
