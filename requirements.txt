@@ -3,7 +3,6 @@ Babel==2.5.3
 certifi==2018.4.16
 chardet==3.0.4
 docutils==0.14
-greynoise==0.1.0
 idna==2.6
 imagesize==1.0.0
 Jinja2==2.10
