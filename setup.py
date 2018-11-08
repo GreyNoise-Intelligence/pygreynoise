@@ -8,9 +8,9 @@ def read(fname):
 
 setup(
     name='greynoise',
-    version='0.1.0',
+    version='0.1.1',
     description='Abstraction to interact with GreyNoise API.',
-    url="",
+    url="https://greynoise.io/",
     author="Brandon Dixon",
     author_email="brandon@9bplus.com",
     license="MIT",
@@ -32,5 +32,5 @@ setup(
     },
     zip_safe=False,
     keywords=['internet', 'scanning', 'threat intelligence', 'security'],
-    download_url=''
+    download_url='https://github.com/GreyNoise-Intelligence/pygreynoise'
 )

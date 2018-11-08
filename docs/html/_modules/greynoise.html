@@ -24,8 +24,7 @@
 
   
 
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -220,6 +219,7 @@
         <span class="s1">&#39;0x05&#39;</span><span class="p">:</span> <span class="s1">&#39;IP is commonly spoofed in Internet-scan activity&#39;</span><span class="p">,</span>
         <span class="s1">&#39;0x06&#39;</span><span class="p">:</span> <span class="s1">&#39;IP has been observed as noise, but this host belongs to a cloud provider where IPs can be cycled frequently&#39;</span><span class="p">,</span>
         <span class="s1">&#39;0x07&#39;</span><span class="p">:</span> <span class="s1">&#39;IP is invalid&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;0x08&#39;</span><span class="p">:</span> <span class="s1">&#39;IP was classified as noise, but has not been observed engaging in Internet-wide scans or attacks in over 60 days&#39;</span>
     <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_key</span><span class="p">):</span>
@@ -319,7 +319,10 @@
         <span class="n">_</span> <span class="o">=</span> <span class="n">valid_ip</span><span class="p">(</span><span class="n">ip_address</span><span class="p">)</span>
         <span class="n">endpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">EP_NOISE_QUICK</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ip_address</span><span class="o">=</span><span class="n">ip_address</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
-        <span class="n">response</span><span class="p">[</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">:</span>
+            <span class="n">response</span><span class="p">[</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Code message unknown: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span><span class="p">[</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)]</span>
         <span class="n">results</span><span class="p">[</span><span class="s1">&#39;results&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span>
         <span class="k">return</span> <span class="n">results</span></div>
 
@@ -338,7 +341,10 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;ips&#39;</span><span class="p">:</span> <span class="n">ip_addresses</span><span class="p">})</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">EP_NOISE_MULTI</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(),</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
-            <span class="n">response</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">:</span>
+                <span class="n">response</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Code message unknown: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">response</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;code_message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CODE_CONST</span><span class="p">[</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">)]</span>
         <span class="n">results</span><span class="p">[</span><span class="s1">&#39;results&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span>
         <span class="n">results</span><span class="p">[</span><span class="s1">&#39;result_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;results&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">results</span></div>
@@ -369,7 +375,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Brandon Dixon.
+        &copy; Copyright 2018, Brandon Dixon
 
     </p>
   </div>
@@ -388,27 +394,18 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
