@@ -69,6 +69,7 @@ class GreyNoise:
         '0x05': 'IP is commonly spoofed in Internet-scan activity',
         '0x06': 'IP has been observed as noise, but this host belongs to a cloud provider where IPs can be cycled frequently',
         '0x07': 'IP is invalid',
+        '0x08': 'IP was classified as noise, but has not been observed engaging in Internet-wide scans or attacks in over 60 days'
     }
 
     def __init__(self, api_key):
@@ -168,7 +169,10 @@ class GreyNoise:
         _ = valid_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
         response = self._request(endpoint)
-        response['code_message'] = self.CODE_CONST[response.get('code')]
+        if response.get('code') not in self.CODE_CONST:
+            response['code_message'] = "Code message unknown: %s" % (response.get('code'))
+        else:
+            response['code_message'] = self.CODE_CONST[response.get('code')]
         results['results'] = response
         return results
 
@@ -187,7 +191,10 @@ class GreyNoise:
         data = json.dumps({'ips': ip_addresses})
         response = self._request(self.EP_NOISE_MULTI, params=dict(), data=data)
         for idx, result in enumerate(response):
-            response[idx]['code_message'] = self.CODE_CONST[result.get('code')]
+            if response.get('code') not in self.CODE_CONST:
+                response[idx]['code_message'] = "Code message unknown: %s" % (response.get('code'))
+            else:
+                response[idx]['code_message'] = self.CODE_CONST[response.get('code')]
         results['results'] = response
         results['result_count'] = len(results['results'])
         return results
