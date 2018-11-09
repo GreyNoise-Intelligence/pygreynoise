@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 """Interact with the GreyNoise service."""
-import base64
 import json
 import os
-import logging
 from argparse import ArgumentParser
 from greynoise import GreyNoise
-import sys
 
 
 __author__ = "Brandon Dixon"
@@ -35,19 +32,17 @@ def main():
     if args.cmd == 'setup':
         if not os.path.exists(CONFIG_PATH):
             os.makedirs(CONFIG_PATH)
-        if not os.path.exists(CONFIG_FILE):
-            json.dump(CONFIG_DEFAULTS, open(CONFIG_FILE, 'w'), indent=4,
-                      separators=(',', ': '))
         config = CONFIG_DEFAULTS
         config['api_key'] = args.api_key
-        json.dump(config, open(CONFIG_FILE, 'w'), indent=4,
-                  separators=(',', ': '))
+        with open(CONFIG_FILE, 'w') as conf_file_handle:
+            json.dump(config, conf_file_handle, indent=4,
+                      separators=(',', ': '))
 
     config = json.load(open(CONFIG_FILE))
     if config['api_key'] == '':
         raise Exception("Run setup before any other actions!")
 
-    gn = GreyNoise(config['api_key'])
+    GreyNoise(config['api_key'])
     raise NotImplementedError
 
 
