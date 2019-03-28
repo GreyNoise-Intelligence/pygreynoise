@@ -25,7 +25,11 @@ Quick Start
 
 Changelog
 ---------
-11-08-19
+03-27-19
+~~~~~~~~
+* Merge CLI and pip module
+
+11-08-18
 ~~~~~~~~
 * Change: Updated codes to reflect latest documents
 * Bugfix: Handle cases when code is unknown
