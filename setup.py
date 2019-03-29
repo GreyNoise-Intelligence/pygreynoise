@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name='greynoise',
-    version='0.1.2',
+    version='0.1.3',
     description='Abstraction to interact with GreyNoise API.',
     url="https://greynoise.io/",
     author="Brandon Dixon",
