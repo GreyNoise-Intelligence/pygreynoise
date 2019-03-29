@@ -9,7 +9,6 @@ import re
 import requests
 import sys
 
-
 __author__ = "Brandon Dixon"
 __copyright__ = "Copyright, GreyNoise"
 __credits__ = ["Brandon Dixon"]
@@ -17,7 +16,6 @@ __license__ = "MIT"
 __maintainer__ = "Brandon Dixon"
 __email__ = "brandon@9bplus.com"
 __status__ = "BETA"
-
 
 class RequestFailure(Exception):
     """Exception to capture a failed request."""
@@ -490,7 +488,7 @@ class GNCli:
                     GNCli.makeCSV(jResult,of,queryType)
             elif outFormat == "json":
                 if jResult:
-                    pprint.pprint(jResult)
+                    print(json.dumps(jResult))
             elif not outFormat or outFormat == "raw":
                 if jResult:
                     if outFile:
