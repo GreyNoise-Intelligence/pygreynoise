@@ -1,4 +1,5 @@
 # Alpha API endpoints. 
+import json
 import requests
 
 
@@ -14,7 +15,10 @@ def list_tags():
     """
     r = requests.get('http://api.greynoise.io:8888/v1/query/list')
     if r.status_code == 200:
-        return r.json()['tags']
+        if 'tags' in r.json():
+            return r.json()['tags']
+        else:
+            print("No tags found.")
     else:
         return {}
 #########################################################################################
@@ -26,21 +30,24 @@ def list_tags():
 # GreyNoise adds scanner tags to IP addresses. This function retrieves
 # all tags currently in use.
 #########################################################################################
-def query_ip(ip):
+def query_ip(ip, key=False):
     """Retrieves GreyNoise tags associated with a given IP address.
     :param ip: The IP address to use in the query.
     :type ip: str
     :return: List of GreyNoise tags associated with the supplied IP address.
     :rtype: list
     """
-    r = requests.post('http://api.greynoise.io:8888/v1/query/ip', ({'ip': ip}))
+    r = requests.post('http://api.greynoise.io:8888/v1/query/ip', ({'ip': ip, 'key': key}))
     if r.status_code == 200:
-        return r.json()['records']
+        if 'records' in r.json():
+            return r.json()['records']
+        else:
+            print("No records found.")
     else:
         return {}
 
 
-def query_ips(ips):
+def query_ips(ips, key=False):
     """Retrieves GreyNoise tags associated with a list of IP addresses.
     :param ips: List of IPs to query for GreyNoise tags.
     :type ips: list
@@ -49,16 +56,16 @@ def query_ips(ips):
     """
     ips_list = []
     for ip in ips:
-        r = requests.post('http://api.greynoise.io:8888/v1/query/ip', ({'ip': ip}))
+        r = requests.post('http://api.greynoise.io:8888/v1/query/ip', ({'ip': ip, 'key': key}))
         if r.status_code == 200:
-            ips_list.extend(r.json()['records'])
+            if 'records' in r.json():
+                ips_list.extend(r.json()['records'])
+            else:
+                print("No records found.")
         else:
             ips_list.extend([])
-
     return ips_list
 #########################################################################################
-
-
 
 
 # Query all IPs that have a given tag
@@ -67,20 +74,23 @@ def query_ips(ips):
 # all tags currently in use.
 #
 #########################################################################################
-def query_tag(tag):
+def query_tag(tag, key=False):
     """Retrieves IPs associated with a given GreyNoise tag.
     :param ips: Tag to use in query.
     :type ips: str
     :return: List of IP addresses associated with the given GreyNoise tag.
     :rtype: list
     """
-    r = requests.post('http://api.greynoise.io:8888/v1/query/tag', ({'tag': tag}))
+    r = requests.post('http://api.greynoise.io:8888/v1/query/tag', ({'tag': tag, 'key': key}))
     if r.status_code == 200:
-        return r.json()['records']
+        if 'records' in r.json():
+            return r.json()['records']
+        else:
+            print("No records found.")
     else:
         return {}
 
-def query_tags(tags):
+def query_tags(tags, key=False):
     """Retrieves IPs associated with a list of GreyNoise tags.
     :param ips: List of tags to use in query.
     :type ips: list
@@ -89,11 +99,13 @@ def query_tags(tags):
     """
     tags_list = []
     for tag in tags:
-        r = requests.post('http://api.greynoise.io:8888/v1/query/tag', ({'tag': tag}))
+        r = requests.post('http://api.greynoise.io:8888/v1/query/tag', ({'tag': tag, 'key': key}))
         if r.status_code == 200:
-            tags_list.extend(r.json()['records'])
+            if 'records' in r.json():
+                tags_list.extend(r.json()['records'])
         else:
             tags_list.extend([])
-
+    if not tags_list:
+        print("No records found.")
     return tags_list
 #########################################################################################
