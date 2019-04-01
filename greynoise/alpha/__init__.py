@@ -2,9 +2,9 @@
 import json
 import requests
 
+# thank you https://github.com/phyler/greynoise for the base functions!
 
 # List GreyNoise Intelligence Tags
-#
 # GreyNoise adds scanner tags to IP addresses. This function retrieves
 # all tags currently in use.
 #########################################################################################
