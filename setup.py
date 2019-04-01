@@ -15,7 +15,7 @@ setup(
     author_email="brandon@9bplus.com",
     license="MIT",
     packages=find_packages(),
-    install_requires=['dict2xml', 'requests'],
+    install_requires=['ConfigParser', 'dict2xml', 'requests'],
     long_description=read('README.rst'),
     classifiers=[
         'Development Status :: 4 - Beta',
