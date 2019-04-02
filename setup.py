@@ -8,11 +8,11 @@ def read(fname):
 
 setup(
     name='greynoise',
-    version='0.1.3',
+    version='0.1.4',
     description='Abstraction to interact with GreyNoise API.',
     url="https://greynoise.io/",
-    author="Brandon Dixon",
-    author_email="brandon@9bplus.com",
+    author="GreyNoise Intelligence",
+    author_email="hello@greynoise.io",
     license="MIT",
     packages=find_packages(),
     install_requires=['ConfigParser', 'dict2xml', 'requests'],
