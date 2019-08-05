@@ -1,0 +1,42 @@
+version: 2.1
+workflows:
+  version: 2
+  build:
+    jobs:
+      - python2
+      - python3
+jobs:
+  python2:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            virtualenv py27
+            . py27/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: Static analysis
+          command: |
+            . py27/bin/activate
+            flake8 greynoise
+
+
+  python3:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            python3 -m venv py37
+            . py37/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: Static analysis
+          command: |
+            . py37/bin/activate
+            flake8 greynoise
