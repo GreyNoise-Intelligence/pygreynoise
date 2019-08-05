@@ -9,6 +9,7 @@ certifi==2018.10.15
 chardet==3.0.4
 dict2xml==1.6
 docutils==0.14
+flake8==3.7.8
 idna==2.7
 imagesize==1.1.0
 packaging==18.0
