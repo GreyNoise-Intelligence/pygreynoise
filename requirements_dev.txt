@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==5.0.1;python_version>='3'
+pytest==4.6.5;python_version<'3'
+flake8==3.7.8
