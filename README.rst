@@ -1,7 +1,7 @@
 Python GreyNoise
 ================
 
-.. image:: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise.svg?style=svg
+.. image:: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise.svg?style=shield
     :target: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise
 
 .. image:: https://readthedocs.org/projects/greynoise/badge/?version=latest
