@@ -5,8 +5,8 @@
 import os
 import sys
 from argparse import ArgumentParser
-from greynoise import GNUtils
-from greynoise import GNCli
+from greynoise.gnutils import GNUtils
+from greynoise.gncli import GNCli
 
 __author__ = "Brandon Dixon"
 __copyright__ = "Copyright, GreyNoise"
