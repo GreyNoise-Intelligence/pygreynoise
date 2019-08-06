@@ -61,3 +61,5 @@ class TestValidateIP(object):
     )
     def test_invalid(self, ip):
         """Invalid ip address values."""
+        with pytest.raises(ValueError):
+            validate_ip(ip)
