@@ -15,7 +15,8 @@ setup(
     author="GreyNoise Intelligence",
     author_email="hello@greynoise.io",
     license="MIT",
-    packages=find_packages(),
+    package_dir={'': 'src'},
+    packages=find_packages(where='src'),
     install_requires=["ConfigParser", "dict2xml", "requests"],
     long_description=read("README.rst"),
     classifiers=[
