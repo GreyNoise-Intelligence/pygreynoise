@@ -202,9 +202,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        results = dict()
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         response = self._request(endpoint)
-        results["results"] = response
-        return results
+        return response
