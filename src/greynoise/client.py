@@ -8,8 +8,8 @@ from greynoise.exceptions import (
     RequestFailure,
 )
 from greynoise.util import (
-    valid_date,
-    valid_ip,
+    validate_date,
+    validate_ip,
 )
 
 
@@ -125,7 +125,7 @@ class GreyNoise(object):
         results = dict()
         endpoint = self.EP_NOISE_BULK
         if date:
-            _ = valid_date(date)
+            validate_date(date)
             endpoint = self.EP_NOISE_BULK_DATE.format(date=date)
 
         if recurse:
@@ -152,7 +152,7 @@ class GreyNoise(object):
         :rtype: dict
         """
         results = dict()
-        _ = valid_ip(ip_address)
+        validate_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
         response = self._request(endpoint)
         if response.get("code") not in self.CODE_CONST:
@@ -175,7 +175,11 @@ class GreyNoise(object):
         results = dict()
         if not isinstance(ip_addresses, list):
             raise ValueError("`ip_addresses` must be a list")
-        ip_addresses = [x for x in ip_addresses if valid_ip(x, strict=False)]
+        ip_addresses = [
+            ip_address
+            for ip_address in ip_addresses
+            if validate_ip(ip_address, strict=False)
+        ]
         data = json.dumps({"ips": ip_addresses})
         response = self._request(self.EP_NOISE_MULTI, params=dict(), data=data)
         for idx, result in enumerate(response):
@@ -199,7 +203,7 @@ class GreyNoise(object):
 
         """
         results = dict()
-        _ = valid_ip(ip_address)
+        validate_ip(ip_address)
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         response = self._request(endpoint)
         results["results"] = response
