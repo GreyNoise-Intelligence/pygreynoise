@@ -1,5 +1,9 @@
 Python GreyNoise
 ================
+
+.. image:: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise.svg?style=shield
+    :target: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise
+
 .. image:: https://readthedocs.org/projects/greynoise/badge/?version=latest
     :target: http://greynoise.readthedocs.io/en/latest/?badge=latest
 
