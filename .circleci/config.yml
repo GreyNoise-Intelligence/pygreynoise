@@ -28,6 +28,13 @@ jobs:
           command: |
             . venv/bin/activate
             pytest tests
+      - run:
+          name: Test cases
+          command: |
+            . venv/bin/activate
+            pytest --junitxml=test_results/py27/results.xml tests
+      - store_test_results:
+          path: test_results
 
 
   python3:
@@ -51,7 +58,9 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest tests
+            pytest --junitxml=test_results/py37/results.xml tests
+      - store_test_results:
+          path: test_results
 
   sonnarcloud:
     docker:
