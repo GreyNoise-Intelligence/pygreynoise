@@ -28,8 +28,11 @@ class TestGetContext(object):
         """Get invalid IP address information."""
         client._request = Mock()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception:
             client.get_context('not an ip address')
+        assert str(exception.value) == 'Invalid IP address'
+
+        client._request.assert_not_called()
 
 
 class TestGetNoiseStatus(object):
