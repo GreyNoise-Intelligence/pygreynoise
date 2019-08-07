@@ -153,19 +153,19 @@ class GreyNoise(object):
         :type recurse: str
         :return: Activity metadata for the IP address.
         :rtype: dict
+
         """
-        results = dict()
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
         response = self._request(endpoint)
         if response.get("code") not in self.CODE_CONST:
-            response["code_message"] = "Code message unknown: %s" % (
-                response.get("code")
+            response["code_message"] = (
+                "Code message unknown: {}"
+                .format(response.get("code"))
             )
         else:
             response["code_message"] = self.CODE_CONST[response.get("code")]
-        results["results"] = response
-        return results
+        return response
 
     def get_noise_status_bulk(self, ip_addresses):
         """Get activity associated with multiple IP addresses.
