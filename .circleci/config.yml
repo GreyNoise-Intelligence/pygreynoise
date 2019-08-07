@@ -5,6 +5,7 @@ workflows:
     jobs:
       - python2
       - python3
+      - sonnarcloud
 jobs:
   python2:
     docker:
@@ -40,6 +41,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
+
       - run:
           name: Static analysis
           command: |
@@ -50,3 +52,29 @@ jobs:
           command: |
             . venv/bin/activate
             pytest tests
+
+  sonnarcloud:
+    docker:
+      - image: circleci/openjdk:11
+    steps:
+      - checkout
+      - run:
+          name: Sonnar scanner
+          command: |
+            SONAR_SCANNER_VERSION=3.3.0.1492
+            export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
+            rm -rf $SONAR_SCANNER_HOME
+            mkdir -p $SONAR_SCANNER_HOME
+            curl -sSLo $HOME/.sonar/sonar-scanner.zip http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
+            unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+            rm $HOME/.sonar/sonar-scanner.zip
+            export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+            export SONAR_SCANNER_OPTS="-server"
+
+            sonar-scanner \
+              -Dsonar.projectKey=GreyNoise-Intelligence_pygreynoise \
+              -Dsonar.organization=greynoise-intelligence \
+              -Dsonar.sources=src \
+              -Dsonar.tests=tests \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.login=36b503aeaab2a80a95d98e7fb105772d7a0c0c0b
