@@ -47,19 +47,18 @@ class GNUtils(object):
                 # print(config['api_key'])
                 return config["api_key"]  # .encode('utf-8')
             else:
-                return ""
                 print(" API key not found.\n")
                 exit()
 
     # Turns input file into a python list
-    def listFile(listFile):
+    def list_file(list_file):
         try:
-            with open(listFile) as f:
-                ipList = []
-                inputFile = f.readlines()
-                for i in inputFile:
+            with open(list_file) as f:
+                ip_list = []
+                input_file = f.readlines()
+                for i in input_file:
                     i = i.split("\n")[0]
-                    ipList.append(i)
-            return ipList
+                    ip_list.append(i)
+            return ip_list
         except Exception:
             return None

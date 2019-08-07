@@ -42,41 +42,39 @@ def main():
             exit()
         # otherwise default query
         else:
-            outFile = ""
-            outFormat = "txt"
-            queryType = "raw"
-            rQuery = sys.argv[1]
-            verboseOut = False
+            out_file = ""
+            out_format = "txt"
+            query_type = "raw"
+            r_query = sys.argv[1]
+            verbose_out = False
 
-            GNCli.runQuery(outFile, outFormat, queryType, rQuery, verboseOut)
+            GNCli.runQuery(out_file, out_format, query_type, r_query, verbose_out)
 
     # Otherwise we do a query with flags
     else:
-        # verboseOut = False
         parser = ArgumentParser(
             description="GreyNoise - GreyNoise Commandline Interface"
         )
-        parser.add_argument("-f", "--file", dest="outFile", help="Output File")
+        parser.add_argument("-f", "--file", dest="out_file", help="Output File")
 
-        # verboseOut = False
         parser = ArgumentParser(
             description="GreyNoise - GreyNoise Commandline Interface"
         )
-        parser.add_argument("-f", "--file", dest="outFile", help="Output File")
-        parser.add_argument("-o", "--output", dest="outFormat", help="Output Format")
+        parser.add_argument("-f", "--file", dest="out_file", help="Output File")
+        parser.add_argument("-o", "--output", dest="out_format", help="Output Format")
         parser.add_argument("-q", "--query", dest="query", help="Query")
-        parser.add_argument("-t", "--type", dest="queryType", help="Query Type")
+        parser.add_argument("-t", "--type", dest="query_type", help="Query Type")
         parser.add_argument(
             "-v", "--verbose", action="store_true", help="Verbose Output"
         )
         args = parser.parse_args()
-        outFile = args.outFile
-        outFormat = args.outFormat
-        queryType = args.queryType
-        rQuery = args.query
-        verboseOut = args.verbose
+        out_file = args.out_file
+        out_format = args.out_format
+        query_type = args.query_type
+        r_query = args.query
+        verbose_out = args.verbose
 
-        GNCli.runQuery(outFile, outFormat, queryType, rQuery, verboseOut)
+        GNCli.runQuery(out_file, out_format, query_type, r_query, verbose_out)
 
 
 if __name__ == "__main__":
