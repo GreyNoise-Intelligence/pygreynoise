@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Abstract API over the GreyNoise API."""
 
 __author__ = "GreyNoise Intelligence"

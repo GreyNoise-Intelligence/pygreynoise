@@ -7,6 +7,10 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+install_requires = [
+    "requests",
+]
+
 setup(
     name="greynoise",
     version="0.1.5",
@@ -17,7 +21,7 @@ setup(
     license="MIT",
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    install_requires=["ConfigParser", "dict2xml", "requests"],
+    install_requires=install_requires,
     long_description=read("README.rst"),
     classifiers=[
         "Development Status :: 4 - Beta",

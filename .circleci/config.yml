@@ -14,14 +14,19 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            virtualenv py27
-            . py27/bin/activate
-            pip install -r requirements.txt
+            virtualenv venv
+            . venv/bin/activate
+            pip install -r requirements_dev.txt -e .
       - run:
           name: Static analysis
           command: |
-            . py27/bin/activate
+            . venv/bin/activate
             flake8 greynoise
+      - run:
+          name: Test cases
+          command: |
+            . venv/bin/activate
+            pytest tests
 
 
   python3:
@@ -32,11 +37,16 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            python3 -m venv py37
-            . py37/bin/activate
-            pip install -r requirements.txt
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements_dev.txt -e .
       - run:
           name: Static analysis
           command: |
-            . py37/bin/activate
+            . venv/bin/activate
             flake8 greynoise
+      - run:
+          name: Test cases
+          command: |
+            . venv/bin/activate
+            pytest tests
