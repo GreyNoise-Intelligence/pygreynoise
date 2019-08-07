@@ -5,7 +5,13 @@ workflows:
     jobs:
       - python2
       - python3
-      - sonnarcloud
+      - sonarcloud:
+          requires:
+            # generate coverage reports in python jobs
+            # and upload them to sonarcloud.io in sonarcloud job
+            - python2
+            - python3
+
 jobs:
   python2:
     docker:
@@ -32,7 +38,11 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest --junitxml=test_results/py27/results.xml tests
+            pytest --cov=greynoise --cov-report=xml:workspace/py27.xml --junitxml=test_results/py27/results.xml tests
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - py27.xml
       - store_test_results:
           path: test_results
 
@@ -58,17 +68,23 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest --junitxml=test_results/py37/results.xml tests
+            pytest --cov=greynoise --cov-report=xml:workspace/py37.xml --junitxml=test_results/py37/results.xml tests
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - py37.xml
       - store_test_results:
           path: test_results
 
-  sonnarcloud:
+  sonarcloud:
     docker:
       - image: circleci/openjdk:11
     steps:
       - checkout
+      - attach_workspace:
+          at: workspace
       - run:
-          name: Sonnar scanner
+          name: Sonar scanner
           command: |
             SONAR_SCANNER_VERSION=3.3.0.1492
             export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
@@ -85,5 +101,6 @@ jobs:
               -Dsonar.organization=greynoise-intelligence \
               -Dsonar.sources=src \
               -Dsonar.tests=tests \
+              -Dsonar.python.coverage.reportPaths='workspace/*.xml' \
               -Dsonar.host.url=https://sonarcloud.io \
               -Dsonar.login=36b503aeaab2a80a95d98e7fb105772d7a0c0c0b
