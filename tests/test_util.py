@@ -31,8 +31,9 @@ class TestValidateDate(object):
     )
     def test_invalid(self, date):
         """Invalid date values."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception:
             validate_date(date)
+        assert str(exception.value) == 'Incorrect data format, should be YYYY-MM-DD'
 
 
 class TestValidateIP(object):
@@ -61,5 +62,6 @@ class TestValidateIP(object):
     )
     def test_invalid(self, ip):
         """Invalid ip address values."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exception:
             validate_ip(ip)
+        assert str(exception.value) == 'Invalid IP address'
