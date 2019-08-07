@@ -80,8 +80,11 @@ class GreyNoise(object):
             level = logging.ERROR
         self._log.setLevel(level)
 
-    def _request(self, endpoint, params=dict(), data=None):
+    def _request(self, endpoint, params=None, data=None):
         """Handle the requesting of information from the API."""
+        if params is None:
+            params = {}
+
         # GNClient_value =
         "pyGreyNoise v%s" % (str(self.CLIENT_VERSION))
         headers = {"X-Request-Client": "pyGreyNoise", "key": self.api_key}
