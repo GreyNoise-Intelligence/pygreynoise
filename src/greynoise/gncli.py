@@ -91,8 +91,8 @@ class GNCli(object):
                 if results["seen"] or ("count" in results and results["count"] > 0):
                     print(" " * 10 + "OVERVIEW:")
                     print(" " + "-" * 28)
-                    for field in GNCli.contextFields:
-                        print(" %s: %s" % (GNCli.contextFields[field], results[field]))
+                    for field in GNCli.context_fields:
+                        print(" %s: %s" % (GNCli.context_fields[field], results[field]))
                     print()
                     print(" " * 10 + "METADATA:")
                     print(" " + "-" * 28)
@@ -112,7 +112,7 @@ class GNCli(object):
                         country_code = ""
                     print(" Location: %s%s%s" % (city, country, country_code))
                     # the rest of the metadata can be looped thru
-                    for field in GNCli.metadataFields:
+                    for field in GNCli.metadata_fields:
                         try:
                             if results["metadata"][field]:
                                 if field == "tor":  # the only non string..
@@ -121,7 +121,7 @@ class GNCli(object):
                                     print(
                                         " %s: %s"
                                         % (
-                                            GNCli.metadataFields[field],
+                                            GNCli.metadata_fields[field],
                                             results["metadata"][field],
                                         )
                                     )
@@ -166,7 +166,8 @@ class GNCli(object):
                         else:
                             if (
                                 len(results["raw_data"]["web"]["paths"]) < 20
-                            ) or verbose_out:
+                                or verbose_out
+                            ):
                                 for path in results["raw_data"]["web"]["paths"]:
                                     try:
                                         print(" %s" % path)
@@ -229,7 +230,7 @@ class GNCli(object):
                 # result is paginated
                 return pydoc.pager(formatted)
             if type == "quick" or type == "context":
-                GNCli.txtIP(results, verbose_out)
+                GNCli.txt_ip(results, verbose_out)
             if type == "raw" or not type:
                 if "data" in results:
                     counter = 1
@@ -261,7 +262,7 @@ class GNCli(object):
                             % heading
                         )
                         print()
-                        GNCli.txtIP(entry, verbose_out)
+                        GNCli.txt_ip(entry, verbose_out)
                         print()
                         print()
                         counter += 1
@@ -342,7 +343,7 @@ class GNCli(object):
     def multi_query(input_file):
         try:
             if input_file:
-                ip_list = GNUtils.listFile(input_file)
+                ip_list = GNUtils.list_file(input_file)
                 rr = {"ips": ip_list}
                 query = json.dumps(rr)
                 r = requests.get(
@@ -361,9 +362,8 @@ class GNCli(object):
     def bulk_query(date=False):
         r_query = ""  # TODO: Where is rQuery coming from?
         try:
-            if (
-                date
-            ):  # If there's an actual date given, run the date-specific bulk search
+            # If there's an actual date given, run the date-specific bulk search
+            if date:
                 # Restricts input to "real" dates
                 match_date_format = re.fullmatch(
                     r"2\d{3}-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))",
@@ -466,13 +466,13 @@ class GNCli(object):
                 or query_type == "raw"
                 or not query_type
             ):
-                result = GNCli.singleIP(c_query, query_type)
+                result = GNCli.single_ip(c_query, query_type)
             elif query_type == "multi":
-                result = GNCli.multiQuery(c_query)  # takes a list of ips
+                result = GNCli.multi_query(c_query)  # takes a list of ips
             elif query_type == "bulk":
-                result = GNCli.bulkQuery()  # defaults to today's date
+                result = GNCli.bulk_query()  # defaults to today's date
             elif query_type == "date":
-                result = GNCli.bulkQuery(c_query)  # param is a date YYYY-MM-DD
+                result = GNCli.bulk_query(c_query)  # param is a date YYYY-MM-DD
             elif query_type == "actors":
                 result = GNCli.actors()
             # you can handle special cases for anything by returning False to runQuery.
@@ -485,14 +485,14 @@ class GNCli(object):
             if out_format == "xml":
                 if j_result:
                     if out_file:
-                        GNCli.writeToFile(dict2xml.dict2xml(j_result))
+                        GNCli.write_to_file(dict2xml.dict2xml(j_result))
                     else:
                         print(dict2xml.dict2xml(j_result))
             elif out_format == "txt":
                 if j_result:
                     if query_type != "quick":
                         print(GNCli.banner)
-                    GNCli.makeTxt(j_result, query_type, verbose_out)
+                    GNCli.make_txt(j_result, query_type, verbose_out)
             elif out_format == "csv":
                 if out_file:
                     of = out_file
@@ -506,7 +506,7 @@ class GNCli(object):
             elif not out_format or out_format == "raw":
                 if j_result:
                     if out_file:
-                        GNCli.writeToFile(j_result)
+                        GNCli.write_to_file(j_result)
                     else:
                         print(
                             j_result

@@ -4,6 +4,7 @@
 
 import os
 import sys
+
 from argparse import ArgumentParser
 from greynoise.gnutils import GNUtils
 from greynoise.gncli import GNCli
@@ -48,7 +49,7 @@ def main():
             r_query = sys.argv[1]
             verbose_out = False
 
-            GNCli.runQuery(out_file, out_format, query_type, r_query, verbose_out)
+            GNCli.run_query(out_file, out_format, query_type, r_query, verbose_out)
 
     # Otherwise we do a query with flags
     else:
@@ -74,7 +75,7 @@ def main():
         r_query = args.query
         verbose_out = args.verbose
 
-        GNCli.runQuery(out_file, out_format, query_type, r_query, verbose_out)
+        GNCli.run_query(out_file, out_format, query_type, r_query, verbose_out)
 
 
 if __name__ == "__main__":

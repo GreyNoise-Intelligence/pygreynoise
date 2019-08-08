@@ -46,9 +46,9 @@ class GNUtils(object):
             if "api_key" in config:
                 # print(config['api_key'])
                 return config["api_key"]  # .encode('utf-8')
-            else:
-                print(" API key not found.\n")
-                exit()
+
+            print(" API key not found.\n")
+            exit()
 
     # Turns input file into a python list
     def list_file(list_file):
