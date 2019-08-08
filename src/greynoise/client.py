@@ -11,7 +11,14 @@ from greynoise.util import (
 
 class GreyNoise(object):
 
-    """Abstract interface for GreyNoise."""
+    """GreyNoise API client.
+
+    :param api_key: Key use to access the API.
+    :type api_key: str
+    :param timeout: API requests timeout in seconds.
+    :type timeout: int
+
+    """
 
     NAME = "GreyNoise"
     BASE_URL = "https://enterprise.api.greynoise.io"
@@ -47,9 +54,9 @@ class GreyNoise(object):
         ),
     }
 
-    def __init__(self, api_key):
-        """Init the object."""
+    def __init__(self, api_key, timeout=7):
         self.api_key = api_key
+        self.timeout = timeout
 
     def _request(self, endpoint, params=None, json=None):
         """Handle the requesting of information from the API."""
@@ -61,7 +68,7 @@ class GreyNoise(object):
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
         response = requests.get(
-            url, headers=headers, timeout=7, params=params, json=json
+            url, headers=headers, timeout=self.timeout, params=params, json=json
         )
         if response.status_code not in range(200, 299):
             raise RequestFailure(response.status_code, response.content)
