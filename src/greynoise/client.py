@@ -1,8 +1,5 @@
 """GreyNoise API client."""
 
-import logging
-import sys
-
 import requests
 
 from greynoise.exceptions import RequestFailure
@@ -17,7 +14,6 @@ class GreyNoise(object):
     """Abstract interface for GreyNoise."""
 
     NAME = "GreyNoise"
-    LOG_LEVEL = logging.INFO
     BASE_URL = "https://enterprise.api.greynoise.io"
     CLIENT_VERSION = 1
     API_VERSION = "v2"
@@ -53,32 +49,7 @@ class GreyNoise(object):
 
     def __init__(self, api_key):
         """Init the object."""
-        self._log = self._logger()
         self.api_key = api_key
-
-    def _logger(self):
-        """Create a logger to be used between processes.
-
-        :returns: Logging instance.
-        """
-        logger = logging.getLogger(self.NAME)
-        logger.setLevel(self.LOG_LEVEL)
-        shandler = logging.StreamHandler(sys.stdout)
-        fmt = "\033[1;32m%(levelname)-5s %(module)s:%(funcName)s():"
-        fmt += "%(lineno)d %(asctime)s\033[0m| %(message)s"
-        shandler.setFormatter(logging.Formatter(fmt))
-        logger.addHandler(shandler)
-        return logger
-
-    def set_log_level(self, level):
-        """Set the log level."""
-        if level == "info":
-            level = logging.INFO
-        if level == "debug":
-            level = logging.DEBUG
-        if level == "error":
-            level = logging.ERROR
-        self._log.setLevel(level)
 
     def _request(self, endpoint, params=None, json=None):
         """Handle the requesting of information from the API."""
@@ -89,7 +60,6 @@ class GreyNoise(object):
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
-        self._log.debug("Requesting: %s", url)
         response = requests.get(
             url, headers=headers, timeout=7, params=params, json=json
         )
