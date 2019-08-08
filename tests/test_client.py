@@ -1,8 +1,9 @@
 import pytest
 
-from mock import Mock
+from mock import Mock, patch
 
 from greynoise.client import GreyNoise
+from greynoise.exceptions import RequestFailure
 
 
 @pytest.fixture
@@ -10,6 +11,22 @@ def client():
     """API client fixture."""
     client = GreyNoise(api_key="<api_key>")
     yield client
+
+
+class TestRequest(object):
+    """GreyNoise client _request method test cases."""
+
+    @pytest.mark.parametrize(
+        'status_code',
+        (100, 300, 400, 500),
+    )
+    def test_status_code_failure(self, client, status_code):
+        """Exception is raised on response status code failure."""
+        with patch('greynoise.client.requests') as requests:
+            requests.get = Mock()
+            requests.get().status_code = status_code
+            with pytest.raises(RequestFailure):
+                client._request('endpoint')
 
 
 class TestGetContext(object):

@@ -59,7 +59,19 @@ class GreyNoise(object):
         self.timeout = timeout
 
     def _request(self, endpoint, params=None, json=None):
-        """Handle the requesting of information from the API."""
+        """Handle the requesting of information from the API.
+
+        :param endpoint: Endpoint to send the request to.
+        :type endpoint: str
+        :param params: Request parameters.
+        :type param: dict
+        :param json: Request JSON payload.
+        :type json: dict
+        :returns: Response's JSON payload
+        :rtype: dict
+        :raises RequestFailure when HTTP status code is not 2xx
+
+        """
         if params is None:
             params = {}
         headers = {
