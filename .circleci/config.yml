@@ -83,10 +83,6 @@ jobs:
       - run:
           name: Sonar scanner
           command: |
-            ls -l workspace
-            ls -l workspace/coverage
-            ls -l workspace/test_results
-
             SONAR_SCANNER_VERSION=3.3.0.1492
             export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
             rm -rf $SONAR_SCANNER_HOME
@@ -97,13 +93,4 @@ jobs:
             export PATH=$SONAR_SCANNER_HOME/bin:$PATH
             export SONAR_SCANNER_OPTS="-server"
 
-            sonar-scanner \
-              -Dsonar.projectKey=GreyNoise-Intelligence_pygreynoise \
-              -Dsonar.organization=greynoise-intelligence \
-              -Dsonar.sources=src \
-              -Dsonar.tests=tests \
-              -Dsonar.python.pylint.reportPath=workspace/pylint.txt \
-              -Dsonar.python.xunit.reportPath=workspace/test_results/pytest.xml \
-              -Dsonar.python.coverage.reportPaths=workspace/coverage/report.xml \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.login=36b503aeaab2a80a95d98e7fb105772d7a0c0c0b
+            sonar-scanner
