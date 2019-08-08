@@ -32,9 +32,9 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest --junitxml=test_results/py27/results.xml tests
+            pytest --junitxml=workspace/test_results/pytest.xml tests
       - store_test_results:
-          path: test_results
+          path: workspace/test_results
 
 
   python3:
@@ -58,19 +58,20 @@ jobs:
           command: |
             . venv/bin/activate
             mkdir workspace
-            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' src > workspace/py37.txt
+            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' src > workspace/pylint.txt
       - run:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest --cov=greynoise --cov-report=xml:workspace/py37.xml --junitxml=test_results/py37/results.xml tests
+            pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
       - persist_to_workspace:
           root: workspace
           paths:
-            - py37.txt
-            - py37.xml
+            - pylint.txt
+            - coverage/report.xml
+            - test_results/pytest.xml
       - store_test_results:
-          path: test_results
+          path: workspace/test_results
 
   sonarcloud:
     docker:
@@ -83,6 +84,8 @@ jobs:
           name: Sonar scanner
           command: |
             ls -l workspace
+            ls -l workspace/coverage
+            ls -l workspace/test_results
 
             SONAR_SCANNER_VERSION=3.3.0.1492
             export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
@@ -99,7 +102,8 @@ jobs:
               -Dsonar.organization=greynoise-intelligence \
               -Dsonar.sources=src \
               -Dsonar.tests=tests \
-              -Dsonar.python.pylint.reportPath=workspace/py37.txt \
-              -Dsonar.python.coverage.reportPaths=workspace/py37.xml \
+              -Dsonar.python.pylint.reportPath=workspace/pylint.txt \
+              -Dsonar.python.xunit.reportPath=workspace/test_results/pytest.xml \
+              -Dsonar.python.coverage.reportPaths=workspace/coverage/report.xml \
               -Dsonar.host.url=https://sonarcloud.io \
               -Dsonar.login=36b503aeaab2a80a95d98e7fb105772d7a0c0c0b
