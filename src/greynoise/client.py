@@ -1,13 +1,11 @@
-import json
+"""GreyNoise API client."""
+
 import logging
 import sys
 
 import requests
 
-from greynoise.exceptions import (
-    InvalidResponse,
-    RequestFailure,
-)
+from greynoise.exceptions import RequestFailure
 from greynoise.util import (
     validate_date,
     validate_ip,
@@ -28,7 +26,8 @@ class GreyNoise(object):
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
-    CODE_CONST = {
+    UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
+    CODE_MESSAGES = {
         "0x00": "IP has never been observed scanning the Internet",
         "0x01": "IP has been observed by the GreyNoise sensor network",
         "0x02": (
@@ -81,26 +80,23 @@ class GreyNoise(object):
             level = logging.ERROR
         self._log.setLevel(level)
 
-    def _request(self, endpoint, params=None, data=None):
+    def _request(self, endpoint, params=None, json=None):
         """Handle the requesting of information from the API."""
         if params is None:
             params = {}
-
-        # GNClient_value =
-        "pyGreyNoise v%s" % (str(self.CLIENT_VERSION))
-        headers = {"X-Request-Client": "pyGreyNoise", "key": self.api_key}
+        headers = {
+            "X-Request-Client": "pyGreyNoise v{}".format(self.CLIENT_VERSION),
+            "key": self.api_key,
+        }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
         self._log.debug("Requesting: %s", url)
         response = requests.get(
-            url, headers=headers, timeout=7, params=params, data=data
+            url, headers=headers, timeout=7, params=params, json=json
         )
         if response.status_code not in range(200, 299):
             raise RequestFailure(response.status_code, response.content)
-        try:
-            loaded = json.loads(response.content)
-        except Exception as error:
-            raise InvalidResponse(error)
-        return loaded
+
+        return response.json()
 
     def _recurse(self, config, breaker=False):
         results = None  # TODO: Where is results coming from?
@@ -158,15 +154,13 @@ class GreyNoise(object):
         """
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
-        response = self._request(endpoint)
-        if response.get("code") not in self.CODE_CONST:
-            response["code_message"] = (
-                "Code message unknown: {}"
-                .format(response.get("code"))
-            )
-        else:
-            response["code_message"] = self.CODE_CONST[response.get("code")]
-        return response
+        result = self._request(endpoint)
+        code = result["code"]
+        result["code_message"] = self.CODE_MESSAGES.get(
+            code,
+            self.UNKNOWN_CODE_MESSAGE.format(code),
+        )
+        return result
 
     def get_noise_status_bulk(self, ip_addresses):
         """Get activity associated with multiple IP addresses.
@@ -175,26 +169,23 @@ class GreyNoise(object):
         :type ip_addresses: list
         :return: Bulk status information for IP addresses.
         :rtype: dict
+
         """
-        results = dict()
         if not isinstance(ip_addresses, list):
             raise ValueError("`ip_addresses` must be a list")
+
         ip_addresses = [
             ip_address
             for ip_address in ip_addresses
             if validate_ip(ip_address, strict=False)
         ]
-        data = json.dumps({"ips": ip_addresses})
-        response = self._request(self.EP_NOISE_MULTI, params=dict(), data=data)
-        for idx, result in enumerate(response):
-            if response.get("code") not in self.CODE_CONST:
-                response[idx]["code_message"] = "Code message unknown: %s" % (
-                    response.get("code")
-                )
-            else:
-                response[idx]["code_message"] = self.CODE_CONST[response.get("code")]
-        results["results"] = response
-        results["result_count"] = len(results["results"])
+        results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
+        for result in results:
+            code = result["code"]
+            result["code_message"] = self.CODE_MESSAGES.get(
+                code,
+                self.UNKNOWN_CODE_MESSAGE.format(code),
+            )
         return results
 
     def get_context(self, ip_address):
