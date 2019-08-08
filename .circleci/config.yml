@@ -7,9 +7,8 @@ workflows:
       - python3
       - sonarcloud:
           requires:
-            # generate coverage reports in python jobs
+            # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
-            - python2
             - python3
 
 jobs:
@@ -25,7 +24,7 @@ jobs:
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
       - run:
-          name: Static analysis
+          name: Static analysis (flake8)
           command: |
             . venv/bin/activate
             flake8 src tests docs
@@ -33,16 +32,7 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest tests
-      - run:
-          name: Test cases
-          command: |
-            . venv/bin/activate
-            pytest --cov=greynoise --cov-report=xml:workspace/py27.xml --junitxml=test_results/py27/results.xml tests
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - py27.xml
+            pytest --junitxml=test_results/py27/results.xml tests
       - store_test_results:
           path: test_results
 
@@ -58,12 +48,17 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
-
       - run:
-          name: Static analysis
+          name: Static analysis (flake8)
           command: |
             . venv/bin/activate
             flake8 src tests docs
+      - run:
+          name: Static analysis (pylint)
+          command: |
+            . venv/bin/activate
+            mkdir workspace
+            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' src > workspace/py37.txt
       - run:
           name: Test cases
           command: |
@@ -72,6 +67,7 @@ jobs:
       - persist_to_workspace:
           root: workspace
           paths:
+            - py37.txt
             - py37.xml
       - store_test_results:
           path: test_results
@@ -86,6 +82,8 @@ jobs:
       - run:
           name: Sonar scanner
           command: |
+            ls -l workspace
+
             SONAR_SCANNER_VERSION=3.3.0.1492
             export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
             rm -rf $SONAR_SCANNER_HOME
@@ -101,6 +99,7 @@ jobs:
               -Dsonar.organization=greynoise-intelligence \
               -Dsonar.sources=src \
               -Dsonar.tests=tests \
-              -Dsonar.python.coverage.reportPaths='workspace/*.xml' \
+              -Dsonar.python.pylint.reportPath=workspace/py37.txt \
+              -Dsonar.python.coverage.reportPaths=workspace/py37.xml \
               -Dsonar.host.url=https://sonarcloud.io \
               -Dsonar.login=36b503aeaab2a80a95d98e7fb105772d7a0c0c0b
