@@ -1,25 +1,11 @@
-.. greynoise documentation master file, created by
-   sphinx-quickstart on Thu Nov  9 10:39:13 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Python GreyNoise
-====================
-
-
-Features
---------
-
-
-Code Documentation
-------------------
+================
 
 .. toctree::
    :maxdepth: 2
 
    introduction
    code
-   exceptions
    changelog
 
 License

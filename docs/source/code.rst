@@ -1,9 +1,27 @@
-Code Documentation
-===================
+Code reference
+==============
 
-GreyNoise Interface
-----------------------
+.. automodule:: greynoise
+    :members:
+    :private-members:
 
-.. autoclass:: greynoise.client.GreyNoise
+greynoise.client
+----------------
+
+.. automodule:: greynoise.client
+    :members:
+    :private-members:
+
+greynoise.util
+--------------
+
+.. automodule:: greynoise.util
+    :members:
+    :private-members:
+
+greynoise.exceptions
+--------------------
+
+.. automodule:: greynoise.exceptions
     :members:
     :private-members:

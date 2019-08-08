@@ -65,11 +65,11 @@ class GreyNoise(object):
         :type endpoint: str
         :param params: Request parameters.
         :type param: dict
-        :param json: Request JSON payload.
+        :param json: Request's JSON payload.
         :type json: dict
         :returns: Response's JSON payload
         :rtype: dict
-        :raises RequestFailure when HTTP status code is not 2xx
+        :raises RequestFailure: when HTTP status code is not 2xx
 
         """
         if params is None:
