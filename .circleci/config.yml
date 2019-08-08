@@ -5,6 +5,12 @@ workflows:
     jobs:
       - python2
       - python3
+      - sonarcloud:
+          requires:
+            # generate static analysis and coverage reports in python3 job
+            # and upload them to sonarcloud.io in sonarcloud job
+            - python3
+
 jobs:
   python2:
     docker:
@@ -18,7 +24,7 @@ jobs:
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
       - run:
-          name: Static analysis
+          name: Static analysis (flake8)
           command: |
             . venv/bin/activate
             flake8 src tests docs
@@ -26,7 +32,9 @@ jobs:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest tests
+            pytest --junitxml=workspace/test_results/pytest.xml tests
+      - store_test_results:
+          path: workspace/test_results
 
 
   python3:
@@ -41,12 +49,48 @@ jobs:
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
       - run:
-          name: Static analysis
+          name: Static analysis (flake8)
           command: |
             . venv/bin/activate
             flake8 src tests docs
       - run:
+          name: Static analysis (pylint)
+          command: |
+            . venv/bin/activate
+            mkdir workspace
+            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' src > workspace/pylint.txt
+      - run:
           name: Test cases
           command: |
             . venv/bin/activate
-            pytest tests
+            pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - pylint.txt
+            - coverage/report.xml
+            - test_results/pytest.xml
+      - store_test_results:
+          path: workspace/test_results
+
+  sonarcloud:
+    docker:
+      - image: circleci/openjdk:11
+    steps:
+      - checkout
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Sonar scanner
+          command: |
+            SONAR_SCANNER_VERSION=3.3.0.1492
+            export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
+            rm -rf $SONAR_SCANNER_HOME
+            mkdir -p $SONAR_SCANNER_HOME
+            curl -sSLo $HOME/.sonar/sonar-scanner.zip http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
+            unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+            rm $HOME/.sonar/sonar-scanner.zip
+            export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+            export SONAR_SCANNER_OPTS="-server"
+
+            sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN

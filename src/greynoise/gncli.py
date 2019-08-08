@@ -24,7 +24,7 @@ class GNCli(object):
 
     # global variables #################################################################
     # For output
-    contextFields = {
+    context_fields = {
         "ip": "IP",
         "classification": "Classification",
         "first_seen": "First seen",
@@ -32,7 +32,7 @@ class GNCli(object):
         "actor": "Actor",
         "tags": "Tags",
     }
-    metadataFields = {
+    metadata_fields = {
         "organization": "Organization",
         "rdns": "rDNS",
         "asn": "ASN",
@@ -55,8 +55,8 @@ class GNCli(object):
         "--verbose",
     ]
     flags_meta = ["-h", "--help"]
-    formatTypes = ["txt", "csv", "xml", "json", "raw"]  # constraints for -o
-    queryTypes = [
+    format_types = ["txt", "csv", "xml", "json", "raw"]  # constraints for -o
+    query_types = [
         "quick",
         "raw",
         "context",
@@ -75,7 +75,7 @@ class GNCli(object):
 
     # TODO: refactor, individual functions? this is long... + name is inaccurate - not
     # all queries are IPs
-    def txtIP(results, verboseOut):
+    def txt_ip(results, verbose_out):
         try:
             if "error" in results:
                 print(" Error: %s" % results["error"])
@@ -91,8 +91,8 @@ class GNCli(object):
                 if results["seen"] or ("count" in results and results["count"] > 0):
                     print(" " * 10 + "OVERVIEW:")
                     print(" " + "-" * 28)
-                    for field in GNCli.contextFields:
-                        print(" %s: %s" % (GNCli.contextFields[field], results[field]))
+                    for field in GNCli.context_fields:
+                        print(" %s: %s" % (GNCli.context_fields[field], results[field]))
                     print()
                     print(" " * 10 + "METADATA:")
                     print(" " + "-" * 28)
@@ -112,7 +112,7 @@ class GNCli(object):
                         country_code = ""
                     print(" Location: %s%s%s" % (city, country, country_code))
                     # the rest of the metadata can be looped thru
-                    for field in GNCli.metadataFields:
+                    for field in GNCli.metadata_fields:
                         try:
                             if results["metadata"][field]:
                                 if field == "tor":  # the only non string..
@@ -121,7 +121,7 @@ class GNCli(object):
                                     print(
                                         " %s: %s"
                                         % (
-                                            GNCli.metadataFields[field],
+                                            GNCli.metadata_fields[field],
                                             results["metadata"][field],
                                         )
                                     )
@@ -131,7 +131,7 @@ class GNCli(object):
                     print(" " * 10 + "RAW DATA:")
                     print(" " + "-" * 28)
                     if results["raw_data"]["scan"]:
-                        if (len(results["raw_data"]["scan"]) < 20) or verboseOut:
+                        if (len(results["raw_data"]["scan"]) < 20) or verbose_out:
                             for item in results["raw_data"]["scan"]:
                                 try:
                                     print(
@@ -166,7 +166,8 @@ class GNCli(object):
                         else:
                             if (
                                 len(results["raw_data"]["web"]["paths"]) < 20
-                            ) or verboseOut:
+                                or verbose_out
+                            ):
                                 for path in results["raw_data"]["web"]["paths"]:
                                     try:
                                         print(" %s" % path)
@@ -210,7 +211,7 @@ class GNCli(object):
             print(e)
 
     # -o txt
-    def makeTxt(results, type, verboseOut):
+    def make_txt(results, type, verbose_out):
         try:
             if type == "bulk" or type == "date":
                 formatted = ""
@@ -229,7 +230,7 @@ class GNCli(object):
                 # result is paginated
                 return pydoc.pager(formatted)
             if type == "quick" or type == "context":
-                GNCli.txtIP(results, verboseOut)
+                GNCli.txt_ip(results, verbose_out)
             if type == "raw" or not type:
                 if "data" in results:
                     counter = 1
@@ -261,7 +262,7 @@ class GNCli(object):
                             % heading
                         )
                         print()
-                        GNCli.txtIP(entry, verboseOut)
+                        GNCli.txt_ip(entry, verbose_out)
                         print()
                         print()
                         counter += 1
@@ -273,27 +274,27 @@ class GNCli(object):
 
     # TODO: Clean up the lists and flatten within each cell.
     # Handling for other query types? Usage?
-    def makeCSV(results, of, type):
+    def make_csv(results, of, type):
         try:
             if type != "raw":
                 print(" Output to .csv not available for this query type at this time.")
                 exit()
             else:
                 if "data" in results:
-                    scanData = results["data"]
+                    scan_data = results["data"]
                 else:
                     print(" No data to write.")
                     exit()
-                scanCSV = open(of, "w")
-                csvwriter = csv.writer(scanCSV)
+                scan_csv = open(of, "w")
+                csvwriter = csv.writer(scan_csv)
                 count = 0
-                for o in scanData:
+                for o in scan_data:
                     if count == 0:
                         header = o.keys()
                         csvwriter.writerow(header)
                         count += 1
                     csvwriter.writerow(o.values())
-                scanCSV.close()
+                scan_csv.close()
                 print(" Output to file: %s" % of)
         except Exception as e:
             print(" Error converting to CSV!")
@@ -307,7 +308,7 @@ class GNCli(object):
 
     # Handling for single-IP requests.
     # TODO: Name is inaccurate now - not all queries are IPs
-    def singleIP(query, type):
+    def single_ip(query, type):
         try:
             url = "https://research.api.greynoise.io/v2/"
             if type == "raw" or not type:
@@ -339,11 +340,11 @@ class GNCli(object):
     # TODO: handling for file input... invalid/couldnt read, etc
     # TODO: log parser output directly as input for multi query.
     # Come back to this - endpoint busted
-    def multiQuery(inputFile):
+    def multi_query(input_file):
         try:
-            if inputFile:
-                ipList = GNUtils.listFile(inputFile)
-                rr = {"ips": ipList}
+            if input_file:
+                ip_list = GNUtils.list_file(input_file)
+                rr = {"ips": ip_list}
                 query = json.dumps(rr)
                 r = requests.get(
                     "https://research.api.greynoise.io/v2/noise/multi/quick",
@@ -358,22 +359,21 @@ class GNCli(object):
             print(" Error making request!")
             print(e)
 
-    def bulkQuery(date=False):
-        rQuery = ""  # TODO: Where is rQuery coming from?
+    def bulk_query(date=False):
+        r_query = ""  # TODO: Where is rQuery coming from?
         try:
-            if (
-                date
-            ):  # If there's an actual date given, run the date-specific bulk search
+            # If there's an actual date given, run the date-specific bulk search
+            if date:
                 # Restricts input to "real" dates
-                matchDateFormat = re.fullmatch(
+                match_date_format = re.fullmatch(
                     r"2\d{3}-((0[1-9])|(1[0-2]))-((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))",
-                    rQuery,
+                    r_query,
                 )
-                if not matchDateFormat:
+                if not match_date_format:
                     print("Error: Query needs to be a date in YYYY-MM-DD format.")
                     exit()
                 r = requests.get(
-                    "https://research.api.greynoise.io/v2/noise/bulk/" + rQuery,
+                    "https://research.api.greynoise.io/v2/noise/bulk/" + r_query,
                     headers={"key": GNCli.GREYNOISE_API_KEY},
                 )
             else:  # today
@@ -404,29 +404,29 @@ class GNCli(object):
             print(e)
 
     # TODO: write to file with txt formatted output
-    def writeToFile(contents):
-        outFile = None  # TODO: Where is outFile coming from?
-        if outFile:
+    def write_to_file(contents):
+        out_file = None  # TODO: Where is outFile coming from?
+        if out_file:
             try:
-                f = open(outFile, "w")
+                f = open(out_file, "w")
                 f.write(str(contents))
                 f.close()
-                print(' Output written to file "%s".' % outFile)
+                print(' Output written to file "%s".' % out_file)
             except Exception:
                 print(" Error accessing output file.")
 
     # Ensure query is valid ~ ##########################################################
-    def test_query(rQuery, queryType, outFormat):
+    def test_query(r_query, query_type, out_format):
 
         # If queryType is defined, but its value is not in types, it is not allowed
-        if queryType and queryType not in GNCli.queryTypes:
+        if query_type and query_type not in GNCli.query_types:
             print(" Query type unrecognized.")
             print(
                 " Accepted query types: quick, raw, context, multi, bulk, date, actors"
             )
             exit()
         # only these formats
-        if outFormat and outFormat not in GNCli.formatTypes:
+        if out_format and out_format not in GNCli.formatTypes:
             print(
                 " Invalid output format. "
                 "Options are text, csv, xml, json, raw (default)"
@@ -434,83 +434,82 @@ class GNCli(object):
             exit()
         # If queryType is one of the following, rQuery must be defined
         # - the search requires a query.
-        if not rQuery:
+        if not r_query:
             if (
-                queryType == "quick"
-                or queryType == "context"
-                or queryType == "raw"
-                or not queryType
+                query_type == "quick"
+                or query_type == "context"
+                or query_type == "raw"
+                or not query_type
             ):
                 print(" Please enter a query.")
                 exit()
-            elif queryType == "date":  # bulkdate
+            elif query_type == "date":  # bulkdate
                 print(" Please enter a date (-q YYYY-MM-DD).")
                 exit()
 
     # Main Application Logic #####################################################
     # TODO: refactor?
-    def runQuery(outFile, outFormat, queryType, rQuery, verboseOut):
+    def run_query(out_file, out_format, query_type, r_query, verbose_out):
         try:
 
-            GNCli.test_query(
-                rQuery, queryType, outFormat
-            )  # Will lead to program exit if any issues found.
+            GNCli.test_query(r_query, query_type, out_format)
+            # Will lead to program exit if any issues found.
 
             # TODO: controller for this decision making.
-            if rQuery:
-                cQuery = re.sub("[/]+", "\\/", rQuery)  # Escaping backslashes
+            if r_query:
+                c_query = re.sub("[/]+", "\\/", r_query)  # Escaping backslashes
             else:
-                cQuery = False
+                c_query = False
             if (
-                queryType == "context"
-                or queryType == "quick"
-                or queryType == "raw"
-                or not queryType
+                query_type == "context"
+                or query_type == "quick"
+                or query_type == "raw"
+                or not query_type
             ):
-                result = GNCli.singleIP(cQuery, queryType)
-            elif queryType == "multi":
-                result = GNCli.multiQuery(cQuery)  # takes a list of ips
-            elif queryType == "bulk":
-                result = GNCli.bulkQuery()  # defaults to today's date
-            elif queryType == "date":
-                result = GNCli.bulkQuery(cQuery)  # param is a date YYYY-MM-DD
-            elif queryType == "actors":
+                result = GNCli.single_ip(c_query, query_type)
+            elif query_type == "multi":
+                result = GNCli.multi_query(c_query)  # takes a list of ips
+            elif query_type == "bulk":
+                result = GNCli.bulk_query()  # defaults to today's date
+            elif query_type == "date":
+                result = GNCli.bulk_query(c_query)  # param is a date YYYY-MM-DD
+            elif query_type == "actors":
                 result = GNCli.actors()
             # you can handle special cases for anything by returning False to runQuery.
             if result:
-                jResult = json.loads(result.decode("utf-8"))
+                j_result = json.loads(result.decode("utf-8"))
             else:
-                jResult = False
+                j_result = False
 
             # TODO: formatting.py as described above - encapsulate the following
-            if outFormat == "xml":
-                if jResult:
-                    if outFile:
-                        GNCli.writeToFile(dict2xml.dict2xml(jResult))
+            if out_format == "xml":
+                if j_result:
+                    if out_file:
+                        GNCli.write_to_file(dict2xml.dict2xml(j_result))
                     else:
-                        print(dict2xml.dict2xml(jResult))
-            elif outFormat == "txt":
-                if jResult:
-                    if queryType != "quick":
+                        print(dict2xml.dict2xml(j_result))
+            elif out_format == "txt":
+                if j_result:
+                    if query_type != "quick":
                         print(GNCli.banner)
-                    GNCli.makeTxt(jResult, queryType, verboseOut)
-            elif outFormat == "csv":
-                if outFile:
-                    of = outFile
+                    GNCli.make_txt(j_result, query_type, verbose_out)
+            elif out_format == "csv":
+                if out_file:
+                    of = out_file
                 else:  # Timestamped file name generated if none is given
                     of = "greynoise-" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
-                if jResult:
-                    GNCli.makeCSV(jResult, of, queryType)
-            elif outFormat == "json":
-                if jResult:
-                    print(json.dumps(jResult))
-            elif not outFormat or outFormat == "raw":
-                if jResult:
-                    if outFile:
-                        GNCli.writeToFile(jResult)
+                if j_result:
+                    GNCli.make_csv(j_result, of, query_type)
+            elif out_format == "json":
+                if j_result:
+                    print(json.dumps(j_result))
+            elif not out_format or out_format == "raw":
+                if j_result:
+                    if out_file:
+                        GNCli.write_to_file(j_result)
                     else:
                         print(
-                            jResult
+                            j_result
                         )  # Print raw if nothing specified # TODO: add default
         except Exception as e:
             print(" General Error! %s" % e)

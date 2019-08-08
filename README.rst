@@ -4,6 +4,9 @@ Python GreyNoise
 .. image:: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise.svg?style=shield
     :target: https://circleci.com/gh/GreyNoise-Intelligence/pygreynoise
 
+.. image:: https://sonarcloud.io/api/project_badges/measure?project=GreyNoise-Intelligence_pygreynoise&metric=coverage
+    :target: https://sonarcloud.io/dashboard?id=GreyNoise-Intelligence_pygreynoise
+
 .. image:: https://readthedocs.org/projects/greynoise/badge/?version=latest
     :target: http://greynoise.readthedocs.io/en/latest/?badge=latest
 

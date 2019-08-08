@@ -1,7 +1,8 @@
 import json
 import logging
-import requests
 import sys
+
+import requests
 
 from greynoise.exceptions import (
     InvalidResponse,
