@@ -216,3 +216,35 @@ class TestGetNoiseStatusBulk(object):
         with pytest.raises(ValueError) as exception:
             client.get_noise_status_bulk("not a list")
         assert str(exception.value) == "`ip_addresses` must be a list"
+
+
+class TestGetNoise(object):
+    """GreyNoise client bulk test cases."""
+
+    @pytest.mark.parametrize(
+        'date, api_responses, expected_noise_ips',
+        (
+            (
+                None,
+                [{'complete': True}],
+                [],
+            ),
+            (
+                '2019-01-01',
+                [
+                    {
+                        'noise_ips': ['0.0.0.0'],
+                        'offset': 1,
+                        'complete': False,
+                    },
+                    {'complete': True},
+                ],
+                ['0.0.0.0'],
+            ),
+        ),
+    )
+    def test_get_noise(self, client, date, api_responses, expected_noise_ips):
+        """Get noise IPs."""
+        client._request = Mock(side_effect=api_responses)
+        noise_ips = client.get_noise(date)
+        assert noise_ips == expected_noise_ips
