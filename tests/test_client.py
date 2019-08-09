@@ -27,6 +27,16 @@ class TestRequest(object):
         with pytest.raises(RequestFailure):
             client._request('endpoint')
 
+    def test_json(self, client):
+        """Response's json payload is returned."""
+        expected_response = {'expected': 'response'}
+        client.session = Mock()
+        client.session.get().status_code = 200
+        client.session.get().json.return_value = expected_response
+
+        response = client._request('endpoint')
+        assert response == expected_response
+
 
 class TestGetContext(object):
     """GreyNoise client IP context test cases."""
