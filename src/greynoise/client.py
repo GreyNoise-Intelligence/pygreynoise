@@ -6,7 +6,7 @@ import logging
 import requests
 
 from greynoise.exceptions import RequestFailure
-from greynoise.util import validate_ip
+from greynoise.util import load_config, validate_ip
 
 
 LOGGER = logging.getLogger(__name__)
@@ -59,7 +59,9 @@ class GreyNoise(object):
         ),
     }
 
-    def __init__(self, api_key, timeout=7):
+    def __init__(self, api_key=None, timeout=7):
+        if api_key is None:
+            api_key = load_config()['api_key']
         self.api_key = api_key
         self.timeout = timeout
         self.session = requests.Session()

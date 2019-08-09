@@ -39,19 +39,6 @@ def setup():
         exit()
 
 
-# Parse json from config file, return api key to caller
-def load_config():
-    # test for existence of file again before actually executing
-    if os.path.isfile(CONFIG_FILE):
-        config = json.load(open(CONFIG_FILE))
-        if "api_key" in config:
-            # print(config['api_key'])
-            return config["api_key"]  # .encode('utf-8')
-
-        print(" API key not found.\n")
-        exit()
-
-
 # Turns input file into a python list
 def list_file(list_file):
     try:

@@ -8,6 +8,7 @@ import dict2xml
 import requests
 
 from greynoise import gnutils
+from greynoise.util import load_config
 
 
 class GNCli(object):
@@ -20,7 +21,7 @@ class GNCli(object):
     """
 
     # Will be loaded
-    GREYNOISE_API_KEY = gnutils.load_config()  # this is working
+    GREYNOISE_API_KEY = load_config()['api_key']
 
     # global variables #################################################################
     # For output
