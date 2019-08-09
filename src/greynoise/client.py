@@ -1,11 +1,15 @@
 """GreyNoise API client."""
 
 import datetime
+import logging
 
 import requests
 
 from greynoise.exceptions import RequestFailure
 from greynoise.util import validate_ip
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GreyNoise(object):
@@ -102,6 +106,7 @@ class GreyNoise(object):
         :raises ValueError: when date argument is invalid
 
         """
+        LOGGER.debug('Getting noise (date: %s)...', date)
         if date is None:
             endpoint = self.EP_NOISE_BULK
         else:
@@ -121,6 +126,7 @@ class GreyNoise(object):
             offset = response.get("offset", -1)
             complete = response["complete"]
 
+        LOGGER.debug('Noisy IP addresses found: %d', len(noise_ips))
         return noise_ips
 
     def get_noise_status(self, ip_address):
@@ -132,6 +138,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
+        LOGGER.debug('Getting noise status for %s...', ip_address)
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
         result = self._request(endpoint)
@@ -151,6 +158,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
+        LOGGER.debug('Getting noise status for %s...', ip_addresses)
         if not isinstance(ip_addresses, list):
             raise ValueError("`ip_addresses` must be a list")
 
@@ -177,6 +185,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
+        LOGGER.debug('Getting context for %s...', ip_address)
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         response = self._request(endpoint)
