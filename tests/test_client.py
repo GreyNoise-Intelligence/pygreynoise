@@ -1,6 +1,6 @@
 import pytest
 
-from mock import Mock, patch
+from mock import Mock
 
 from greynoise.client import GreyNoise
 from greynoise.exceptions import RequestFailure
@@ -22,11 +22,10 @@ class TestRequest(object):
     )
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
-        with patch('greynoise.client.requests') as requests:
-            requests.get = Mock()
-            requests.get().status_code = status_code
-            with pytest.raises(RequestFailure):
-                client._request('endpoint')
+        client.session = Mock()
+        client.session.get().status_code = status_code
+        with pytest.raises(RequestFailure):
+            client._request('endpoint')
 
 
 class TestGetContext(object):

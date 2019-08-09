@@ -57,6 +57,7 @@ class GreyNoise(object):
     def __init__(self, api_key, timeout=7):
         self.api_key = api_key
         self.timeout = timeout
+        self.session = requests.Session()
 
     def _request(self, endpoint, params=None, json=None):
         """Handle the requesting of information from the API.
@@ -79,7 +80,7 @@ class GreyNoise(object):
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
-        response = requests.get(
+        response = self.session.get(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
         if response.status_code not in range(200, 299):
