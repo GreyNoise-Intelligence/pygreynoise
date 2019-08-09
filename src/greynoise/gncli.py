@@ -7,7 +7,7 @@ import time
 import dict2xml
 import requests
 
-from greynoise.gnutils import GNUtils
+from greynoise import gnutils
 
 
 class GNCli(object):
@@ -20,7 +20,7 @@ class GNCli(object):
     """
 
     # Will be loaded
-    GREYNOISE_API_KEY = GNUtils.load_config()  # this is working
+    GREYNOISE_API_KEY = gnutils.load_config()  # this is working
 
     # global variables #################################################################
     # For output
@@ -343,7 +343,7 @@ class GNCli(object):
     def multi_query(input_file):
         try:
             if input_file:
-                ip_list = GNUtils.list_file(input_file)
+                ip_list = gnutils.list_file(input_file)
                 rr = {"ips": ip_list}
                 query = json.dumps(rr)
                 r = requests.get(
