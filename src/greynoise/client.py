@@ -193,7 +193,12 @@ class GreyNoise(object):
         return response
 
     def get_actors(self):
-        """Get the names and IP addresses of actors scanning the Internet."""
+        """Get the names and IP addresses of actors scanning the Internet.
+
+        :returns: Most labeled actors scanning the intenet.
+        :rtype: list
+
+        """
         LOGGER.debug('Getting actors...')
         response = self._request(self.EP_RESEARCH_ACTORS)
         return response

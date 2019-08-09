@@ -48,3 +48,12 @@ Note that:
 - if *date* is not passed, the current list of noisy IP addresses will
   be returned.
 - this is an expensive operation and it can take a few seconds to complete.
+
+
+Get actors
+----------
+
+A list of the names and IP addresses of the most up-to-date labeled actors
+scanning and crawling the Internet can be retrieved as well::
+
+   >>> actors = client.get_actors()
