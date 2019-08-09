@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from mock import Mock
@@ -240,7 +242,7 @@ class TestGetNoise(object):
                 [],
             ),
             (
-                '2019-01-01',
+                datetime.date(2019, 1, 1),
                 [
                     {
                         'noise_ips': ['0.0.0.0'],
@@ -258,3 +260,11 @@ class TestGetNoise(object):
         client._request = Mock(side_effect=api_responses)
         noise_ips = client.get_noise(date)
         assert noise_ips == expected_noise_ips
+
+    def test_get_noise_invalid_date(self, client):
+        """ValueError is raised when date is invalid."""
+        with pytest.raises(ValueError) as exception:
+            client.get_noise('invalid')
+
+        expected_error = 'date argument must be an instance of datetime.date'
+        assert str(exception.value) == expected_error

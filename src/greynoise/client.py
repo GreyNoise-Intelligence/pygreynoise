@@ -1,12 +1,11 @@
 """GreyNoise API client."""
 
+import datetime
+
 import requests
 
 from greynoise.exceptions import RequestFailure
-from greynoise.util import (
-    validate_date,
-    validate_ip,
-)
+from greynoise.util import validate_ip
 
 
 class GreyNoise(object):
@@ -24,6 +23,7 @@ class GreyNoise(object):
     BASE_URL = "https://enterprise.api.greynoise.io"
     CLIENT_VERSION = 1
     API_VERSION = "v2"
+    DATE_FORMAT = "%Y-%m-%d"
     EP_NOISE_BULK = "noise/bulk"
     EP_NOISE_BULK_DATE = "noise/bulk/{date}"
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
@@ -96,27 +96,30 @@ class GreyNoise(object):
         a single day.
 
         :param date: Optional date to use as a filter.
-        :type date: str
-        :param recurse: Recurse through all results.
-        :type recurse: bool
+        :type date: datetime.date | None
         :return: List of IP addresses associated with scans.
         :rtype: list
+        :raises ValueError: when date argument is invalid
+
         """
         if date is None:
             endpoint = self.EP_NOISE_BULK
         else:
-            validate_date(date)
-            endpoint = self.EP_NOISE_BULK_DATE.format(date=date)
+            if not isinstance(date, datetime.date):
+                raise ValueError("date argument must be an instance of datetime.date")
+            endpoint = self.EP_NOISE_BULK_DATE.format(
+                date=date.strftime(self.DATE_FORMAT),
+            )
 
         response = self._request(endpoint)
-        noise_ips = response.get('noise_ips', [])
-        offset = response.get('offset', -1)
-        complete = response['complete']
+        noise_ips = response.get("noise_ips", [])
+        offset = response.get("offset", -1)
+        complete = response["complete"]
         while not complete:
-            response = self._request(endpoint, params={'offset': offset})
-            noise_ips.extend(response.get('noise_ips', []))
-            offset = response.get('offset', -1)
-            complete = response['complete']
+            response = self._request(endpoint, params={"offset": offset})
+            noise_ips.extend(response.get("noise_ips", []))
+            offset = response.get("offset", -1)
+            complete = response["complete"]
 
         return noise_ips
 
