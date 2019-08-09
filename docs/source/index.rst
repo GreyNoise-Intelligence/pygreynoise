@@ -5,6 +5,7 @@ Python GreyNoise
    :maxdepth: 2
 
    introduction
+   tutorial
    code
    changelog
 

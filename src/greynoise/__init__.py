@@ -2,6 +2,8 @@
 
 import logging
 
+from greynoise.client import GreyNoise  # noqa
+
 __author__ = "GreyNoise Intelligence"
 __copyright__ = "Copyright, GreyNoise"
 __credits__ = ["GreyNoise Intelligence"]
