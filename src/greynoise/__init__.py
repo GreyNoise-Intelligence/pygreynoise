@@ -1,4 +1,4 @@
-"""Abstract API over the GreyNoise API."""
+"""GreyNoise API client and tools."""
 
 __author__ = "GreyNoise Intelligence"
 __copyright__ = "Copyright, GreyNoise"
