@@ -1,6 +1,8 @@
+import datetime
+
 import pytest
 
-from mock import Mock, patch
+from mock import Mock
 
 from greynoise.client import GreyNoise
 from greynoise.exceptions import RequestFailure
@@ -22,11 +24,20 @@ class TestRequest(object):
     )
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
-        with patch('greynoise.client.requests') as requests:
-            requests.get = Mock()
-            requests.get().status_code = status_code
-            with pytest.raises(RequestFailure):
-                client._request('endpoint')
+        client.session = Mock()
+        client.session.get().status_code = status_code
+        with pytest.raises(RequestFailure):
+            client._request('endpoint')
+
+    def test_json(self, client):
+        """Response's json payload is returned."""
+        expected_response = {'expected': 'response'}
+        client.session = Mock()
+        client.session.get().status_code = 200
+        client.session.get().json.return_value = expected_response
+
+        response = client._request('endpoint')
+        assert response == expected_response
 
 
 class TestGetContext(object):
@@ -217,3 +228,43 @@ class TestGetNoiseStatusBulk(object):
         with pytest.raises(ValueError) as exception:
             client.get_noise_status_bulk("not a list")
         assert str(exception.value) == "`ip_addresses` must be a list"
+
+
+class TestGetNoise(object):
+    """GreyNoise client bulk test cases."""
+
+    @pytest.mark.parametrize(
+        'date, api_responses, expected_noise_ips',
+        (
+            (
+                None,
+                [{'complete': True}],
+                [],
+            ),
+            (
+                datetime.date(2019, 1, 1),
+                [
+                    {
+                        'noise_ips': ['0.0.0.0'],
+                        'offset': 1,
+                        'complete': False,
+                    },
+                    {'complete': True},
+                ],
+                ['0.0.0.0'],
+            ),
+        ),
+    )
+    def test_get_noise(self, client, date, api_responses, expected_noise_ips):
+        """Get noise IPs."""
+        client._request = Mock(side_effect=api_responses)
+        noise_ips = client.get_noise(date)
+        assert noise_ips == expected_noise_ips
+
+    def test_get_noise_invalid_date(self, client):
+        """ValueError is raised when date is invalid."""
+        with pytest.raises(ValueError) as exception:
+            client.get_noise('invalid')
+
+        expected_error = 'date argument must be an instance of datetime.date'
+        assert str(exception.value) == expected_error
