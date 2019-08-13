@@ -9,14 +9,13 @@ from argparse import ArgumentParser
 from greynoise.gnutils import GNUtils
 from greynoise.gncli import GNCli
 
-__author__ = "Brandon Dixon"
+__author__ = "GreyNoise Intelligence"
 __copyright__ = "Copyright, GreyNoise"
-__credits__ = ["Brandon Dixon"]
+__credits__ = ["GreyNoise Intelligence"]
 __license__ = "MIT"
-__maintainer__ = "Brandon Dixon"
-__email__ = "brandon@9bplus.com"
+__maintainer__ = "GreyNoise Intelligence"
+__email__ = "hello@greynoise.io"
 __status__ = "BETA"
-
 
 def main():
 
