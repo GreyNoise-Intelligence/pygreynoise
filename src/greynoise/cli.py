@@ -10,7 +10,7 @@ from xml.dom.minidom import parseString
 
 from dicttoxml import dicttoxml
 
-from greynoise.client import GreyNoise
+from greynoise.api import GreyNoise
 from greynoise.util import (
     CONFIG_FILE,
     load_config,

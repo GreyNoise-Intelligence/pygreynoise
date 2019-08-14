@@ -4,7 +4,7 @@ import pytest
 
 from mock import Mock
 
-from greynoise.client import GreyNoise
+from greynoise.api import GreyNoise
 from greynoise.exceptions import RequestFailure
 
 
