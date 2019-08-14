@@ -6,7 +6,8 @@ import os
 import sys
 
 from argparse import ArgumentParser
-from greynoise.gnutils import GNUtils
+
+from greynoise import gnutils
 from greynoise.gncli import GNCli
 
 __author__ = "GreyNoise Intelligence"
@@ -25,10 +26,10 @@ def main():
     # Setup check before running a query
     # If running setup, or if config.json is missing, do something different
     if len(sys.argv) > 1 and sys.argv[1] == "setup":
-        GNUtils.setup()
+        gnutils.setup()
 
     # if I can't find your configuration
-    elif not os.path.isfile(GNUtils.CONFIG_FILE):
+    elif not os.path.isfile(gnutils.CONFIG_FILE):
         print(
             " Please run setup in order to establish your API key.\n"
             " Usage: greynoise setup -k <your API key>"

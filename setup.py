@@ -8,7 +8,16 @@ def read(fname):
 
 
 install_requires = [
+    "appdirs",
     "requests",
+]
+
+test_requires = [
+    "flake8",
+    "mock",
+    "pylint",
+    "pytest",
+    "pytest-cov",
 ]
 
 setup(
@@ -22,6 +31,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     install_requires=install_requires,
+    test_requires=test_requires,
     long_description=read("README.rst"),
     classifiers=[
         "Development Status :: 4 - Beta",
