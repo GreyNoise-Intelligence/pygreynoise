@@ -41,6 +41,21 @@ def load_config():
     }
 
 
+def save_config(config):
+    """Save configuration.
+
+    :param config: Data to be written to the configuration file.
+    :type config:  dict
+
+    """
+    config_parser = ConfigParser()
+    config_parser.add_section('greynoise')
+    config_parser.set('greynoise', 'api_key', config['api_key'])
+
+    with open(CONFIG_FILE, 'w') as config_file:
+        config_parser.write(config_file)
+
+
 def validate_ip(ip_address, strict=True):
     """Check if the IP address is valid.
 
