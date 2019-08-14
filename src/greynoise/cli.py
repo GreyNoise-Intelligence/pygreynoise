@@ -154,7 +154,7 @@ def parse_arguments(argv):
     )
     actors_parser.set_defaults(func=actors)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.api_key:
         config = load_config()
         args.api_key = config["api_key"]
