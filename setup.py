@@ -42,7 +42,7 @@ setup(
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries",
     ],
-    entry_points={"console_scripts": ["greynoise = greynoise.cli.manage:main"]},
+    entry_points={"console_scripts": ["greynoise = greynoise.cli:main"]},
     zip_safe=False,
     keywords=["internet", "scanning", "threat intelligence", "security"],
     download_url="https://github.com/GreyNoise-Intelligence/pygreynoise",
