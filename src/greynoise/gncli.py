@@ -446,11 +446,9 @@ def run_query(api_key, out_file, out_format, query_type, r_query, verbose_out):
     elif out_format == "json":
         if j_result:
             print(json.dumps(j_result))
-    elif not out_format or out_format == "raw":
+    elif out_format == "raw":
         if j_result:
             if out_file:
                 write_to_file(j_result)
             else:
-                print(
-                    j_result
-                )  # Print raw if nothing specified # TODO: add default
+                print(j_result)
