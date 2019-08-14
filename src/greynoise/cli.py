@@ -1,83 +1,112 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""Interact with the GreyNoise service."""
+"""GreyNoise command line Interface."""
 
 import os
 import sys
 
 from argparse import ArgumentParser
 
-from greynoise import gnutils
-from greynoise.gncli import GNCli
-
-__author__ = "GreyNoise Intelligence"
-__copyright__ = "Copyright, GreyNoise"
-__credits__ = ["GreyNoise Intelligence"]
-__license__ = "MIT"
-__maintainer__ = "GreyNoise Intelligence"
-__email__ = "hello@greynoise.io"
-__status__ = "BETA"
+from greynoise.gncli import run_query
+from greynoise.util import (
+    CONFIG_FILE,
+    load_config,
+    save_config,
+)
 
 
-def main():
+def main(argv=None):
+    """Entry point for the greynoise CLI."""
+    if argv is None:
+        argv = sys.argv[1:]
 
-    """Run the core."""
+    args = parse_arguments(argv)
+    args.func(args)
+    return
 
-    # Setup check before running a query
-    # If running setup, or if config.json is missing, do something different
-    if len(sys.argv) > 1 and sys.argv[1] == "setup":
-        gnutils.setup()
 
-    # if I can't find your configuration
-    elif not os.path.isfile(gnutils.CONFIG_FILE):
+def setup(args):
+    """Configure API key."""
+    config = {'api_key': args.api_key}
+    save_config(config)
+    print('Configuration saved to {!r}'.format(CONFIG_FILE))
+
+
+def run(args):
+    """Run GNQL query."""
+    api_key = args.api_key
+    if not api_key:
+        config = load_config()
+        api_key = config['api_key']
+    if not api_key:
+        prog = os.path.basename(sys.argv[0])
         print(
-            " Please run setup in order to establish your API key.\n"
-            " Usage: greynoise setup -k <your API key>"
+            "Error: API key not found.\n\n"
+            "To fix this problem, please use any of the following methods:\n"
+            "- Run {!r} to save it to the configuration file.\n"
+            "- Pass it to {!r} using the -k/--api-key option.\n"
+            "- Set it in the GREYNOISE_API_KEY environment variable.\n"
+            .format(
+                "{} setup".format(prog),
+                "{} run".format(prog),
+            )
         )
-        exit()
 
-    # User just wants to run a query - apply settings and run the GNCli
-    elif len(sys.argv) == 2 and sys.argv[1] not in GNCli.flags_meta:
-        if sys.argv[1] in GNCli.flags:  # -- Here we do argparsing
-            # Then you lack a necessary argument
-            print(" Invalid request. Please specify a query or IP address.")
-            exit()
-        # otherwise default query
-        else:
-            out_file = ""
-            out_format = "txt"
-            query_type = "raw"
-            r_query = sys.argv[1]
-            verbose_out = False
-
-            GNCli.run_query(out_file, out_format, query_type, r_query, verbose_out)
-
-    # Otherwise we do a query with flags
-    else:
-        parser = ArgumentParser(
-            description="GreyNoise - GreyNoise Commandline Interface"
-        )
-        parser.add_argument("-f", "--file", dest="out_file", help="Output File")
-
-        parser = ArgumentParser(
-            description="GreyNoise - GreyNoise Commandline Interface"
-        )
-        parser.add_argument("-f", "--file", dest="out_file", help="Output File")
-        parser.add_argument("-o", "--output", dest="out_format", help="Output Format")
-        parser.add_argument("-q", "--query", dest="query", help="Query")
-        parser.add_argument("-t", "--type", dest="query_type", help="Query Type")
-        parser.add_argument(
-            "-v", "--verbose", action="store_true", help="Verbose Output"
-        )
-        args = parser.parse_args()
-        out_file = args.out_file
-        out_format = args.out_format
-        query_type = args.query_type
-        r_query = args.query
-        verbose_out = args.verbose
-
-        GNCli.run_query(out_file, out_format, query_type, r_query, verbose_out)
+    run_query(
+        args.output_file,
+        args.output_format,
+        args.query_type,
+        args.query,
+        args.verbose,
+    )
 
 
-if __name__ == "__main__":
-    main()
+def parse_arguments(argv):
+    """Parse command line arguments."""
+    parser = ArgumentParser(description=__doc__)
+    parser.set_defaults(func=lambda args: parser.print_help())
+
+    subparsers = parser.add_subparsers(help="Subcommands")
+
+    setup_parser = subparsers.add_parser("setup", help=setup.__doc__.rstrip("."))
+    setup_parser.add_argument(
+        "-k",
+        "--api-key",
+        required=True,
+        help="Key to include in API requests",
+    )
+    setup_parser.set_defaults(func=setup)
+
+    run_parser = subparsers.add_parser("run", help=run.__doc__.rstrip("."))
+    run_parser.add_argument("query", help="Query to be executed")
+    run_parser.add_argument(
+        "-k",
+        "--api-key",
+        help="Key to include in API requests",
+    )
+    run_parser.add_argument(
+        "-f",
+        "--file",
+        dest="output_filename",
+        help="Output file name",
+    )
+    run_parser.add_argument(
+        "-o",
+        "--output",
+        dest="output_format",
+        help="Output format",
+    )
+    run_parser.add_argument(
+        "-t",
+        "--type",
+        dest="query_type",
+        help="Query type",
+    )
+    run_parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Verbose output",
+    )
+    run_parser.set_defaults(func=run)
+
+    args = parser.parse_args()
+    return args
