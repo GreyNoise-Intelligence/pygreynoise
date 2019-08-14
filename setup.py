@@ -10,6 +10,7 @@ def read(fname):
 
 install_requires = [
     "appdirs",
+    "dicttoxml",
     "requests",
 ]
 
