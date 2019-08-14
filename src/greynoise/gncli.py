@@ -395,47 +395,10 @@ def write_to_file(contents):
             print(" Error accessing output file.")
 
 
-# Ensure query is valid ~ ##########################################################
-def test_query(r_query, query_type, out_format):
-
-    # If queryType is defined, but its value is not in types, it is not allowed
-    if query_type and query_type not in QUERY_TYPES:
-        print(" Query type unrecognized.")
-        print(
-            " Accepted query types: quick, raw, context, multi, bulk, date, actors"
-        )
-        exit()
-    # only these formats
-    if out_format and out_format not in QUERY_TYPES:
-        print(
-            " Invalid output format. "
-            "Options are text, csv, xml, json, raw (default)"
-        )
-        exit()
-    # If queryType is one of the following, rQuery must be defined
-    # - the search requires a query.
-    if not r_query:
-        if (
-            query_type == "quick"
-            or query_type == "context"
-            or query_type == "raw"
-            or not query_type
-        ):
-            print(" Please enter a query.")
-            exit()
-        elif query_type == "date":  # bulkdate
-            print(" Please enter a date (-q YYYY-MM-DD).")
-            exit()
-
-
 # Main Application Logic #####################################################
 # TODO: refactor?
 def run_query(api_key, out_file, out_format, query_type, r_query, verbose_out):
     try:
-
-        test_query(r_query, query_type, out_format)
-        # Will lead to program exit if any issues found.
-
         # TODO: controller for this decision making.
         if r_query:
             c_query = re.sub("[/]+", "\\/", r_query)  # Escaping backslashes
