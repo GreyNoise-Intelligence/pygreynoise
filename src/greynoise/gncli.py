@@ -398,63 +398,59 @@ def write_to_file(contents):
 # Main Application Logic #####################################################
 # TODO: refactor?
 def run_query(api_key, out_file, out_format, query_type, r_query, verbose_out):
-    try:
-        # TODO: controller for this decision making.
-        if r_query:
-            c_query = re.sub("[/]+", "\\/", r_query)  # Escaping backslashes
-        else:
-            c_query = False
-        if (
-            query_type == "context"
-            or query_type == "quick"
-            or query_type == "raw"
-            or not query_type
-        ):
-            result = single_ip(api_key, c_query, query_type)
-        elif query_type == "multi":
-            result = multi_query(api_key, c_query)  # takes a list of ips
-        elif query_type == "bulk":
-            result = bulk_query(api_key)  # defaults to today's date
-        elif query_type == "date":
-            result = bulk_query(api_key, c_query)  # param is a date YYYY-MM-DD
-        elif query_type == "actors":
-            result = actors(api_key)
-        # you can handle special cases for anything by returning False to runQuery.
-        if result:
-            j_result = json.loads(result.decode("utf-8"))
-        else:
-            j_result = False
+    # TODO: controller for this decision making.
+    if r_query:
+        c_query = re.sub("[/]+", "\\/", r_query)  # Escaping backslashes
+    else:
+        c_query = False
+    if (
+        query_type == "context"
+        or query_type == "quick"
+        or query_type == "raw"
+        or not query_type
+    ):
+        result = single_ip(api_key, c_query, query_type)
+    elif query_type == "multi":
+        result = multi_query(api_key, c_query)  # takes a list of ips
+    elif query_type == "bulk":
+        result = bulk_query(api_key)  # defaults to today's date
+    elif query_type == "date":
+        result = bulk_query(api_key, c_query)  # param is a date YYYY-MM-DD
+    elif query_type == "actors":
+        result = actors(api_key)
+    # you can handle special cases for anything by returning False to runQuery.
+    if result:
+        j_result = json.loads(result.decode("utf-8"))
+    else:
+        j_result = False
 
-        # TODO: formatting.py as described above - encapsulate the following
-        if out_format == "xml":
-            if j_result:
-                if out_file:
-                    write_to_file(dict2xml.dict2xml(j_result))
-                else:
-                    print(dict2xml.dict2xml(j_result))
-        elif out_format == "txt":
-            if j_result:
-                if query_type != "quick":
-                    print(BANNER)
-                make_txt(j_result, query_type, verbose_out)
-        elif out_format == "csv":
+    # TODO: formatting.py as described above - encapsulate the following
+    if out_format == "xml":
+        if j_result:
             if out_file:
-                of = out_file
-            else:  # Timestamped file name generated if none is given
-                of = "greynoise-" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
-            if j_result:
-                make_csv(j_result, of, query_type)
-        elif out_format == "json":
-            if j_result:
-                print(json.dumps(j_result))
-        elif not out_format or out_format == "raw":
-            if j_result:
-                if out_file:
-                    write_to_file(j_result)
-                else:
-                    print(
-                        j_result
-                    )  # Print raw if nothing specified # TODO: add default
-    except Exception as e:
-        print(" General Error! %s" % e)
-        # TODO: error handling for API key
+                write_to_file(dict2xml.dict2xml(j_result))
+            else:
+                print(dict2xml.dict2xml(j_result))
+    elif out_format == "txt":
+        if j_result:
+            if query_type != "quick":
+                print(BANNER)
+            make_txt(j_result, query_type, verbose_out)
+    elif out_format == "csv":
+        if out_file:
+            of = out_file
+        else:  # Timestamped file name generated if none is given
+            of = "greynoise-" + time.strftime("%Y%m%d-%H%M%S") + ".csv"
+        if j_result:
+            make_csv(j_result, of, query_type)
+    elif out_format == "json":
+        if j_result:
+            print(json.dumps(j_result))
+    elif not out_format or out_format == "raw":
+        if j_result:
+            if out_file:
+                write_to_file(j_result)
+            else:
+                print(
+                    j_result
+                )  # Print raw if nothing specified # TODO: add default
