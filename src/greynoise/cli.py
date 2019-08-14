@@ -101,6 +101,16 @@ def parse_arguments(argv):
         "-t",
         "--type",
         dest="query_type",
+        choices=[
+            "raw",
+            "quick",
+            "multi",
+            "context",
+            "bulk",
+            "date",
+            "actors",
+        ],
+        default="raw",
         help="Query type",
     )
     run_parser.add_argument(

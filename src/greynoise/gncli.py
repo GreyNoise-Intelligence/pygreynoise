@@ -37,16 +37,6 @@ METADATA_FIELDS = {
     "category": "Category",
 }
 
-QUERY_TYPES = [
-    "quick",
-    "raw",
-    "context",
-    "multi",
-    "bulk",
-    "date",
-    "actors",
-]  # constraints for -t
-
 ####################################################################################
 
 # TODO: formatting.py - make functions, call the right one in each case Could even
