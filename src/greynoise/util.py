@@ -13,7 +13,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 def load_config():
-    """Load configuration."""
+    """Load configuration.
+
+    :returns:
+        Current configuration based on configuration file and environment variables.
+    :rtype: dict
+
+    """
     defaults = {'api_key': 'api key not provided'}
     if 'GREYNOISE_API_KEY' in os.environ:
         api_key = os.environ['GREYNOISE_API_KEY']
