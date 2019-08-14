@@ -37,7 +37,6 @@ METADATA_FIELDS = {
     "category": "Category",
 }
 
-FORMAT_TYPES = ["txt", "csv", "xml", "json", "raw"]  # constraints for -o
 QUERY_TYPES = [
     "quick",
     "raw",

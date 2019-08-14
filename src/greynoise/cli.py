@@ -93,6 +93,8 @@ def parse_arguments(argv):
         "-o",
         "--output",
         dest="output_format",
+        choices=["txt", "csv", "xml", "json", "raw"],
+        default="raw",
         help="Output format",
     )
     run_parser.add_argument(
