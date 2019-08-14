@@ -8,6 +8,7 @@ import dict2xml
 import requests
 
 from greynoise import gnutils
+from greynoise.client import GreyNoise
 
 
 BANNER = r"""
@@ -397,10 +398,22 @@ def write_to_file(contents):
 
 # Main Application Logic #####################################################
 # TODO: refactor?
-def run_query(api_key, out_file, out_format, query_type, r_query, verbose_out):
+def run_query(api_key, out_file, out_format, query_type, query, verbose_out):
+    api_client = GreyNoise(api_key)
+    if query_type == "quick":
+        result = api_client.get_noise_status(query)
+    if query_type == "multi":
+        result = api_client.get_noise_status_bulk(query.split(","))
+    elif query_type == "context":
+        result = api_client.get_context(query)
+    elif query_type == "actors":
+        result = api_client.get_actors()
+    print(result)
+    return
+
     # TODO: controller for this decision making.
-    if r_query:
-        c_query = re.sub("[/]+", "\\/", r_query)  # Escaping backslashes
+    if query:
+        c_query = re.sub("[/]+", "\\/", query)  # Escaping backslashes
     else:
         c_query = False
     if (
