@@ -51,6 +51,7 @@ def run(args):
         )
 
     run_query(
+        api_key,
         args.output_file,
         args.output_format,
         args.query_type,
