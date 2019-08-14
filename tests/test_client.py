@@ -268,3 +268,15 @@ class TestGetNoise(object):
 
         expected_error = 'date argument must be an instance of datetime.date'
         assert str(exception.value) == expected_error
+
+
+class TetsGetActors(object):
+    """GreyNoise client actors test cases."""
+
+    def test_get_actors(self):
+        """Get actors scanning the Internet."""
+        expected_response = [{'name': '', 'ips': ['']}]
+
+        client._request = Mock(return_value=expected_response)
+        actors = client.get_actors()
+        assert actors == expected_response
