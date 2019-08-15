@@ -22,19 +22,22 @@ def load_config():
 
     """
     defaults = {'api_key': ''}
-    if 'GREYNOISE_API_KEY' in os.environ:
-        api_key = os.environ['GREYNOISE_API_KEY']
-        LOGGER.debug('API key found in environment variable: %s', api_key)
-        defaults['api_key'] = api_key
-
     config_parser = ConfigParser(defaults)
     config_parser.add_section('greynoise')
 
     if os.path.isfile(CONFIG_FILE):
         LOGGER.debug('Parsing configuration file: %s...', CONFIG_FILE)
-        config_parser.read(CONFIG_FILE)
+        with open(CONFIG_FILE) as config_file:
+            config_parser.readfp(config_file)
     else:
         LOGGER.debug('Configuration file not found: %s', CONFIG_FILE)
+
+    if 'GREYNOISE_API_KEY' in os.environ:
+        api_key = os.environ['GREYNOISE_API_KEY']
+        LOGGER.debug('API key found in environment variable: %s', api_key)
+
+        # Environment variable takes precedence over configuration file content
+        config_parser.set('greynoise', 'api_key', api_key)
 
     return {
         'api_key': config_parser.get('greynoise', 'api_key')
