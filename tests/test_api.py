@@ -270,12 +270,20 @@ class TestGetNoise(object):
         assert str(exception.value) == expected_error
 
 
-class TetsGetActors(object):
+class TestGetActors(object):
     """GreyNoise client actors test cases."""
 
-    def test_get_actors(self):
+    def test_get_actors(self, client):
         """Get actors scanning the Internet."""
-        expected_response = [{'name': '', 'ips': ['']}]
+        expected_response = [
+            {
+                'name': '<actor>',
+                'ips': [
+                    'ip#1',
+                    'ip#2',
+                    'ip#3',
+                ]},
+        ]
 
         client._request = Mock(return_value=expected_response)
         actors = client.get_actors()
