@@ -53,6 +53,10 @@ def save_config(config):
     config_parser.add_section("greynoise")
     config_parser.set("greynoise", "api_key", config["api_key"])
 
+    config_dir = os.path.dirname(CONFIG_FILE)
+    if not os.path.isdir(config_dir):
+        os.makedirs(os.path.dirname(CONFIG_FILE))
+
     with open(CONFIG_FILE, "w") as config_file:
         config_parser.write(config_file)
 
