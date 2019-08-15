@@ -104,6 +104,25 @@ def ip_address_parameter(ip_address):
     return ip_address
 
 
+def date_parameter(date):
+    """Date parameter passed from the command line.
+
+    :param date: Date value
+    :type date: str
+    :raises argparse.ArgumentTypeError: if date value is invalid
+
+    """
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise ArgumentTypeError(
+            'Invalid date: {!r}. Expected format: YYYY-MM-DD'
+            .format(date)
+        )
+
+    return date
+
+
 def parse_arguments(argv):
     """Parse command line arguments."""
     parser = ArgumentParser(description=__doc__)
@@ -139,7 +158,7 @@ def parse_arguments(argv):
     noise_parser.add_argument(
         "-d",
         "--date",
-        type=lambda date_str: datetime.strptime(date_str, "%Y-%m-%d"),
+        type=date_parameter,
         help="Date to use as filter (format: YYYY-MM-DD)",
     )
     noise_parser.set_defaults(func=noise)

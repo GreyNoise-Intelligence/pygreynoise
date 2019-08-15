@@ -83,7 +83,7 @@ class TestGetContext(object):
 
         with pytest.raises(ValueError) as exception:
             client.get_context(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {}".format(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
 
@@ -156,7 +156,7 @@ class TestGetNoiseStatus(object):
 
         with pytest.raises(ValueError) as exception:
             client.get_noise_status(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {}".format(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
 

@@ -115,4 +115,4 @@ class TestValidateIP(object):
         """Invalid ip address values."""
         with pytest.raises(ValueError) as exception:
             validate_ip(ip)
-        assert str(exception.value) == "Invalid IP address: {}".format(ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(ip)
