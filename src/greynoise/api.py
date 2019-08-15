@@ -61,7 +61,7 @@ class GreyNoise(object):
 
     def __init__(self, api_key=None, timeout=7):
         if api_key is None:
-            api_key = load_config()['api_key']
+            api_key = load_config()["api_key"]
         self.api_key = api_key
         self.timeout = timeout
         self.session = requests.Session()
@@ -111,14 +111,14 @@ class GreyNoise(object):
         :raises ValueError: when date argument is invalid
 
         """
-        LOGGER.debug('Getting noise (date: %s)...', date)
+        LOGGER.debug("Getting noise (date: %s)...", date)
         if date is None:
             endpoint = self.EP_NOISE_BULK
         else:
             if not isinstance(date, datetime.date):
                 raise ValueError("date argument must be an instance of datetime.date")
             endpoint = self.EP_NOISE_BULK_DATE.format(
-                date=date.strftime(self.DATE_FORMAT),
+                date=date.strftime(self.DATE_FORMAT)
             )
 
         response = self._request(endpoint)
@@ -131,7 +131,7 @@ class GreyNoise(object):
             offset = response.get("offset", -1)
             complete = response["complete"]
 
-        LOGGER.debug('Noisy IP addresses found: %d', len(noise_ips))
+        LOGGER.debug("Noisy IP addresses found: %d", len(noise_ips))
         return noise_ips
 
     def get_noise_status(self, ip_address):
@@ -143,14 +143,13 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.debug('Getting noise status for %s...', ip_address)
+        LOGGER.debug("Getting noise status for %s...", ip_address)
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
         result = self._request(endpoint)
         code = result["code"]
         result["code_message"] = self.CODE_MESSAGES.get(
-            code,
-            self.UNKNOWN_CODE_MESSAGE.format(code),
+            code, self.UNKNOWN_CODE_MESSAGE.format(code)
         )
         return result
 
@@ -163,7 +162,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.debug('Getting noise status for %s...', ip_addresses)
+        LOGGER.debug("Getting noise status for %s...", ip_addresses)
         if not isinstance(ip_addresses, list):
             raise ValueError("`ip_addresses` must be a list")
 
@@ -176,8 +175,7 @@ class GreyNoise(object):
         for result in results:
             code = result["code"]
             result["code_message"] = self.CODE_MESSAGES.get(
-                code,
-                self.UNKNOWN_CODE_MESSAGE.format(code),
+                code, self.UNKNOWN_CODE_MESSAGE.format(code)
             )
         return results
 
@@ -190,7 +188,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.debug('Getting context for %s...', ip_address)
+        LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         response = self._request(endpoint)
@@ -203,6 +201,6 @@ class GreyNoise(object):
         :rtype: list
 
         """
-        LOGGER.debug('Getting actors...')
+        LOGGER.debug("Getting actors...")
         response = self._request(self.EP_RESEARCH_ACTORS)
         return response

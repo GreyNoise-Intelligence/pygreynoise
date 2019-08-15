@@ -9,7 +9,13 @@ import pytest
 from mock import Mock, patch
 
 from greynoise.cli import (
-    actors, context, multi_quick_check, main, noise, parse_arguments, quick_check,
+    actors,
+    context,
+    multi_quick_check,
+    main,
+    noise,
+    parse_arguments,
+    quick_check,
     setup,
 )
 
@@ -19,23 +25,19 @@ class TestMain(object):
 
     def test_argv(self, capsys):
         """sys.argv used if argv not explicitly passed."""
-        with patch('greynoise.cli.sys') as sys:
-            sys.argv = ['greynoise', '-h']
+        with patch("greynoise.cli.sys") as sys:
+            sys.argv = ["greynoise", "-h"]
 
             with pytest.raises(SystemExit):
                 main()
 
             captured = capsys.readouterr()
-            assert captured.out.startswith('usage:')
+            assert captured.out.startswith("usage:")
 
     @pytest.mark.parametrize(
-        'format_option, result, expected',
+        "format_option, result, expected",
         (
-            (
-                "json",
-                {"a": "result"},
-                '{"a": "result"}\n',
-            ),
+            ("json", {"a": "result"}, '{"a": "result"}\n'),
             (
                 "xml",
                 {"a": "result"},
@@ -47,13 +49,13 @@ class TestMain(object):
                     </root>
 
                     """
-                )
+                ),
             ),
         ),
     )
     def test_output_format(self, capsys, format_option, result, expected):
         """Output is formatted."""
-        with patch('greynoise.cli.parse_arguments') as parse_arguments:
+        with patch("greynoise.cli.parse_arguments") as parse_arguments:
             func = Mock(return_value=result)
             args = argparse.Namespace(format=format_option, func=func)
             parse_arguments.return_value = args
@@ -123,18 +125,19 @@ class TestParseArguments(object):
 
     def test_multi_quick_check(self):
         """Multi quick check subcommand called."""
-        args = parse_arguments(
-            ["multi_quick_check", "0.0.0.0", "0.0.0.1"])
+        args = parse_arguments(["multi_quick_check", "0.0.0.0", "0.0.0.1"])
         assert args.func == multi_quick_check
 
     def test_multi_quick_check_failure(self):
         """Multi quick check subcommand fails is ip validatin fails."""
         with pytest.raises(SystemExit):
-            parse_arguments([
-                "multi_quick_check",
-                "<invalid_ip_address#1>",
-                "<invalid_ip_address#2>",
-            ])
+            parse_arguments(
+                [
+                    "multi_quick_check",
+                    "<invalid_ip_address#1>",
+                    "<invalid_ip_address#2>",
+                ]
+            )
 
     def test_actors(self):
         """Actors subcommand called."""

@@ -34,8 +34,9 @@ class TestLoadConfig(object):
             """\
             [greynoise]
             api_key = {}
-            """
-            .format(expected)
+            """.format(
+                expected
+            )
         )
         open().__enter__.return_value = StringIO(file_content)
 
@@ -76,8 +77,9 @@ class TestSaveConfig(object):
             [greynoise]
             api_key = {}
 
-            """
-            .format(api_key)
+            """.format(
+                api_key
+            )
         )
 
         with patch("greynoise.util.open") as open_:
@@ -91,26 +93,12 @@ class TestSaveConfig(object):
 class TestValidateIP(object):
     """IP validation test cases."""
 
-    @pytest.mark.parametrize(
-        "ip",
-        (
-            "0.0.0.0",
-            "255.255.255.255",
-            "192.168.1.0",
-        ),
-    )
+    @pytest.mark.parametrize("ip", ("0.0.0.0", "255.255.255.255", "192.168.1.0"))
     def test_valid(self, ip):
         """Valid ip address values."""
         validate_ip(ip)
 
-    @pytest.mark.parametrize(
-        "ip",
-        (
-            "0.0.0.-1",
-            "255.255.255.256",
-            "not an ip address",
-        ),
-    )
+    @pytest.mark.parametrize("ip", ("0.0.0.-1", "255.255.255.256", "not an ip address"))
     def test_invalid(self, ip):
         """Invalid ip address values."""
         with pytest.raises(ValueError) as exception:

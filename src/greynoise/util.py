@@ -9,7 +9,7 @@ import appdirs
 from six.moves.configparser import ConfigParser
 
 
-CONFIG_FILE = os.path.join(appdirs.user_config_dir(), 'greynoise', 'config')
+CONFIG_FILE = os.path.join(appdirs.user_config_dir(), "greynoise", "config")
 LOGGER = logging.getLogger(__name__)
 
 
@@ -21,27 +21,25 @@ def load_config():
     :rtype: dict
 
     """
-    defaults = {'api_key': ''}
+    defaults = {"api_key": ""}
     config_parser = ConfigParser(defaults)
-    config_parser.add_section('greynoise')
+    config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
-        LOGGER.debug('Parsing configuration file: %s...', CONFIG_FILE)
+        LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
             config_parser.readfp(config_file)
     else:
-        LOGGER.debug('Configuration file not found: %s', CONFIG_FILE)
+        LOGGER.debug("Configuration file not found: %s", CONFIG_FILE)
 
-    if 'GREYNOISE_API_KEY' in os.environ:
-        api_key = os.environ['GREYNOISE_API_KEY']
-        LOGGER.debug('API key found in environment variable: %s', api_key)
+    if "GREYNOISE_API_KEY" in os.environ:
+        api_key = os.environ["GREYNOISE_API_KEY"]
+        LOGGER.debug("API key found in environment variable: %s", api_key)
 
         # Environment variable takes precedence over configuration file content
-        config_parser.set('greynoise', 'api_key', api_key)
+        config_parser.set("greynoise", "api_key", api_key)
 
-    return {
-        'api_key': config_parser.get('greynoise', 'api_key')
-    }
+    return {"api_key": config_parser.get("greynoise", "api_key")}
 
 
 def save_config(config):
@@ -52,10 +50,10 @@ def save_config(config):
 
     """
     config_parser = ConfigParser()
-    config_parser.add_section('greynoise')
-    config_parser.set('greynoise', 'api_key', config['api_key'])
+    config_parser.add_section("greynoise")
+    config_parser.set("greynoise", "api_key", config["api_key"])
 
-    with open(CONFIG_FILE, 'w') as config_file:
+    with open(CONFIG_FILE, "w") as config_file:
         config_parser.write(config_file)
 
 

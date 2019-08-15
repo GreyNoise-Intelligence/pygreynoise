@@ -22,7 +22,7 @@ class TestInit(object):
 
     def test_with_api_key(self):
         """API parameter is passed."""
-        expected = '<api_key>'
+        expected = "<api_key>"
         with patch("greynoise.api.load_config") as load_config:
             client = GreyNoise(api_key=expected)
             assert client.api_key == expected
@@ -30,9 +30,9 @@ class TestInit(object):
 
     def test_without_api_key(self):
         """API parameter is not passed."""
-        expected = '<api_key>'
+        expected = "<api_key>"
         with patch("greynoise.api.load_config") as load_config:
-            load_config.return_value = {'api_key': expected}
+            load_config.return_value = {"api_key": expected}
             client = GreyNoise()
             assert client.api_key == expected
             load_config.assert_called()
@@ -41,10 +41,7 @@ class TestInit(object):
 class TestRequest(object):
     """GreyNoise client _request method test cases."""
 
-    @pytest.mark.parametrize(
-        "status_code",
-        (100, 300, 400, 500),
-    )
+    @pytest.mark.parametrize("status_code", (100, 300, 400, 500))
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
         client.session = Mock()
@@ -96,11 +93,7 @@ class TestGetNoiseStatus(object):
         (
             (
                 "0.0.0.0",
-                {
-                    "code": "0x00",
-                    "ip_address": "0.0.0.0",
-                    "noise": False,
-                },
+                {"code": "0x00", "ip_address": "0.0.0.0", "noise": False},
                 {
                     "code": "0x00",
                     "code_message": "IP has never been observed scanning the Internet",
@@ -110,11 +103,7 @@ class TestGetNoiseStatus(object):
             ),
             (
                 "127.0.0.1",
-                {
-                    "code": "0x01",
-                    "ip_address": "127.0.0.1",
-                    "noise": False,
-                },
+                {"code": "0x01", "ip_address": "127.0.0.1", "noise": False},
                 {
                     "code": "0x01",
                     "code_message": (
@@ -126,11 +115,7 @@ class TestGetNoiseStatus(object):
             ),
             (
                 "10.0.0.0",
-                {
-                    "code": "0x99",
-                    "ip_address": "10.0.0.0",
-                    "noise": True,
-                },
+                {"code": "0x99", "ip_address": "10.0.0.0", "noise": True},
                 {
                     "code": "0x99",
                     "code_message": "Code message unknown: 0x99",
@@ -141,7 +126,7 @@ class TestGetNoiseStatus(object):
         ),
     )
     def test_get_noise_status(
-            self, client, ip_address, mock_response, expected_results,
+        self, client, ip_address, mock_response, expected_results
     ):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
@@ -171,21 +156,9 @@ class TestGetNoiseStatusBulk(object):
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
                 [
-                    {
-                        "code": "0x00",
-                        "ip_address": "0.0.0.0",
-                        "noise": False,
-                    },
-                    {
-                        "code": "0x01",
-                        "ip_address": "127.0.0.1",
-                        "noise": False,
-                    },
-                    {
-                        "code": "0x99",
-                        "ip_address": "10.0.0.0",
-                        "noise": False,
-                    },
+                    {"code": "0x00", "ip_address": "0.0.0.0", "noise": False},
+                    {"code": "0x01", "ip_address": "127.0.0.1", "noise": False},
+                    {"code": "0x99", "ip_address": "10.0.0.0", "noise": False},
                 ],
                 [
                     {
@@ -210,18 +183,12 @@ class TestGetNoiseStatusBulk(object):
                         "ip_address": "10.0.0.0",
                         "noise": False,
                     },
-                ]
+                ],
             ),
             (
                 ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
                 ["0.0.0.0"],
-                [
-                    {
-                        "code": "0x00",
-                        "ip_address": "0.0.0.0",
-                        "noise": False,
-                    },
-                ],
+                [{"code": "0x00", "ip_address": "0.0.0.0", "noise": False}],
                 [
                     {
                         "code": "0x00",
@@ -230,21 +197,24 @@ class TestGetNoiseStatusBulk(object):
                         ),
                         "ip_address": "0.0.0.0",
                         "noise": False,
-                    },
+                    }
                 ],
             ),
         ),
     )
     def test_get_noise_status_bulk(
-        self, client, ip_addresses, filtered_ip_addresses, mock_response,
+        self,
+        client,
+        ip_addresses,
+        filtered_ip_addresses,
+        mock_response,
         expected_results,
     ):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
         results = client.get_noise_status_bulk(ip_addresses)
         client._request.assert_called_with(
-            "noise/multi/quick",
-            json={"ips": filtered_ip_addresses},
+            "noise/multi/quick", json={"ips": filtered_ip_addresses}
         )
         assert results == expected_results
 
@@ -261,19 +231,11 @@ class TestGetNoise(object):
     @pytest.mark.parametrize(
         "date, api_responses, expected_noise_ips",
         (
-            (
-                None,
-                [{"complete": True}],
-                [],
-            ),
+            (None, [{"complete": True}], []),
             (
                 datetime.date(2019, 1, 1),
                 [
-                    {
-                        "noise_ips": ["0.0.0.0"],
-                        "offset": 1,
-                        "complete": False,
-                    },
+                    {"noise_ips": ["0.0.0.0"], "offset": 1, "complete": False},
                     {"complete": True},
                 ],
                 ["0.0.0.0"],
@@ -300,15 +262,7 @@ class TestGetActors(object):
 
     def test_get_actors(self, client):
         """Get actors scanning the Internet."""
-        expected_response = [
-            {
-                "name": "<actor>",
-                "ips": [
-                    "ip#1",
-                    "ip#2",
-                    "ip#3",
-                ]},
-        ]
+        expected_response = [{"name": "<actor>", "ips": ["ip#1", "ip#2", "ip#3"]}]
 
         client._request = Mock(return_value=expected_response)
         actors = client.get_actors()
