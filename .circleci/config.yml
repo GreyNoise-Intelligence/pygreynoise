@@ -63,7 +63,7 @@ jobs:
           command: |
             . venv/bin/activate
             mkdir workspace
-            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' src > workspace/pylint.txt
+            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' setup.py src > workspace/pylint.txt
       - run:
           name: Test cases
           command: |

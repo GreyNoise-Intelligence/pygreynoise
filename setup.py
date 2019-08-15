@@ -1,16 +1,18 @@
 #!/usr/bin/env python
+"""GreyNoise API client package."""
 import os
 from setuptools import setup, find_packages
 
 
 def read(fname):
+    """Read file and return its contents."""
     with open(os.path.join(os.path.dirname(__file__), fname)) as input_file:
         return input_file.read()
 
 
-install_requires = ["dicttoxml", "requests"]
+INSTALL_REQUIRES = ["dicttoxml", "requests"]
 
-test_requires = ["flake8", "mock", "pylint", "pytest", "pytest-cov"]
+TEST_REQUIRES = ["flake8", "mock", "pylint", "pytest", "pytest-cov"]
 
 setup(
     name="greynoise",
@@ -22,8 +24,8 @@ setup(
     license="MIT",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    install_requires=install_requires,
-    test_requires=test_requires,
+    install_requires=INSTALL_REQUIRES,
+    test_requires=TEST_REQUIRES,
     long_description=read("README.rst"),
     classifiers=[
         "Development Status :: 4 - Beta",
