@@ -1,4 +1,5 @@
 """GreyNoise API client test cases."""
+
 import datetime
 
 import pytest
