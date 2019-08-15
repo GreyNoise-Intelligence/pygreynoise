@@ -55,7 +55,7 @@ def save_config(config):
 
     config_dir = os.path.dirname(CONFIG_FILE)
     if not os.path.isdir(config_dir):
-        os.makedirs(os.path.dirname(CONFIG_FILE))
+        os.makedirs(config_dir)
 
     with open(CONFIG_FILE, "w") as config_file:
         config_parser.write(config_file)

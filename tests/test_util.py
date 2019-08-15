@@ -7,7 +7,7 @@ import pytest
 from mock import patch
 from six import StringIO
 
-from greynoise.util import load_config, save_config, validate_ip
+from greynoise.util import CONFIG_FILE, load_config, save_config, validate_ip
 
 
 class TestLoadConfig(object):
@@ -68,10 +68,22 @@ class TestLoadConfig(object):
 class TestSaveConfig(object):
     """Save configuration to a file test cases."""
 
-    def test_save_config(self):
+    def test_save_config_dir_created(self):
+        """Configuration directory created if missing."""
+        config = {"api_key": "<api_key>"}
+
+        with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
+            os.path.isdir.return_value = False
+            config_file = StringIO()
+            open_().__enter__.return_value = config_file
+            save_config(config)
+
+        os.makedirs.assert_called_with(os.path.dirname(CONFIG_FILE))
+
+    def test_save_config_file_written(self):
         """Configuration written to a file."""
         api_key = "<api_key>"
-        config = {"api_key": "<api_key>"}
+        config = {"api_key": api_key}
         expected = textwrap.dedent(
             """\
             [greynoise]
@@ -82,7 +94,8 @@ class TestSaveConfig(object):
             )
         )
 
-        with patch("greynoise.util.open") as open_:
+        with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
+            os.path.isdir.return_value = True
             config_file = StringIO()
             open_().__enter__.return_value = config_file
             save_config(config)
