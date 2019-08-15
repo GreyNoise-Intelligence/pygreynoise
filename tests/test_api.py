@@ -1,3 +1,4 @@
+"""GreyNoise API client test cases."""
 import datetime
 
 import pytest
@@ -19,7 +20,7 @@ class TestRequest(object):
     """GreyNoise client _request method test cases."""
 
     @pytest.mark.parametrize(
-        'status_code',
+        "status_code",
         (100, 300, 400, 500),
     )
     def test_status_code_failure(self, client, status_code):
@@ -27,16 +28,16 @@ class TestRequest(object):
         client.session = Mock()
         client.session.get().status_code = status_code
         with pytest.raises(RequestFailure):
-            client._request('endpoint')
+            client._request("endpoint")
 
     def test_json(self, client):
         """Response's json payload is returned."""
-        expected_response = {'expected': 'response'}
+        expected_response = {"expected": "response"}
         client.session = Mock()
         client.session.get().status_code = 200
         client.session.get().json.return_value = expected_response
 
-        response = client._request('endpoint')
+        response = client._request("endpoint")
         assert response == expected_response
 
 
@@ -45,7 +46,7 @@ class TestGetContext(object):
 
     def test_get_context(self, client):
         """Get IP address information."""
-        ip_address = '0.0.0.0'
+        ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
@@ -68,7 +69,7 @@ class TestGetNoiseStatus(object):
     """GreyNoise client IP quick check test cases."""
 
     @pytest.mark.parametrize(
-        'ip_address, mock_response, expected_results',
+        "ip_address, mock_response, expected_results",
         (
             (
                 "0.0.0.0",
@@ -122,7 +123,7 @@ class TestGetNoiseStatus(object):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
         response = client.get_noise_status(ip_address)
-        client._request.assert_called_with('noise/quick/{}'.format(ip_address))
+        client._request.assert_called_with("noise/quick/{}".format(ip_address))
         assert response == expected_results
 
     def test_get_noise_status_invalid_ip(self, client):
@@ -130,8 +131,8 @@ class TestGetNoiseStatus(object):
         client._request = Mock()
 
         with pytest.raises(ValueError) as exception:
-            client.get_noise_status('not an ip address')
-        assert str(exception.value) == 'Invalid IP address'
+            client.get_noise_status("not an ip address")
+        assert str(exception.value) == "Invalid IP address"
 
         client._request.assert_not_called()
 
@@ -140,7 +141,7 @@ class TestGetNoiseStatusBulk(object):
     """GreyNoise client IP multi quick check test cases."""
 
     @pytest.mark.parametrize(
-        'ip_addresses, filtered_ip_addresses, mock_response, expected_results',
+        "ip_addresses, filtered_ip_addresses, mock_response, expected_results",
         (
             (
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
@@ -218,8 +219,8 @@ class TestGetNoiseStatusBulk(object):
         client._request = Mock(return_value=mock_response)
         results = client.get_noise_status_bulk(ip_addresses)
         client._request.assert_called_with(
-            'noise/multi/quick',
-            json={'ips': filtered_ip_addresses},
+            "noise/multi/quick",
+            json={"ips": filtered_ip_addresses},
         )
         assert results == expected_results
 
@@ -234,24 +235,24 @@ class TestGetNoise(object):
     """GreyNoise client bulk test cases."""
 
     @pytest.mark.parametrize(
-        'date, api_responses, expected_noise_ips',
+        "date, api_responses, expected_noise_ips",
         (
             (
                 None,
-                [{'complete': True}],
+                [{"complete": True}],
                 [],
             ),
             (
                 datetime.date(2019, 1, 1),
                 [
                     {
-                        'noise_ips': ['0.0.0.0'],
-                        'offset': 1,
-                        'complete': False,
+                        "noise_ips": ["0.0.0.0"],
+                        "offset": 1,
+                        "complete": False,
                     },
-                    {'complete': True},
+                    {"complete": True},
                 ],
-                ['0.0.0.0'],
+                ["0.0.0.0"],
             ),
         ),
     )
@@ -264,9 +265,9 @@ class TestGetNoise(object):
     def test_get_noise_invalid_date(self, client):
         """ValueError is raised when date is invalid."""
         with pytest.raises(ValueError) as exception:
-            client.get_noise('invalid')
+            client.get_noise("invalid")
 
-        expected_error = 'date argument must be an instance of datetime.date'
+        expected_error = "date argument must be an instance of datetime.date"
         assert str(exception.value) == expected_error
 
 
@@ -277,11 +278,11 @@ class TestGetActors(object):
         """Get actors scanning the Internet."""
         expected_response = [
             {
-                'name': '<actor>',
-                'ips': [
-                    'ip#1',
-                    'ip#2',
-                    'ip#3',
+                "name": "<actor>",
+                "ips": [
+                    "ip#1",
+                    "ip#2",
+                    "ip#3",
                 ]},
         ]
 
