@@ -22,7 +22,7 @@ jobs:
           command: |
             virtualenv venv
             . venv/bin/activate
-            pip install -r requirements/dev.txt -e .
+            pip install -r requirements/test.txt -e .
       - run:
           name: Static analysis (flake8)
           command: |
