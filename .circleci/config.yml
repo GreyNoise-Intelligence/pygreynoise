@@ -27,7 +27,7 @@ jobs:
           name: Static analysis (flake8)
           command: |
             . venv/bin/activate
-            flake8 src tests docs
+            flake8 setup.py src tests docs
       - run:
           name: Test cases
           command: |
@@ -49,10 +49,15 @@ jobs:
             . venv/bin/activate
             pip install -r requirements/dev.txt -e .
       - run:
+          name: Style check (black)
+          command: |
+            . venv/bin/activate
+            black --check setup.py src tests docs
+      - run:
           name: Static analysis (flake8)
           command: |
             . venv/bin/activate
-            flake8 src tests docs
+            flake8 setup.py src tests docs
       - run:
           name: Static analysis (pylint)
           command: |
