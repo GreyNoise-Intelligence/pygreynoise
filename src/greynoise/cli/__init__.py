@@ -22,6 +22,9 @@ def main(argv=None):
     args = parse_arguments(argv)
     result = args.func(args)
 
+    if result is None:
+        return
+
     if args.format == "json":
         output = json.dumps(result)
     elif args.format == "xml":
