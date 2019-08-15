@@ -3,7 +3,7 @@ import datetime
 
 import pytest
 
-from mock import Mock
+from mock import Mock, patch
 
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RequestFailure
@@ -14,6 +14,27 @@ def client():
     """API client fixture."""
     client = GreyNoise(api_key="<api_key>")
     yield client
+
+
+class TestInit(object):
+    """GreyNoise client initialization."""
+
+    def test_with_api_key(self):
+        """API parameter is passed."""
+        expected = '<api_key>'
+        with patch("greynoise.api.load_config") as load_config:
+            client = GreyNoise(api_key=expected)
+            assert client.api_key == expected
+            load_config.assert_not_called()
+
+    def test_without_api_key(self):
+        """API parameter is not passed."""
+        expected = '<api_key>'
+        with patch("greynoise.api.load_config") as load_config:
+            load_config.return_value = {'api_key': expected}
+            client = GreyNoise()
+            assert client.api_key == expected
+            load_config.assert_called()
 
 
 class TestRequest(object):
