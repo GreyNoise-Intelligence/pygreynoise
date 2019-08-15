@@ -24,6 +24,21 @@ class TestMain(object):
             captured = capsys.readouterr()
             assert captured.out.startswith("usage:")
 
+    def test_empty_output(self, capsys):
+        """Ouput not printed if None.
+
+        This is useful for the setup subcommand which doesn't return any data.
+
+        """
+        with patch("greynoise.cli.parse_arguments") as parse_arguments:
+            func = Mock(return_value=None)
+            args = argparse.Namespace(func=func)
+            parse_arguments.return_value = args
+
+            main()
+            captured = capsys.readouterr()
+            assert captured.out == ""
+
     @pytest.mark.parametrize(
         "format_option, result, expected",
         (
