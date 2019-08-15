@@ -7,7 +7,7 @@ import pytest
 from mock import patch
 from six import StringIO
 
-from greynoise.util import load_config, validate_ip
+from greynoise.util import load_config, save_config, validate_ip
 
 
 class TestLoadConfig(object):
@@ -56,13 +56,36 @@ class TestLoadConfig(object):
             [greynoise]
             api_key = unexpected
             """
-            .format(expected)
         )
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
         assert config["api_key"] == expected
         open().__enter__.assert_called()
+
+
+class TestSaveConfig(object):
+    """Save configuration to a file test cases."""
+
+    def test_save_config(self):
+        """Configuration written to a file."""
+        api_key = "<api_key>"
+        config = {"api_key": "<api_key>"}
+        expected = textwrap.dedent(
+            """\
+            [greynoise]
+            api_key = {}
+
+            """
+            .format(api_key)
+        )
+
+        with patch("greynoise.util.open") as open_:
+            config_file = StringIO()
+            open_().__enter__.return_value = config_file
+            save_config(config)
+
+        assert config_file.getvalue() == expected
 
 
 class TestValidateIP(object):
