@@ -89,7 +89,13 @@ def actors(args):
 
 
 def ip_address_parameter(ip_address):
-    """IP parameter passed from the command line."""
+    """IPv4 parameter passed from the command line.
+
+    :param ip_address: IPv4 address value
+    :type ip_address: str
+    :raises argparse.ArgumentTypeError: if ip_address value is invalid
+
+    """
     try:
         validate_ip(ip_address)
     except ValueError as exception:

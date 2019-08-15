@@ -60,9 +60,9 @@ def save_config(config):
 
 
 def validate_ip(ip_address, strict=True):
-    """Check if the IP address is valid.
+    """Check if the IPv4 address is valid.
 
-    :param ip_address: IP address value to validate.
+    :param ip_address: IPv4 address value to validate.
     :type ip_address: str
     :param strict: Whether to raise exception if validation fails.
     :type strict: bool
