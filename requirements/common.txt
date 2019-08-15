@@ -1,3 +1,2 @@
-appdirs==1.4.3
 dicttoxml==1.7.4
 requests==2.20.1

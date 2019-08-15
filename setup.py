@@ -8,7 +8,7 @@ def read(fname):
         return input_file.read()
 
 
-install_requires = ["appdirs", "dicttoxml", "requests"]
+install_requires = ["dicttoxml", "requests"]
 
 test_requires = ["flake8", "mock", "pylint", "pytest", "pytest-cov"]
 

@@ -4,12 +4,10 @@ import logging
 import os
 import socket
 
-import appdirs
-
 from six.moves.configparser import ConfigParser
 
 
-CONFIG_FILE = os.path.join(appdirs.user_config_dir(), "greynoise", "config")
+CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = logging.getLogger(__name__)
 
 
