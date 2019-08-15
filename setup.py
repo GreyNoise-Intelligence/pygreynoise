@@ -8,19 +8,9 @@ def read(fname):
         return input_file.read()
 
 
-install_requires = [
-    "appdirs",
-    "dicttoxml",
-    "requests",
-]
+install_requires = ["appdirs", "dicttoxml", "requests"]
 
-test_requires = [
-    "flake8",
-    "mock",
-    "pylint",
-    "pytest",
-    "pytest-cov",
-]
+test_requires = ["flake8", "mock", "pylint", "pytest", "pytest-cov"]
 
 setup(
     name="greynoise",
@@ -30,8 +20,8 @@ setup(
     author="GreyNoise Intelligence",
     author_email="hello@greynoise.io",
     license="MIT",
-    package_dir={'': 'src'},
-    packages=find_packages(where='src'),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=install_requires,
     test_requires=test_requires,
     long_description=read("README.rst"),
