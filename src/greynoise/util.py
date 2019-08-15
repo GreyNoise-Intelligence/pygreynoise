@@ -74,5 +74,5 @@ def validate_ip(ip_address, strict=True):
         return True
     except socket.error:
         if strict:
-            raise ValueError("Invalid IP address")
+            raise ValueError("Invalid IP address: {}".format(ip_address))
         return False

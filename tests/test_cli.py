@@ -24,26 +24,62 @@ class TestParseArguments(object):
         args = parse_arguments(["setup", api_key_option, "<api_key>"])
         assert args.func == setup
 
+    def test_setup_failure(self):
+        """Setup subcommand fails if api_key not passed."""
+        with pytest.raises(SystemExit):
+            parse_arguments(["setup"])
+
     def test_noise(self):
         """Noise subcommand called."""
         args = parse_arguments(["noise"])
         assert args.func == noise
 
+    @pytest.mark.parametrize("date_option", ("-d", "--date"))
+    def test_noise_with_date(self, date_option):
+        """Noise with date subcommand called."""
+        args = parse_arguments(["noise", date_option, "2019-01-01"])
+        assert args.func == noise
+
+    @pytest.mark.parametrize("date_option", ("-d", "--date"))
+    def test_noise_with_date_failure(self, date_option):
+        """Noise with date subcommand fails if date validation fails."""
+        with pytest.raises(SystemExit):
+            parse_arguments(["noise", date_option, "not-a-date"])
+
     def test_context(self):
         """Context subcommand called."""
-        args = parse_arguments(["context", "<ip_address>"])
+        args = parse_arguments(["context", "0.0.0.0"])
         assert args.func == context
+
+    def test_context_failure(self):
+        """Context subcommand fails if ip address validation fails."""
+        with pytest.raises(SystemExit):
+            parse_arguments(["context", "<invalid_ip_address>"])
 
     def test_quick_check(self):
         """Quick check subcommand called."""
-        args = parse_arguments(["quick_check", "<ip_address>"])
+        args = parse_arguments(["quick_check", "0.0.0.0"])
         assert args.func == quick_check
+
+    def test_quick_check_failure(self):
+        """Quick check subcommand fails if ip address validation fails."""
+        with pytest.raises(SystemExit):
+            parse_arguments(["quick_check", "<invalid_ip_address>"])
 
     def test_multi_quick_check(self):
         """Multi quick check subcommand called."""
         args = parse_arguments(
-            ["multi_quick_check", "<ip_address#1>", "<ip_address#2>"])
+            ["multi_quick_check", "0.0.0.0", "0.0.0.1"])
         assert args.func == multi_quick_check
+
+    def test_multi_quick_check_failure(self):
+        """Multi quick check subcommand fails is ip validatin fails."""
+        with pytest.raises(SystemExit):
+            parse_arguments([
+                "multi_quick_check",
+                "<invalid_ip_address#1>",
+                "<invalid_ip_address#2>",
+            ])
 
     def test_actors(self):
         """Actors subcommand called."""

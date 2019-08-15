@@ -4,7 +4,7 @@ import json
 import os
 import sys
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 from datetime import datetime
 from xml.dom.minidom import parseString
 
@@ -15,6 +15,7 @@ from greynoise.util import (
     CONFIG_FILE,
     load_config,
     save_config,
+    validate_ip,
 )
 
 
@@ -87,6 +88,16 @@ def actors(args):
     return args.api_client.get_actors()
 
 
+def ip_address_parameter(ip_address):
+    """IP parameter passed from the command line."""
+    try:
+        validate_ip(ip_address)
+    except ValueError as exception:
+        raise ArgumentTypeError(str(exception))
+
+    return ip_address
+
+
 def parse_arguments(argv):
     """Parse command line arguments."""
     parser = ArgumentParser(description=__doc__)
@@ -131,21 +142,34 @@ def parse_arguments(argv):
         "context",
         help=context.__doc__.rstrip("."),
     )
-    context_parser.add_argument("ip_address", help="IP address")
+    context_parser.add_argument(
+        "ip_address",
+        type=ip_address_parameter,
+        help="IP address",
+    )
     context_parser.set_defaults(func=context)
 
     quick_check_parser = subparsers.add_parser(
         "quick_check",
         help=quick_check.__doc__.rstrip("."),
     )
-    quick_check_parser.add_argument("ip_address", help="IP address")
+    quick_check_parser.add_argument(
+        "ip_address",
+        type=ip_address_parameter,
+        help="IP address",
+    )
     quick_check_parser.set_defaults(func=quick_check)
 
     multi_quick_check_parser = subparsers.add_parser(
         "multi_quick_check",
         help=multi_quick_check.__doc__.rstrip("."),
     )
-    multi_quick_check_parser.add_argument("ip_address", nargs="+", help="IP address")
+    multi_quick_check_parser.add_argument(
+        "ip_address",
+        type=ip_address_parameter,
+        nargs="+",
+        help="IP address",
+    )
     multi_quick_check_parser.set_defaults(func=multi_quick_check)
 
     actors_parser = subparsers.add_parser(
