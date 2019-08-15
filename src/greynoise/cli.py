@@ -40,22 +40,6 @@ def main(argv=None):
     print(output)
 
 
-def assert_api_key():
-    """Get API key from environment or configuration."""
-    prog = os.path.basename(sys.argv[0])
-    print(
-        "Error: API key not found.\n\n"
-        "To fix this problem, please use any of the following methods:\n"
-        "- Run {!r} to save it to the configuration file.\n"
-        "- Pass it to {!r} using the -k/--api-key option.\n"
-        "- Set it in the GREYNOISE_API_KEY environment variable.\n"
-        .format(
-            "{} setup".format(prog),
-            "{} run".format(prog),
-        )
-    )
-
-
 def setup(args):
     """Configure API key."""
     config = {"api_key": args.api_key}
@@ -204,6 +188,18 @@ def parse_arguments(argv):
     args = parser.parse_args(argv)
     if not args.api_key:
         config = load_config()
+        if not config["api_key"]:
+            prog = os.path.basename(sys.argv[0])
+            print(
+                "Error: API key not found.\n\n"
+                "To fix this problem, please use any of the following methods "
+                "(in order of precedence):\n"
+                "- Pass it using the -k/--api-key option.\n"
+                "- Set it in the GREYNOISE_API_KEY environment variable.\n"
+                "- Run {!r} to save it to the configuration file.\n"
+                .format("{} setup".format(prog))
+            )
+            sys.exit(-1)
         args.api_key = config["api_key"]
         args.api_client = GreyNoise(args.api_key)
 

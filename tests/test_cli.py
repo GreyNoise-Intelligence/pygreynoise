@@ -67,10 +67,10 @@ class TestParseArguments(object):
     """Parse arguments tests."""
 
     @pytest.fixture(autouse=True)
-    def patch_load_config(self):
+    def load_config(self):
         """Patch load_config function."""
-        with patch("greynoise.cli.load_config"):
-            yield
+        with patch("greynoise.cli.load_config") as load_config:
+            yield load_config
 
     @pytest.mark.parametrize("api_key_option", ("-k", "--api-key"))
     def test_setup(self, api_key_option):
@@ -140,6 +140,16 @@ class TestParseArguments(object):
         """Actors subcommand called."""
         args = parse_arguments(["actors"])
         assert args.func == actors
+
+    def test_api_key_not_found(self, capsys, load_config):
+        """Error is returned if API is not found."""
+        load_config.return_value = {"api_key": ""}
+
+        with pytest.raises(SystemExit):
+            parse_arguments(["actors"])
+
+        captured = capsys.readouterr()
+        assert captured.out.startswith("Error: API key not found")
 
 
 class TestSubcommands(object):
