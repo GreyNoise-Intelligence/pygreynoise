@@ -7,6 +7,12 @@ repos:
         language: system
         types:
           - python
+      - id: isort
+        name: Style check (isort)
+        entry: isort
+        language: system
+        types:
+          - python
       - id: flake8
         name: Static analysis (flake8)
         entry: flake8
