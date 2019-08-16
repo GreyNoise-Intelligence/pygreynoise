@@ -8,7 +8,6 @@ import requests
 from greynoise.exceptions import RequestFailure
 from greynoise.util import load_config, validate_ip
 
-
 LOGGER = logging.getLogger(__name__)
 
 

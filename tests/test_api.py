@@ -3,7 +3,6 @@
 import datetime
 
 import pytest
-
 from mock import Mock, patch
 
 from greynoise.api import GreyNoise

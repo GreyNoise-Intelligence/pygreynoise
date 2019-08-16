@@ -2,8 +2,8 @@
 
 import json
 import sys
-
 from xml.dom.minidom import parseString
+
 from dicttoxml import dicttoxml
 
 from greynoise.cli.parser import parse_arguments

@@ -3,7 +3,6 @@
 import datetime
 
 import pytest
-
 from mock import patch
 
 from greynoise.cli.parser import parse_arguments

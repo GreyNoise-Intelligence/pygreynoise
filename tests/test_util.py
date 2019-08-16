@@ -3,7 +3,6 @@
 import textwrap
 
 import pytest
-
 from mock import patch
 from six import StringIO
 

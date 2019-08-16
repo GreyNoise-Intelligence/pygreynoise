@@ -4,7 +4,6 @@ import argparse
 import textwrap
 
 import pytest
-
 from mock import Mock, patch
 
 from greynoise.cli import main

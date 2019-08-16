@@ -6,7 +6,6 @@ import socket
 
 from six.moves.configparser import ConfigParser
 
-
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = logging.getLogger(__name__)
 

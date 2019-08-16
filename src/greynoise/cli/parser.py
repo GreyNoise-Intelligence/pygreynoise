@@ -2,7 +2,6 @@
 
 import os
 import sys
-
 from argparse import ArgumentParser
 
 from greynoise.api import GreyNoise
