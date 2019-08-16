@@ -12,8 +12,6 @@ def read(fname):
 
 INSTALL_REQUIRES = ["dicttoxml", "requests"]
 
-TEST_REQUIRES = ["flake8", "mock", "pylint", "pytest", "pytest-cov"]
-
 setup(
     name="greynoise",
     version="0.1.5",
@@ -25,7 +23,6 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=INSTALL_REQUIRES,
-    test_requires=TEST_REQUIRES,
     long_description=read("README.rst"),
     classifiers=[
         "Development Status :: 4 - Beta",

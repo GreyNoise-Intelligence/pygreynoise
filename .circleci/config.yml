@@ -54,6 +54,11 @@ jobs:
             . venv/bin/activate
             black --check setup.py src tests docs
       - run:
+          name: Style check (isort)
+          command: |
+            . venv/bin/activate
+            isort --check-only setup.py src/**/*.py tests/**/*.py docs/**/*.py
+      - run:
           name: Static analysis (flake8)
           command: |
             . venv/bin/activate
