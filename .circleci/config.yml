@@ -47,7 +47,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements/dev.txt -e .
+            pip install -r requirements/test.txt -e .
       - run:
           name: Style check (black)
           command: |
