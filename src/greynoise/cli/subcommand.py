@@ -102,3 +102,23 @@ def actors(obj):
     """Run actors query."""
     api_client = obj["api_client"]
     return api_client.get_actors()
+
+
+@click.command()
+@click.argument("query")
+@click.pass_obj
+@echo_result
+def gnql(obj, query):
+    """Run GNQL query."""
+    api_client = obj["api_client"]
+    return api_client.run_query(query=query)
+
+
+@click.command()
+@click.argument("query")
+@click.pass_obj
+@echo_result
+def stats(obj, query):
+    """Run GNQL stats query."""
+    api_client = obj["api_client"]
+    return api_client.run_stats_query(query=query)

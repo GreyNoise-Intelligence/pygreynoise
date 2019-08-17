@@ -7,11 +7,11 @@ import click
 from click_default_group import DefaultGroup
 
 from greynoise.api import GreyNoise
-from greynoise.cli.subcommand import actors, ip, noise, setup
+from greynoise.cli.subcommand import actors, gnql, ip, noise, setup, stats
 from greynoise.util import load_config
 
 
-@click.group(cls=DefaultGroup, default="ip", default_if_no_args=True)
+@click.group(cls=DefaultGroup, default="gnql", default_if_no_args=True)
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
     "-f",
@@ -49,5 +49,5 @@ def main(context, api_key, output_format):
     context.obj = {"api_client": GreyNoise(api_key), "output_format": output_format}
 
 
-for new_subcommand in [setup, noise, ip, actors]:
+for new_subcommand in [actors, gnql, ip, noise, setup, stats]:
     main.add_command(new_subcommand)

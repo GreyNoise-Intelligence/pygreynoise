@@ -27,6 +27,8 @@ class GreyNoise(object):
     CLIENT_VERSION = 1
     API_VERSION = "v2"
     DATE_FORMAT = "%Y-%m-%d"
+    EP_GNQL = "experimental/gnql"
+    EP_GNQL_STATS = "experimental/gnql/stats"
     EP_NOISE_BULK = "noise/bulk"
     EP_NOISE_BULK_DATE = "noise/bulk/{date}"
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
@@ -203,4 +205,16 @@ class GreyNoise(object):
         """
         LOGGER.debug("Getting actors...")
         response = self._request(self.EP_RESEARCH_ACTORS)
+        return response
+
+    def run_query(self, query):
+        """Run GNQL query."""
+        LOGGER.debug("Running GNQL query: %s...", query)
+        response = self._request(self.EP_GNQL, params={"query": query})
+        return response
+
+    def run_stats_query(self, query):
+        """Run GNQL stats query."""
+        LOGGER.debug("Running GNQL stats query: %s...", query)
+        response = self._request(self.EP_GNQL_STATS, params={"query": query})
         return response
