@@ -1,12 +1,10 @@
 """CLI subcommands."""
 
 import functools
-import json
-from xml.dom.minidom import parseString
 
 import click
-from dicttoxml import dicttoxml
 
+from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, save_config
 
@@ -25,12 +23,8 @@ def echo_result(fn):
     def wrapper(obj, *args, **kwargs):
         result = fn(obj, *args, **kwargs)
         output_format = obj["output_format"]
-        if output_format == "json":
-            output = json.dumps(result)
-        elif output_format == "xml":
-            output = parseString(dicttoxml(result)).toprettyxml()
-        else:
-            raise ValueError()
+        formatter = FORMATTERS[output_format]
+        output = formatter(result)
         click.echo(output)
 
     return wrapper

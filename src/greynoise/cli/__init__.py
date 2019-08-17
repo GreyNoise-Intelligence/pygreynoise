@@ -17,7 +17,7 @@ from greynoise.util import load_config
     "-f",
     "--format",
     "output_format",
-    type=click.Choice(["json", "xml"]),
+    type=click.Choice(["json", "txt", "xml"]),
     default="json",
     help="Output format",
 )
