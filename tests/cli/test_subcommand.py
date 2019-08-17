@@ -1,5 +1,6 @@
 """CLI subcommands test cases."""
 
+import textwrap
 from datetime import datetime
 
 import pytest
@@ -203,7 +204,13 @@ class TestMultiQuickCheck(object):
         api_client = Mock()
         api_client.get_noise_status_bulk.return_value = {"error": "no results"}
         obj = {"api_client": api_client, "output_format": "json"}
-        expected = '{"error": "no results"}\n'
+        expected = textwrap.dedent(
+            """\
+            {
+                "error": "no results"
+            }
+        """
+        )
 
         result = runner.invoke(multi_quick_check, [], obj=obj)
         assert result.exit_code == 0

@@ -8,7 +8,7 @@ from dicttoxml import dicttoxml
 
 def json_formatter(result):
     """Format result as json."""
-    return json.dumps(result)
+    return json.dumps(result, indent=4, sort_keys=True)
 
 
 def xml_formatter(result):
