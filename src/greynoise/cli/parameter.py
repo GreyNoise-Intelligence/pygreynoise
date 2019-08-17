@@ -1,38 +1,38 @@
 """Command line parameter types."""
 
-from argparse import ArgumentTypeError
-from datetime import datetime
+import click
 
 from greynoise.util import validate_ip
 
 
-def ip_address_parameter(ip_address):
-    """IPv4 parameter passed from the command line.
+def ip_addresses_parameter(context, parameter, values):
+    """IPv4 addresses passed from the command line.
 
-    :param ip_address: IPv4 address value
-    :type ip_address: str
-    :raises argparse.ArgumentTypeError: if ip_address value is invalid
+    :param values: IPv4 address values
+    :type value: list
+    :raises click.BadParameter: when any IP address value is invalid
+
+    """
+    for value in values:
+        try:
+            validate_ip(value)
+        except ValueError:
+            raise click.BadParameter(value)
+
+    return values
+
+
+def ip_address_parameter(context, parameter, value):
+    """IPv4 address passed from the command line.
+
+    :param value: IPv4 address value
+    :type value: str
+    :raises click.BadParameter: when IP address value is invalid
 
     """
     try:
-        validate_ip(ip_address)
-    except ValueError as exception:
-        raise ArgumentTypeError(str(exception))
-
-    return ip_address
-
-
-def date_parameter(date):
-    """Date parameter passed from the command line.
-
-    :param date: Date value
-    :type date: str
-    :raises argparse.ArgumentTypeError: if date value is invalid
-
-    """
-    try:
-        return datetime.strptime(date, "%Y-%m-%d").date()
+        validate_ip(value)
     except ValueError:
-        raise ArgumentTypeError(
-            "Invalid date: {!r}. Expected format: YYYY-MM-DD".format(date)
-        )
+        raise click.BadParameter(value)
+
+    return value

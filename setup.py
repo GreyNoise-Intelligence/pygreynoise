@@ -11,7 +11,7 @@ def read(fname):
         return input_file.read()
 
 
-INSTALL_REQUIRES = ["dicttoxml", "requests"]
+INSTALL_REQUIRES = ["Click", "dicttoxml", "requests"]
 
 setup(
     name="greynoise",

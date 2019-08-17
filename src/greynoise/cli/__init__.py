@@ -1,33 +1,53 @@
 """GreyNoise command line Interface."""
 
-import json
+import os
 import sys
-from xml.dom.minidom import parseString
 
-from dicttoxml import dicttoxml
+import click
+from click_default_group import DefaultGroup
 
-from greynoise.cli.parser import parse_arguments
+from greynoise.api import GreyNoise
+from greynoise.cli.subcommand import actors, ip, noise, setup
+from greynoise.util import load_config
 
 
-def main(argv=None):
+@click.group(cls=DefaultGroup, default="ip", default_if_no_args=True)
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "xml"]),
+    default="json",
+    help="Output format",
+)
+@click.pass_context
+def main(context, api_key, output_format):
     """Entry point for the greynoise CLI.
 
     :param argv: Command line arguments
     :type: list
 
     """
-    if argv is None:
-        argv = sys.argv[1:]
+    if api_key is None:
+        config = load_config()
+        if not config["api_key"]:
+            prog = os.path.basename(sys.argv[0])
+            click.echo(
+                "\nError: API key not found.\n\n"
+                "To fix this problem, please use any of the following methods "
+                "(in order of precedence):\n"
+                "- Pass it using the -k/--api-key option.\n"
+                "- Set it in the GREYNOISE_API_KEY environment variable.\n"
+                "- Run {!r} to save it to the configuration file.\n".format(
+                    "{} setup".format(prog)
+                )
+            )
+            context.exit(-1)
+        api_key = config["api_key"]
 
-    args = parse_arguments(argv)
-    result = args.func(args)
+    context.obj = {"api_client": GreyNoise(api_key), "output_format": output_format}
 
-    if result is None:
-        return
 
-    if args.format == "json":
-        output = json.dumps(result)
-    elif args.format == "xml":
-        output = parseString(dicttoxml(result)).toprettyxml()
-
-    print(output)
+for new_subcommand in [setup, noise, ip, actors]:
+    main.add_command(new_subcommand)

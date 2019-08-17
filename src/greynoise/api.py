@@ -171,11 +171,12 @@ class GreyNoise(object):
             if validate_ip(ip_address, strict=False)
         ]
         results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
-        for result in results:
-            code = result["code"]
-            result["code_message"] = self.CODE_MESSAGES.get(
-                code, self.UNKNOWN_CODE_MESSAGE.format(code)
-            )
+        if isinstance(results, list):
+            for result in results:
+                code = result["code"]
+                result["code_message"] = self.CODE_MESSAGES.get(
+                    code, self.UNKNOWN_CODE_MESSAGE.format(code)
+                )
         return results
 
     def get_context(self, ip_address):
