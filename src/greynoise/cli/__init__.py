@@ -21,8 +21,9 @@ from greynoise.util import load_config
     default="json",
     help="Output format",
 )
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
-def main(context, api_key, output_format):
+def main(context, api_key, output_format, verbose):
     """Entry point for the greynoise CLI.
 
     :param argv: Command line arguments
@@ -46,7 +47,11 @@ def main(context, api_key, output_format):
             context.exit(-1)
         api_key = config["api_key"]
 
-    context.obj = {"api_client": GreyNoise(api_key), "output_format": output_format}
+    context.obj = {
+        "api_client": GreyNoise(api_key),
+        "output_format": output_format,
+        "verbose": verbose,
+    }
 
 
 for new_subcommand in [actors, gnql, ip, noise, setup, stats]:

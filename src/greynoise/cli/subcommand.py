@@ -28,7 +28,7 @@ def echo_result(fn):
             output = formatter(result)
             click.echo(output)
         elif output_format == "txt":
-            make_txt(result, obj["query_type"], False)
+            make_txt(result, obj["query_type"], obj["verbose"])
 
     return wrapper
 
