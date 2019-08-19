@@ -1,3 +1,4 @@
 # Requirements needed to develop the application
 -r test.txt
 pre-commit==1.18.2
+tox==3.13.2
