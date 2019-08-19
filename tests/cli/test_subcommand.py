@@ -10,6 +10,7 @@ from mock import Mock, patch
 from greynoise.cli.subcommand import (
     actors,
     context,
+    gnql,
     multi_quick_check,
     noise,
     quick_check,
@@ -248,3 +249,22 @@ class TestActors(object):
         assert result.exit_code == 0
         assert result.output == expected
         api_client.get_actors.assert_called_with()
+
+
+class TestGNQL(object):
+    """"GNQL subcommand tests."""
+
+    def test_gnql(self):
+        """Run GQNQL query."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client = Mock()
+        api_client.run_query.return_value = []
+        obj = {"api_client": api_client, "output_format": "json"}
+        expected = "[]\n"
+
+        result = runner.invoke(gnql, [query], obj=obj)
+        assert result.exit_code == 0
+        assert result.output == expected
+        api_client.run_query.assert_called_with(query=query)
