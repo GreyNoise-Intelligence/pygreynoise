@@ -15,6 +15,7 @@ from greynoise.cli.subcommand import (
     noise,
     quick_check,
     setup,
+    stats,
 )
 from greynoise.util import CONFIG_FILE
 
@@ -268,3 +269,22 @@ class TestGNQL(object):
         assert result.exit_code == 0
         assert result.output == expected
         api_client.run_query.assert_called_with(query=query)
+
+
+class TestStats(object):
+    """"GNQL stats subcommand tests."""
+
+    def test_stats(self):
+        """Run GQNQL stats query."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client = Mock()
+        api_client.run_stats_query.return_value = []
+        obj = {"api_client": api_client, "output_format": "json"}
+        expected = "[]\n"
+
+        result = runner.invoke(stats, [query], obj=obj)
+        assert result.exit_code == 0
+        assert result.output == expected
+        api_client.run_stats_query.assert_called_with(query=query)
