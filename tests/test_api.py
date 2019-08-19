@@ -278,3 +278,15 @@ class TestRunQuery(object):
         client._request = Mock(return_value=expected_response)
         response = client.run_query("<query>")
         assert response == expected_response
+
+
+class TestRunStatsQuery(object):
+    """GreyNoise client run GNQL stats query test cases."""
+
+    def test_run_query(self, client):
+        """Run GNQL stats query."""
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.run_stats_query("<query>")
+        assert response == expected_response
