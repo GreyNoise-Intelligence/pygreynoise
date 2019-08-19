@@ -94,17 +94,121 @@ class TestNoise(object):
 class TestContext(object):
     """Context subcommand tests."""
 
-    def test_context(self):
+    @pytest.mark.parametrize(
+        "output_format, expected",
+        (
+            (
+                "json",
+                textwrap.dedent(
+                    """\
+                    {
+                        "actor": "unknown",
+                        "classification": "unknown",
+                        "first_seen": "2019-01-29",
+                        "ip": "0.0.0.0",
+                        "last_seen": "2019-08-19",
+                        "metadata": {
+                            "asn": "",
+                            "category": "",
+                            "city": "",
+                            "country": "",
+                            "country_code": "",
+                            "organization": "",
+                            "os": "unknown",
+                            "tor": false
+                        },
+                        "raw_data": {
+                            "ja3": [],
+                            "scan": [
+                                {
+                                    "port": 67,
+                                    "protocol": "UDP"
+                                }
+                            ],
+                            "web": {
+                                "paths": [],
+                                "useragents": []
+                            }
+                        },
+                        "seen": true,
+                        "tags": [
+                            "ZMap Client"
+                        ]
+                    }
+                    """
+                ),
+            ),
+            (
+                "txt",
+                textwrap.indent(
+                    textwrap.dedent(
+                        """\
+                                 OVERVIEW:
+                        ----------------------------
+                        IP: 0.0.0.0
+                        Classification: unknown
+                        First seen: 2019-01-29
+                        Last seen: 2019-08-19
+                        Actor: unknown
+                        Tags: ['ZMap Client']
+
+                                 METADATA:
+                        ----------------------------
+                        Location: Unknown Country
+                        OS: unknown
+
+                                 RAW DATA:
+                        ----------------------------
+                        Port/Proto: 67/UDP
+
+                        [Paths]
+                        None found.
+
+                        """
+                    ),
+                    " ",
+                ),
+            ),
+        ),
+    )
+    def test_context(self, output_format, expected):
         """Get IP address context."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        api_client.get_context.return_value = {
+            "actor": "unknown",
+            "classification": "unknown",
+            "first_seen": "2019-01-29",
+            "ip": "0.0.0.0",
+            "last_seen": "2019-08-19",
+            "metadata": {
+                "asn": "",
+                "category": "",
+                "city": "",
+                "country": "",
+                "country_code": "",
+                "organization": "",
+                "os": "unknown",
+                "tor": False,
+            },
+            "raw_data": {
+                "ja3": [],
+                "scan": [{"port": 67, "protocol": "UDP"}],
+                "web": {"paths": [], "useragents": []},
+            },
+            "seen": True,
+            "tags": ["ZMap Client"],
+        }
+        obj = {
+            "api_client": api_client,
+            "output_format": output_format,
+            "verbose": False,
+        }
 
         result = runner.invoke(context, ["0.0.0.0"], obj=obj)
         assert result.exit_code == 0
-        assert result.output == "{}\n"
+        assert result.output == expected
         api_client.get_context.assert_called_with(ip_address="0.0.0.0")
 
     def test_missing_ip_address(self):
