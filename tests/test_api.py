@@ -266,3 +266,15 @@ class TestGetActors(object):
         client._request = Mock(return_value=expected_response)
         actors = client.get_actors()
         assert actors == expected_response
+
+
+class TestRunQuery(object):
+    """GreyNoise client run GNQL query test cases."""
+
+    def test_run_query(self, client):
+        """Run GNQL query."""
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.run_query("<query>")
+        assert response == expected_response
