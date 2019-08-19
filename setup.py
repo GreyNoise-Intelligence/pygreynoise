@@ -1,24 +1,17 @@
 #!/usr/bin/env python
+"""GreyNoise API client package."""
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    """Read file and return its contents."""
+    with open(os.path.join(os.path.dirname(__file__), fname)) as input_file:
+        return input_file.read()
 
 
-install_requires = [
-    "appdirs",
-    "requests",
-]
-
-test_requires = [
-    "flake8",
-    "mock",
-    "pylint",
-    "pytest",
-    "pytest-cov",
-]
+INSTALL_REQUIRES = ["click", "click-default-group", "dicttoxml", "requests"]
 
 setup(
     name="greynoise",
@@ -28,10 +21,9 @@ setup(
     author="GreyNoise Intelligence",
     author_email="hello@greynoise.io",
     license="MIT",
-    package_dir={'': 'src'},
-    packages=find_packages(where='src'),
-    install_requires=install_requires,
-    test_requires=test_requires,
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
+    install_requires=INSTALL_REQUIRES,
     long_description=read("README.rst"),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -41,7 +33,7 @@ setup(
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries",
     ],
-    entry_points={"console_scripts": ["greynoise = greynoise.cli.manage:main"]},
+    entry_points={"console_scripts": ["greynoise = greynoise.cli:main"]},
     zip_safe=False,
     keywords=["internet", "scanning", "threat intelligence", "security"],
     download_url="https://github.com/GreyNoise-Intelligence/pygreynoise",

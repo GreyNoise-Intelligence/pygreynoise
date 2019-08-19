@@ -1,0 +1,8 @@
+# Requirements needed to run the test cases
+-r common.txt
+-r test-py2.txt
+-r test-py3.txt
+flake8==3.7.8
+isort==4.3.21
+mock==3.0.5
+pytest-cov==2.7.1
