@@ -265,6 +265,7 @@ class TestGetActors(object):
 
         client._request = Mock(return_value=expected_response)
         actors = client.get_actors()
+        client._request.assert_called_with("research/actors")
         assert actors == expected_response
 
 
@@ -273,10 +274,12 @@ class TestRunQuery(object):
 
     def test_run_query(self, client):
         """Run GNQL query."""
+        query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_query("<query>")
+        response = client.run_query(query)
+        client._request.assert_called_with("experimental/gnql", params={"query": query})
         assert response == expected_response
 
 
@@ -285,8 +288,12 @@ class TestRunStatsQuery(object):
 
     def test_run_query(self, client):
         """Run GNQL stats query."""
+        query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_stats_query("<query>")
+        response = client.run_stats_query(query)
+        client._request.assert_called_with(
+            "experimental/gnql/stats", params={"query": query}
+        )
         assert response == expected_response
