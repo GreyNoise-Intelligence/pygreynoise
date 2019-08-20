@@ -1,0 +1,55 @@
+{%- if gnql_stats.stats.actors %}
+Actors:
+{%- for actor in gnql_stats.stats.actors %}
+- {{ actor.actor }}: {{ actor.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.asns %}
+ASNs:
+{%- for asn in gnql_stats.stats.asns %}
+- {{ asn.asn }}: {{ asn.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.categories %}
+Categories:
+{%- for category in gnql_stats.stats.categories %}
+- {{ category.category }}: {{ category.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.classifications %}
+Classifications:
+{%- for classification in gnql_stats.stats.classifications %}
+- {{ classification.classification }}: {{ classification.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.countries %}
+Countries:
+{%- for country in gnql_stats.stats.countries %}
+- {{ country.country }}: {{ country.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.operating_systems %}
+Operating systems:
+{%- for operating_system in gnql_stats.stats.operating_systems %}
+- {{ operating_system.operating_system }}: {{ operating_system.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.organizations %}
+Organizations:
+{%- for organization in gnql_stats.stats.organizations %}
+- {{ organization.organization }}: {{ organization.count }}
+{%- endfor %}
+{% endif %}
+
+{%- if gnql_stats.stats.tags %}
+Tags:
+{%- for tag in gnql_stats.stats.tags %}
+- {{ tag.tag }}: {{ tag.count }}
+{%- endfor %}
+{% endif %}

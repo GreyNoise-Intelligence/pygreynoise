@@ -217,10 +217,76 @@ def make_txt(results, query_type, verbose):
         print(e)
 
 
-def format_ip_context(ip_context):
-    """Convert IP context into human-readable text."""
+def get_location(metadata):
+    """Get location from ip context metadata."""
+    city = metadata["city"]
+    country = metadata["country"]
+    country_code = metadata["country_code"]
+
+    location = []
+    if city:
+        location.append("{},".format(city))
+    if country:
+        location.append(country)
+    if country_code:
+        location.append("({})".format(country_code))
+    return " ".join(location)
+
+
+def ip_context_formatter(ip_context):
+    """Convert IP context result into human-readable text."""
+    if ip_context["seen"]:
+        metadata = ip_context["metadata"]
+        metadata["location"] = get_location(metadata)
+
     template = JINJA2_ENV.get_template("ip_context.txt.j2")
-    return template.render(**ip_context)
+    return template.render({"ip_context": ip_context})
 
 
-FORMATTERS = {"json": json_formatter, "xml": xml_formatter}
+def ip_quick_check_formatter(ip_quick_check):
+    """Convert IP quick check result into human-readable text."""
+    template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
+    return template.render({"ip_quick_check": ip_quick_check})
+
+
+def ip_multi_quick_check_formatter(ip_multi_quick_check):
+    """Convert IP multi quick check result into human-readable text."""
+    template = JINJA2_ENV.get_template("ip_multi_quick_check.txt.j2")
+    return template.render({"ip_multi_quick_check": ip_multi_quick_check})
+
+
+def gnql_formatter(gnql):
+    """Convert GNQL query result into human-readable text."""
+    for ip_context in gnql["data"]:
+        if ip_context["seen"]:
+            metadata = ip_context["metadata"]
+            metadata["location"] = get_location(metadata)
+
+    template = JINJA2_ENV.get_template("gnql.txt.j2")
+    return template.render({"gnql": gnql})
+
+
+def gnql_stats_formatter(gnql_stats):
+    """Convert GNQL stats result into human-readable text."""
+    template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
+    return template.render({"gnql_stats": gnql_stats})
+
+
+def actors_formatter(actors):
+    """Convert actors result into human-readable text."""
+    template = JINJA2_ENV.get_template("actors.txt.j2")
+    return template.render({"actors": actors})
+
+
+FORMATTERS = {
+    "json": json_formatter,
+    "xml": xml_formatter,
+    "txt": {
+        "context": ip_context_formatter,
+        "quick_check": ip_quick_check_formatter,
+        "multi_quick_check": ip_multi_quick_check_formatter,
+        "gnql": gnql_formatter,
+        "gnql_stats": gnql_stats_formatter,
+        "actors": actors_formatter,
+    },
+}

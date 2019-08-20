@@ -1,0 +1,7 @@
+{% for ip_context in gnql.data %}
+┌───────────────────────────┐
+│ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
+└───────────────────────────┘
+{% include "ip_context.txt.j2" %}
+
+{% endfor %}

@@ -1,0 +1,11 @@
+{% for actor in actors %}
+┌───────────────────────────┐
+│ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
+└───────────────────────────┘
+
+Name: {{ actor.name }}
+IPs:
+{%- for ip in actor.ips %}
+- {{ ip }}
+{%- endfor %}
+{% endfor %}

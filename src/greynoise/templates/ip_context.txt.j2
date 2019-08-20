@@ -1,38 +1,48 @@
+{% if ip_context.seen %}
          OVERVIEW:
 ----------------------------
-Actor: {{ actor }}
-Classification: {{ classification }}
-First seen: {{ first_seen }}
-IP: {{ ip }}
-Last seen: {{ last_seen }}
+Actor: {{ ip_context.actor }}
+Classification: {{ ip_context.classification }}
+First seen: {{ ip_context.first_seen }}
+IP: {{ ip_context.ip }}
+Last seen: {{ ip_context.last_seen }}
 Tags:
-{% for tag in tags -%}
+{%- for tag in ip_context.tags %}
 - {{ tag }}
-{% endfor %}
+{%- endfor %}
+
          METADATA:
 ----------------------------
-ASN: {{ metadata.asn }}
-Category: {{ metadata.category }}
-Location: {{ metadata.city|default("Unknown city") }}, {{ metadata.country|default("Unknown country") }} ({{ metadata.country_code }})
-Organization: {{ metadata.organization }}
-OS: {{ metadata.os }}
-rDNS: {{ metadata.rdns }}
-Tor: {{ metadata.tor }}
+ASN: {{ ip_context.metadata.asn }}
+Category: {{ ip_context.metadata.category }}
+Location: {{ ip_context.metadata.location }}
+Organization: {{ ip_context.metadata.organization }}
+OS: {{ ip_context.metadata.os }}
+rDNS: {{ ip_context.metadata.rdns }}
+Tor: {{ ip_context.metadata.tor }}
 
          RAW DATA:
 ----------------------------
+{%- if ip_context.raw_data.scan %}
 [Scan]
-{%- for scan in raw_data.scan %}
+{%- for scan in ip_context.raw_data.scan %}
 - Port/Proto: {{ scan.port }}/{{ scan.protocol }}
 {%- endfor %}
+{%- endif %}
 
+{%- if ip_context.raw_data.web.paths %}
 [Paths]
-{%- for path in raw_data.web.paths %}
+{%- for path in ip_context.raw_data.web.paths %}
 - {{ path }}
 {%- endfor %}
+{%- endif %}
 
+{%- if ip_context.raw_data.ja3 %}
 [JA3]
-{%- for ja3 in raw_data.ja3 %}
+{%- for ja3 in ip_context.raw_data.ja3 %}
 - Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
 {%- endfor %}
-
+{% endif %}
+{%- else -%}
+{{ ip_context.ip }} has not been seen in scans in the past 30 days.
+{% endif %}

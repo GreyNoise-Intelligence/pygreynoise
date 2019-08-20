@@ -7,7 +7,7 @@ import click
 from click_default_group import DefaultGroup
 
 from greynoise.api import GreyNoise
-from greynoise.cli.subcommand import actors, gnql, ip, noise, setup, stats
+from greynoise.cli.subcommand import actors, gnql, ip, setup, stats
 from greynoise.util import load_config
 
 
@@ -54,5 +54,5 @@ def main(context, api_key, output_format, verbose):
     }
 
 
-for new_subcommand in [actors, gnql, ip, noise, setup, stats]:
+for new_subcommand in [actors, gnql, ip, setup, stats]:
     main.add_command(new_subcommand)
