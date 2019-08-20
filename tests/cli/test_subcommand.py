@@ -1,6 +1,5 @@
 """CLI subcommands test cases."""
 
-import json
 import textwrap
 from datetime import datetime
 
@@ -19,27 +18,6 @@ from greynoise.cli.subcommand import (
     stats,
 )
 from greynoise.util import CONFIG_FILE
-
-
-# Backported from python3 to make test cases work in python2
-def indent(text, prefix, predicate=None):
-    """Adds 'prefix' to the beginning of selected lines in 'text'.
-
-    If 'predicate' is provided, 'prefix' will only be added to the lines
-    where 'predicate(line)' is True. If 'predicate' is not provided,
-    it will default to adding 'prefix' to all non-empty lines that do not
-    consist solely of whitespace characters.
-    """
-    if predicate is None:
-
-        def predicate(line):
-            return line.strip()
-
-    def prefixed_lines():
-        for line in text.splitlines(True):
-            yield (prefix + line if predicate(line) else line)
-
-    return "".join(prefixed_lines())
 
 
 class TestSetup(object):
@@ -116,112 +94,17 @@ class TestNoise(object):
 class TestContext(object):
     """Context subcommand tests."""
 
-    @pytest.mark.parametrize(
-        "output_format, expected",
-        (
-            (
-                "json",
-                json.dumps(
-                    {
-                        "actor": "unknown",
-                        "classification": "unknown",
-                        "first_seen": "2019-01-29",
-                        "ip": "0.0.0.0",
-                        "last_seen": "2019-08-19",
-                        "metadata": {
-                            "asn": "",
-                            "category": "",
-                            "city": "",
-                            "country": "",
-                            "country_code": "",
-                            "organization": "",
-                            "os": "unknown",
-                            "tor": False,
-                        },
-                        "raw_data": {
-                            "ja3": [],
-                            "scan": [{"port": 67, "protocol": "UDP"}],
-                            "web": {"paths": [], "useragents": []},
-                        },
-                        "seen": True,
-                        "tags": ["ZMap Client"],
-                    },
-                    indent=4,
-                    sort_keys=True,
-                )
-                + "\n",
-            ),
-            (
-                "txt",
-                indent(
-                    textwrap.dedent(
-                        """\
-                                 OVERVIEW:
-                        ----------------------------
-                        IP: 0.0.0.0
-                        Classification: unknown
-                        First seen: 2019-01-29
-                        Last seen: 2019-08-19
-                        Actor: unknown
-                        Tags: ['ZMap Client']
-
-                                 METADATA:
-                        ----------------------------
-                        Location: Unknown Country
-                        OS: unknown
-
-                                 RAW DATA:
-                        ----------------------------
-                        Port/Proto: 67/UDP
-
-                        [Paths]
-                        None found.
-
-                        """
-                    ),
-                    " ",
-                ),
-            ),
-        ),
-    )
-    def test_context(self, output_format, expected):
+    def test_context(self):
         """Get IP address context."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {
-            "actor": "unknown",
-            "classification": "unknown",
-            "first_seen": "2019-01-29",
-            "ip": "0.0.0.0",
-            "last_seen": "2019-08-19",
-            "metadata": {
-                "asn": "",
-                "category": "",
-                "city": "",
-                "country": "",
-                "country_code": "",
-                "organization": "",
-                "os": "unknown",
-                "tor": False,
-            },
-            "raw_data": {
-                "ja3": [],
-                "scan": [{"port": 67, "protocol": "UDP"}],
-                "web": {"paths": [], "useragents": []},
-            },
-            "seen": True,
-            "tags": ["ZMap Client"],
-        }
-        obj = {
-            "api_client": api_client,
-            "output_format": output_format,
-            "verbose": False,
-        }
+        api_client.get_context.return_value = {}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
 
         result = runner.invoke(context, ["0.0.0.0"], obj=obj)
         assert result.exit_code == 0
-        assert result.output == expected
+        assert result.output == "{}\n"
         api_client.get_context.assert_called_with(ip_address="0.0.0.0")
 
     def test_missing_ip_address(self):
