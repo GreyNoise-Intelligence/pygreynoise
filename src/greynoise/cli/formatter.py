@@ -19,25 +19,26 @@ def xml_formatter(result):
     return parseString(dicttoxml(result)).toprettyxml()
 
 
-# For output
 CONTEXTFIELDS = OrderedDict(
     [
-        ("ip", "IP"),
+        ("actor", "Actor"),
         ("classification", "Classification"),
         ("first_seen", "First seen"),
+        ("ip", "IP"),
         ("last_seen", "Last seen"),
-        ("actor", "Actor"),
         ("tags", "Tags"),
     ]
 )
-METADATAFIELDS = {
-    "organization": "Organization",
-    "rdns": "rDNS",
-    "asn": "ASN",
-    "tor": "Tor",
-    "os": "OS",
-    "category": "Category",
-}
+METADATAFIELDS = OrderedDict(
+    [
+        ("asn", "ASN"),
+        ("category", "Category"),
+        ("organization", "Organization"),
+        ("os", "OS"),
+        ("rdns", "rDNS"),
+        ("tor", "Tor"),
+    ]
+)
 
 
 def txt_ip(results, verbose):
