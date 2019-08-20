@@ -4,7 +4,7 @@ import functools
 
 import click
 
-from greynoise.cli.formatter import FORMATTERS, make_txt
+from greynoise.cli.formatter import FORMATTERS, format_ip_context, make_txt
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, save_config
 
@@ -28,7 +28,11 @@ def echo_result(fn):
             output = formatter(result)
             click.echo(output)
         elif output_format == "txt":
-            make_txt(result, obj["query_type"], obj["verbose"])
+            if obj["query_type"] == "context":
+                output = format_ip_context(result)
+                click.echo(output)
+            else:
+                make_txt(result, obj["query_type"], obj["verbose"])
 
     return wrapper
 

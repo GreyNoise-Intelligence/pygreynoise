@@ -23,6 +23,7 @@ setup(
     license="MIT",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    package_data={"greynoise": ["templates/*.j2"]},
     install_requires=INSTALL_REQUIRES,
     long_description=read("README.rst"),
     classifiers=[

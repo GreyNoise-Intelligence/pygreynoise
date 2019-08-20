@@ -8,6 +8,9 @@ from collections import OrderedDict
 from xml.dom.minidom import parseString
 
 from dicttoxml import dicttoxml
+from jinja2 import Environment, PackageLoader
+
+JINJA2_ENV = Environment(loader=PackageLoader("greynoise"))
 
 
 def json_formatter(result):
@@ -212,6 +215,12 @@ def make_txt(results, query_type, verbose):
     except Exception as e:
         print(" Error making text output!")
         print(e)
+
+
+def format_ip_context(ip_context):
+    """Convert IP context into human-readable text."""
+    template = JINJA2_ENV.get_template("ip_context.txt.j2")
+    return template.render(**ip_context)
 
 
 FORMATTERS = {"json": json_formatter, "xml": xml_formatter}

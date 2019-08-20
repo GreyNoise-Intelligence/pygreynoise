@@ -1,0 +1,38 @@
+         OVERVIEW:
+----------------------------
+Actor: {{ actor }}
+Classification: {{ classification }}
+First seen: {{ first_seen }}
+IP: {{ ip }}
+Last seen: {{ last_seen }}
+Tags:
+{% for tag in tags -%}
+- {{ tag }}
+{% endfor %}
+         METADATA:
+----------------------------
+ASN: {{ metadata.asn }}
+Category: {{ metadata.category }}
+Location: {{ metadata.city|default("Unknown city") }}, {{ metadata.country|default("Unknown country") }} ({{ metadata.country_code }})
+Organization: {{ metadata.organization }}
+OS: {{ metadata.os }}
+rDNS: {{ metadata.rdns }}
+Tor: {{ metadata.tor }}
+
+         RAW DATA:
+----------------------------
+[Scan]
+{%- for scan in raw_data.scan %}
+- Port/Proto: {{ scan.port }}/{{ scan.protocol }}
+{%- endfor %}
+
+[Paths]
+{%- for path in raw_data.web.paths %}
+- {{ path }}
+{%- endfor %}
+
+[JA3]
+{%- for ja3 in raw_data.ja3 %}
+- Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
+{%- endfor %}
+
