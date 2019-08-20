@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import json
 import pydoc
+from collections import OrderedDict
 from xml.dom.minidom import parseString
 
 from dicttoxml import dicttoxml
@@ -20,14 +21,16 @@ def xml_formatter(result):
 
 
 # For output
-CONTEXTFIELDS = {
-    "ip": "IP",
-    "classification": "Classification",
-    "first_seen": "First seen",
-    "last_seen": "Last seen",
-    "actor": "Actor",
-    "tags": "Tags",
-}
+CONTEXTFIELDS = OrderedDict(
+    [
+        ("ip", "IP"),
+        ("classification", "Classification"),
+        ("first_seen", "First seen"),
+        ("last_seen", "Last seen"),
+        ("actor", "Actor"),
+        ("tags", "Tags"),
+    ]
+)
 METADATAFIELDS = {
     "organization": "Organization",
     "rdns": "rDNS",
