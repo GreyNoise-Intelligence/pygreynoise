@@ -1,5 +1,6 @@
 """CLI subcommands test cases."""
 
+import json
 import textwrap
 from datetime import datetime
 
@@ -120,8 +121,7 @@ class TestContext(object):
         (
             (
                 "json",
-                textwrap.dedent(
-                    """\
+                json.dumps(
                     {
                         "actor": "unknown",
                         "classification": "unknown",
@@ -136,28 +136,20 @@ class TestContext(object):
                             "country_code": "",
                             "organization": "",
                             "os": "unknown",
-                            "tor": false
+                            "tor": False,
                         },
                         "raw_data": {
                             "ja3": [],
-                            "scan": [
-                                {
-                                    "port": 67,
-                                    "protocol": "UDP"
-                                }
-                            ],
-                            "web": {
-                                "paths": [],
-                                "useragents": []
-                            }
+                            "scan": [{"port": 67, "protocol": "UDP"}],
+                            "web": {"paths": [], "useragents": []},
                         },
-                        "seen": true,
-                        "tags": [
-                            "ZMap Client"
-                        ]
-                    }
-                    """
-                ),
+                        "seen": True,
+                        "tags": ["ZMap Client"],
+                    },
+                    indent=4,
+                    sort_keys=True,
+                )
+                + "\n",
             ),
             (
                 "txt",
