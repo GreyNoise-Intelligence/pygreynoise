@@ -4,7 +4,6 @@
 from __future__ import print_function
 
 import json
-import pydoc
 from collections import OrderedDict
 from xml.dom.minidom import parseString
 
@@ -175,22 +174,6 @@ def txt_ip(results, verbose):
 
 def make_txt(results, query_type, verbose):
     try:
-        if query_type == "bulk" or query_type == "date":
-            formatted = ""
-            maxcount = 6  # IPs per line - TODO: allow user to set
-            count = 0
-            # Concatenate IPs into a string of readable columns, variable width
-            for ip in results["noise_ips"]:
-                if count == 0:
-                    # adds spacing to the left of the first IP printed on each line.
-                    ip = "  " + ip
-                formatted = formatted + (ip + " " * (18 - len(ip)))
-                count += 1
-                if count == maxcount:
-                    count = 0
-                    formatted = formatted + "\n"
-            # result is paginated
-            return pydoc.pager(formatted)
         if query_type == "quick" or query_type == "context":
             txt_ip(results, verbose)
         if query_type == "raw" or not query_type:
