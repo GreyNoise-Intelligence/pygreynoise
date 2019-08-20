@@ -1,7 +1,6 @@
 """CLI subcommands test cases."""
 
 import textwrap
-from datetime import datetime
 
 import pytest
 from click.testing import CliRunner
@@ -12,7 +11,6 @@ from greynoise.cli.subcommand import (
     context,
     gnql,
     multi_quick_check,
-    noise,
     quick_check,
     setup,
     stats,
@@ -45,50 +43,6 @@ class TestSetup(object):
         result = runner.invoke(setup, [])
         assert result.exit_code == 2
         assert expected_error in result.output
-
-
-class TestNoise(object):
-    """Noise subcommand test cases."""
-
-    def test_without_date(self):
-        """Noise subcommand without date."""
-        runner = CliRunner()
-
-        api_client = Mock()
-        api_client.get_noise.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
-        result = runner.invoke(noise, [], obj=obj)
-        assert result.exit_code == 0
-        assert result.output == "[]\n"
-        api_client.get_noise.assert_called_with(date=None)
-
-    @pytest.mark.parametrize("date_option", ["-d", "--date"])
-    def test_with_date(self, date_option):
-        """Noise subcommand with date."""
-        runner = CliRunner()
-
-        api_client = Mock()
-        api_client.get_noise.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
-        result = runner.invoke(noise, [date_option, "2019-01-01"], obj=obj)
-        assert result.exit_code == 0
-        assert result.output == "[]\n"
-        api_client.get_noise.assert_called_with(date=datetime(2019, 1, 1))
-
-    @pytest.mark.parametrize("date_option", ["-d", "--date"])
-    def test_invalid_date(self, date_option):
-        """Noise subcommand with date."""
-        runner = CliRunner()
-
-        api_client = Mock()
-        api_client.get_noise.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
-        expected = 'Error: Invalid value for "-d" / "--date"'
-
-        result = runner.invoke(noise, [date_option, "not-a-date"], obj=obj)
-        assert result.exit_code == 2
-        assert expected in result.output
-        api_client.get_noise.assert_not_called()
 
 
 class TestContext(object):
