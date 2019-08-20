@@ -28,14 +28,14 @@ Tor: {{ ip_context.metadata.tor }}
 {%- for scan in ip_context.raw_data.scan %}
 - Port/Proto: {{ scan.port }}/{{ scan.protocol }}
 {%- endfor %}
-{%- endif %}
+{% endif %}
 
 {%- if ip_context.raw_data.web.paths %}
 [Paths]
 {%- for path in ip_context.raw_data.web.paths %}
 - {{ path }}
 {%- endfor %}
-{%- endif %}
+{% endif %}
 
 {%- if ip_context.raw_data.ja3 %}
 [JA3]

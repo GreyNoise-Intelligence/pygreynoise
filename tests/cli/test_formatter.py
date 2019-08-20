@@ -4,11 +4,11 @@ import textwrap
 
 import pytest
 
-from greynoise.cli.formatter import format_ip_context
+from greynoise.cli.formatter import ip_context_formatter
 
 
-class TestFormatIPContext(object):
-    """Format IP context tests."""
+class TestIPContextFormatter(object):
+    """IP context formatter tests."""
 
     @pytest.mark.parametrize(
         "ip_context, expected",
@@ -91,12 +91,11 @@ class TestFormatIPContext(object):
                     [JA3]
                     - Port: 123456, Fingerprint: <fingerprint#1>
                     - Port: 123456, Fingerprint: <fingerprint#2>
-                    - Port: 123456, Fingerprint: <fingerprint#3>
-                    """
+                    - Port: 123456, Fingerprint: <fingerprint#3>"""
                 ),
             ),
         ),
     )
     def test_format_ip_context(self, ip_context, expected):
         """Format IP context."""
-        assert format_ip_context(ip_context) == expected
+        assert ip_context_formatter(ip_context).strip("\n") == expected

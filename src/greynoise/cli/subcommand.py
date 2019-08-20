@@ -28,7 +28,7 @@ def echo_result(fn):
         elif output_format == "txt":
             formatter = FORMATTERS[output_format][obj["subcommand"]]
 
-        output = formatter(result).strip()
+        output = formatter(result).strip("\n")
         click.echo(output)
 
     return wrapper
