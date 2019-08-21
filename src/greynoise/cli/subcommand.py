@@ -3,6 +3,7 @@
 import functools
 
 import click
+from click_default_group import DefaultGroup
 
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
@@ -54,7 +55,7 @@ def ip():
 @echo_result
 def context(obj, ip_address):
     """Run IP context query."""
-    obj["subcommand"] = "context"
+    obj["subcommand"] = "ip.context"
     api_client = obj["api_client"]
     return api_client.get_context(ip_address=ip_address)
 
@@ -65,7 +66,7 @@ def context(obj, ip_address):
 @echo_result
 def quick_check(obj, ip_address):
     """Run IP quick check query."""
-    obj["subcommand"] = "quick_check"
+    obj["subcommand"] = "ip.quick_check"
     api_client = obj["api_client"]
     return api_client.get_noise_status(ip_address=ip_address)
 
@@ -76,7 +77,7 @@ def quick_check(obj, ip_address):
 @echo_result
 def multi_quick_check(obj, ip_address):
     """Run IP multi quick check query."""
-    obj["subcommand"] = "multi_quick_check"
+    obj["subcommand"] = "ip.multi_quick_check"
     api_client = obj["api_client"]
     return api_client.get_noise_status_bulk(ip_addresses=list(ip_address))
 
@@ -91,23 +92,28 @@ def actors(obj):
     return api_client.get_actors()
 
 
-@click.command()
+@click.group(cls=DefaultGroup, default="query", default_if_no_args=True)
+def gnql():
+    """GNQL queries."""
+
+
+@gnql.command()
 @click.argument("query")
 @click.pass_obj
 @echo_result
-def gnql(obj, query):
+def query(obj, query):
     """Run GNQL query."""
-    obj["subcommand"] = "gnql"
+    obj["subcommand"] = "gnql.query"
     api_client = obj["api_client"]
     return api_client.run_query(query=query)
 
 
-@click.command()
+@gnql.command()
 @click.argument("query")
 @click.pass_obj
 @echo_result
 def stats(obj, query):
     """Run GNQL stats query."""
-    obj["subcommand"] = "gnql_stats"
+    obj["subcommand"] = "gnql.stats"
     api_client = obj["api_client"]
     return api_client.run_stats_query(query=query)

@@ -282,11 +282,11 @@ FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
     "txt": {
-        "context": ip_context_formatter,
-        "quick_check": ip_quick_check_formatter,
-        "multi_quick_check": ip_multi_quick_check_formatter,
-        "gnql": gnql_formatter,
-        "gnql_stats": gnql_stats_formatter,
+        "ip.context": ip_context_formatter,
+        "ip.quick_check": ip_quick_check_formatter,
+        "ip.multi_quick_check": ip_multi_quick_check_formatter,
+        "gnql.query": gnql_formatter,
+        "gnql.stats": gnql_stats_formatter,
         "actors": actors_formatter,
     },
 }
