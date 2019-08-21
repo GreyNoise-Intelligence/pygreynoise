@@ -67,7 +67,7 @@ class TestContext(object):
 
         api_client = Mock()
         api_client.get_context.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = 'Error: Missing argument "IP_ADDRESS".'
 
         result = runner.invoke(context, [], obj=obj)
@@ -81,7 +81,7 @@ class TestContext(object):
 
         api_client = Mock()
         api_client.get_context.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = 'Error: Invalid value for "IP_ADDRESS": not-an-ip\n'
 
         result = runner.invoke(context, ["not-an-ip"], obj=obj)
@@ -99,7 +99,7 @@ class TestQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
 
         result = runner.invoke(quick_check, ["0.0.0.0"], obj=obj)
         assert result.exit_code == 0
@@ -112,7 +112,7 @@ class TestQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = 'Error: Missing argument "IP_ADDRESS".'
 
         result = runner.invoke(quick_check, [], obj=obj)
@@ -126,7 +126,7 @@ class TestQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = 'Error: Invalid value for "IP_ADDRESS": not-an-ip\n'
 
         result = runner.invoke(quick_check, ["not-an-ip"], obj=obj)
@@ -144,7 +144,7 @@ class TestMultiQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status_bulk.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
 
         result = runner.invoke(multi_quick_check, ["0.0.0.0", "0.0.0.1"], obj=obj)
         assert result.exit_code == 0
@@ -159,7 +159,7 @@ class TestMultiQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status_bulk.return_value = {"error": "no results"}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = textwrap.dedent(
             """\
             {
@@ -179,7 +179,7 @@ class TestMultiQuickCheck(object):
 
         api_client = Mock()
         api_client.get_noise_status_bulk.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(multi_quick_check, ["0.0.0.0", "not-an-ip"], obj=obj)
@@ -197,7 +197,7 @@ class TestActors(object):
 
         api_client = Mock()
         api_client.get_actors.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = "[]\n"
 
         result = runner.invoke(actors, obj=obj)
@@ -216,7 +216,7 @@ class TestGNQL(object):
         query = "<query>"
         api_client = Mock()
         api_client.run_query.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = "[]\n"
 
         result = runner.invoke(gnql, [query], obj=obj)
@@ -235,7 +235,7 @@ class TestStats(object):
         query = "<query>"
         api_client = Mock()
         api_client.run_stats_query.return_value = []
-        obj = {"api_client": api_client, "output_format": "json"}
+        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
         expected = "[]\n"
 
         result = runner.invoke(stats, [query], obj=obj)

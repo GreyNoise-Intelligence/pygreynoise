@@ -98,4 +98,4 @@ class TestIPContextFormatter(object):
     )
     def test_format_ip_context(self, ip_context, expected):
         """Format IP context."""
-        assert ip_context_formatter(ip_context).strip("\n") == expected
+        assert ip_context_formatter(ip_context, verbose=False).strip("\n") == expected
