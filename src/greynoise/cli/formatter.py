@@ -240,22 +240,22 @@ def ip_context_formatter(ip_context):
         metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("ip_context.txt.j2")
-    return template.render({"ip_context": ip_context})
+    return template.render(ip_context=ip_context)
 
 
 def ip_quick_check_formatter(ip_quick_check):
     """Convert IP quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
-    return template.render({"ip_quick_check": ip_quick_check})
+    return template.render(ip_quick_check=ip_quick_check)
 
 
 def ip_multi_quick_check_formatter(ip_multi_quick_check):
     """Convert IP multi quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_multi_quick_check.txt.j2")
-    return template.render({"ip_multi_quick_check": ip_multi_quick_check})
+    return template.render(ip_multi_quick_check=ip_multi_quick_check)
 
 
-def gnql_formatter(gnql):
+def gnql_query_formatter(gnql):
     """Convert GNQL query result into human-readable text."""
     for ip_context in gnql["data"]:
         if ip_context["seen"]:
@@ -263,19 +263,19 @@ def gnql_formatter(gnql):
             metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("gnql.txt.j2")
-    return template.render({"gnql": gnql})
+    return template.render(gnql=gnql)
 
 
 def gnql_stats_formatter(gnql_stats):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    return template.render({"gnql_stats": gnql_stats})
+    return template.render(gnql_stats=gnql_stats)
 
 
 def actors_formatter(actors):
     """Convert actors result into human-readable text."""
     template = JINJA2_ENV.get_template("actors.txt.j2")
-    return template.render({"actors": actors})
+    return template.render(actors=actors)
 
 
 FORMATTERS = {
@@ -285,7 +285,7 @@ FORMATTERS = {
         "ip.context": ip_context_formatter,
         "ip.quick_check": ip_quick_check_formatter,
         "ip.multi_quick_check": ip_multi_quick_check_formatter,
-        "gnql.query": gnql_formatter,
+        "gnql.query": gnql_query_formatter,
         "gnql.stats": gnql_stats_formatter,
         "actors": actors_formatter,
     },
