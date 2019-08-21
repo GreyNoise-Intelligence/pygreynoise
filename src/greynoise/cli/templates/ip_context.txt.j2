@@ -1,3 +1,5 @@
+{% import "macros.txt.j2" as macros %}
+
 {% if ip_context.seen %}
          OVERVIEW:
 ----------------------------
@@ -7,13 +9,9 @@ First seen: {{ ip_context.first_seen }}
 IP: {{ ip_context.ip }}
 Last seen: {{ ip_context.last_seen }}
 Tags:
-{%- for tag in ip_context.tags[:20 if not verbose else None] %}
+{%- call(tag) macros.verbose_list(ip_context.tags, verbose) -%}
 - {{ tag }}
-{%- endfor %}
-{%- if ip_context.tags | length > 20 and not verbose %}
-Showing results 1 - 20. Run again with -v for full output.
-{%- endif %}
-
+{% endcall %}
          METADATA:
 ----------------------------
 ASN: {{ ip_context.metadata.asn }}
@@ -28,32 +26,23 @@ Tor: {{ ip_context.metadata.tor }}
 ----------------------------
 {%- if ip_context.raw_data.scan %}
 [Scan]
-{%- for scan in ip_context.raw_data.scan[:20 if not verbose else None] %}
+{%- call(scan) macros.verbose_list(ip_context.raw_data.scan, verbose) -%}
 - Port/Proto: {{ scan.port }}/{{ scan.protocol }}
-{%- endfor %}
-{%- if ip_context.raw_data.scan | length > 20 and not verbose %}
-Showing results 1 - 20. Run again with -v for full output.
-{%- endif %}
+{% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.web.paths %}
 [Paths]
-{%- for path in ip_context.raw_data.web.paths[:20 if not verbose else None] %}
+{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths, verbose) -%}
 - {{ path }}
-{%- endfor %}
-{%- if ip_context.raw_data.web_paths | length > 20 and not verbose %}
-Showing results 1 - 20. Run again with -v for full output.
-{%- endif %}
+{% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.ja3 %}
 [JA3]
-{%- for ja3 in ip_context.raw_data.ja3[:20 if not verbose else None] %}
+{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3, verbose) -%}
 - Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
-{%- endfor %}
-{%- if ip_context.raw_data.ja3 | length > 20 and not verbose %}
-Showing results 1 - 20. Run again with -v for full output.
-{%- endif %}
+{% endcall -%}
 {% endif %}
 {%- else -%}
 {{ ip_context.ip }} has not been seen in scans in the past 30 days.
