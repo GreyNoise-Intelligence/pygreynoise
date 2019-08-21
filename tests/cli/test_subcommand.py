@@ -93,17 +93,50 @@ class TestContext(object):
 class TestQuickCheck(object):
     """Quick check subcommand tests."""
 
-    def test_quick_check(self):
+    @pytest.mark.parametrize(
+        "output_format, expected",
+        (
+            (
+                "json",
+                textwrap.dedent(
+                    """\
+                    {
+                        "ip": "0.0.0.0",
+                        "noise": true
+                    }
+                    """
+                ),
+            ),
+            (
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<ip type="str">0.0.0.0</ip>
+                    \t<noise type="bool">True</noise>
+                    </root>
+                    """
+                ),
+            ),
+            ("txt", "0.0.0.0 is classified as NOISE.\n"),
+        ),
+    )
+    def test_quick_check(self, output_format, expected):
         """Quickly check IP address."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {}
-        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
+        api_client.get_noise_status.return_value = {"ip": "0.0.0.0", "noise": True}
+        obj = {
+            "api_client": api_client,
+            "output_format": output_format,
+            "verbose": False,
+        }
 
         result = runner.invoke(quick_check, ["0.0.0.0"], obj=obj)
         assert result.exit_code == 0
-        assert result.output == "{}\n"
+        assert result.output == expected
         api_client.get_noise_status.assert_called_with(ip_address="0.0.0.0")
 
     def test_missing_ip_address(self):
