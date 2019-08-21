@@ -1,0 +1,5 @@
+{% macro result_header(loop) %}
+┌───────────────────────────┐
+│ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
+└───────────────────────────┘
+{% endmacro %}

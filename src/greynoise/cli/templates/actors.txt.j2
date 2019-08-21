@@ -1,8 +1,6 @@
+{% import "macros.txt.j2" as macros %}
 {% for actor in actors %}
-┌───────────────────────────┐
-│ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
-└───────────────────────────┘
-
+{{ macros.result_header(loop) }}
 Name: {{ actor.name }}
 IPs:
 {%- for ip in actor.ips %}
