@@ -103,4 +103,4 @@ jobs:
             export PATH=$SONAR_SCANNER_HOME/bin:$PATH
             export SONAR_SCANNER_OPTS="-server"
 
-            sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN
+            sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.branch.name=$CIRCLE_BRANCH
