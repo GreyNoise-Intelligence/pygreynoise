@@ -29,7 +29,7 @@ def echo_result(fn):
             # For the text formatter, there's a separate formatter for each subcommand
             formatter = formatter[obj["subcommand"]]
 
-        output = formatter(result).strip("\n")
+        output = formatter(result, obj["verbose"]).strip("\n")
         click.echo(output)
 
     return wrapper
