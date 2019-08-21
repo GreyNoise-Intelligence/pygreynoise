@@ -10,7 +10,7 @@ from xml.dom.minidom import parseString
 from dicttoxml import dicttoxml
 from jinja2 import Environment, PackageLoader
 
-JINJA2_ENV = Environment(loader=PackageLoader("greynoise"))
+JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
 
 
 def json_formatter(result):
