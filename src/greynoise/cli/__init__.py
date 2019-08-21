@@ -18,7 +18,7 @@ from greynoise.util import load_config
     "--format",
     "output_format",
     type=click.Choice(["json", "txt", "xml"]),
-    default="json",
+    default="txt",
     help="Output format",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
