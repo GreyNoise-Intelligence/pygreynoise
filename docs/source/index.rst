@@ -6,7 +6,7 @@ Python GreyNoise
 
    introduction
    tutorial
-   code
+   reference
    changelog
 
 License
