@@ -12,12 +12,12 @@ from jinja2 import Environment, PackageLoader
 JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
 
 
-def json_formatter(result, verbose):
+def json_formatter(result, _verbose):
     """Format result as json."""
     return json.dumps(result, indent=4, sort_keys=True)
 
 
-def xml_formatter(result, verbose):
+def xml_formatter(result, _verbose):
     return parseString(dicttoxml(result)).toprettyxml()
 
 

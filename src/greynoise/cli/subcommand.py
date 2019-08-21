@@ -10,19 +10,19 @@ from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, save_config
 
 
-def echo_result(fn):
+def echo_result(function):
     """Decorator that prints subcommand results correctly formatted.
 
-    :param fn: Subcommand that returns a result from the API.
-    :type fn: callable
+    :param function: Subcommand that returns a result from the API.
+    :type function: callable
     :returns: Wrapped function that prints subcommand results
     :rtype: callable
 
     """
 
-    @functools.wraps(fn)
+    @functools.wraps(function)
     def wrapper(obj, *args, **kwargs):
-        result = fn(obj, *args, **kwargs)
+        result = function(obj, *args, **kwargs)
         output_format = obj["output_format"]
         formatter = FORMATTERS[output_format]
         if isinstance(formatter, dict):

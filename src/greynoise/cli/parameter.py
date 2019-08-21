@@ -5,7 +5,7 @@ import click
 from greynoise.util import validate_ip
 
 
-def ip_addresses_parameter(context, parameter, values):
+def ip_addresses_parameter(_context, _parameter, values):
     """IPv4 addresses passed from the command line.
 
     :param values: IPv4 address values
@@ -22,7 +22,7 @@ def ip_addresses_parameter(context, parameter, values):
     return values
 
 
-def ip_address_parameter(context, parameter, value):
+def ip_address_parameter(_context, _parameter, value):
     """IPv4 address passed from the command line.
 
     :param value: IPv4 address value
