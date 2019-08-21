@@ -1,5 +1,6 @@
 """CLI subcommands test cases."""
 
+import json
 import textwrap
 
 import pytest
@@ -98,14 +99,7 @@ class TestQuickCheck(object):
         (
             (
                 "json",
-                textwrap.dedent(
-                    """\
-                    {
-                        "ip": "0.0.0.0",
-                        "noise": true
-                    }
-                    """
-                ),
+                json.dumps({"ip": "0.0.0.0", "noise": True}, indent=4, sort_keys=True),
             ),
             (
                 "xml",
@@ -115,11 +109,10 @@ class TestQuickCheck(object):
                     <root>
                     \t<ip type="str">0.0.0.0</ip>
                     \t<noise type="bool">True</noise>
-                    </root>
-                    """
+                    </root>"""
                 ),
             ),
-            ("txt", "0.0.0.0 is classified as NOISE.\n"),
+            ("txt", "0.0.0.0 is classified as NOISE."),
         ),
     )
     def test_quick_check(self, output_format, expected):
@@ -136,7 +129,7 @@ class TestQuickCheck(object):
 
         result = runner.invoke(quick_check, ["0.0.0.0"], obj=obj)
         assert result.exit_code == 0
-        assert result.output == expected
+        assert result.output.strip("\n") == expected
         api_client.get_noise_status.assert_called_with(ip_address="0.0.0.0")
 
     def test_missing_ip_address(self):
