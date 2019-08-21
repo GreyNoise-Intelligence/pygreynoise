@@ -23,10 +23,10 @@ def echo_result(fn):
     def wrapper(obj, *args, **kwargs):
         result = fn(obj, *args, **kwargs)
         output_format = obj["output_format"]
-        if output_format in {"json", "csv"}:
-            formatter = FORMATTERS[output_format]
-        elif output_format == "txt":
-            formatter = FORMATTERS[output_format][obj["subcommand"]]
+        formatter = FORMATTERS[output_format]
+        if isinstance(formatter, dict):
+            # For the text formatter, there's a separate formatter for each subcommand
+            formatter = formatter[obj["subcommand"]]
 
         output = formatter(result).strip("\n")
         click.echo(output)
