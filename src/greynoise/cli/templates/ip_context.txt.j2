@@ -7,9 +7,12 @@ First seen: {{ ip_context.first_seen }}
 IP: {{ ip_context.ip }}
 Last seen: {{ ip_context.last_seen }}
 Tags:
-{%- for tag in ip_context.tags %}
+{%- for tag in ip_context.tags[:20 if not verbose else None] %}
 - {{ tag }}
 {%- endfor %}
+{%- if ip_context.tags | length > 20 and not verbose %}
+Showing results 1 - 20. Run again with -v for full output.
+{%- endif %}
 
          METADATA:
 ----------------------------
@@ -25,23 +28,32 @@ Tor: {{ ip_context.metadata.tor }}
 ----------------------------
 {%- if ip_context.raw_data.scan %}
 [Scan]
-{%- for scan in ip_context.raw_data.scan %}
+{%- for scan in ip_context.raw_data.scan[:20 if not verbose else None] %}
 - Port/Proto: {{ scan.port }}/{{ scan.protocol }}
 {%- endfor %}
+{%- if ip_context.raw_data.scan | length > 20 and not verbose %}
+Showing results 1 - 20. Run again with -v for full output.
 {% endif %}
+{%- endif %}
 
 {%- if ip_context.raw_data.web.paths %}
 [Paths]
-{%- for path in ip_context.raw_data.web.paths %}
+{%- for path in ip_context.raw_data.web.paths[:20 if not verbose else None] %}
 - {{ path }}
 {%- endfor %}
+{%- if ip_context.raw_data.web_paths | length > 20 and not verbose %}
+Showing results 1 - 20. Run again with -v for full output.
+{% endif %}
 {% endif %}
 
 {%- if ip_context.raw_data.ja3 %}
 [JA3]
-{%- for ja3 in ip_context.raw_data.ja3 %}
+{%- for ja3 in ip_context.raw_data.ja3[:20 if not verbose else None] %}
 - Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
 {%- endfor %}
+{%- if ip_context.raw_data.ja3 | length > 20 and not verbose %}
+Showing results 1 - 20. Run again with -v for full output.
+{% endif %}
 {% endif %}
 {%- else -%}
 {{ ip_context.ip }} has not been seen in scans in the past 30 days.
