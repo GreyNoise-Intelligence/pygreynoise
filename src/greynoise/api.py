@@ -25,11 +25,8 @@ class GreyNoise(object):
     BASE_URL = "https://enterprise.api.greynoise.io"
     CLIENT_VERSION = 1
     API_VERSION = "v2"
-    DATE_FORMAT = "%Y-%m-%d"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
-    EP_NOISE_BULK = "noise/bulk"
-    EP_NOISE_BULK_DATE = "noise/bulk/{date}"
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
