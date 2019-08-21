@@ -11,7 +11,7 @@ def read(fname):
         return input_file.read()
 
 
-INSTALL_REQUIRES = ["click", "click-default-group", "dicttoxml", "requests"]
+INSTALL_REQUIRES = ["click", "click-default-group", "dicttoxml", "jinja2", "requests"]
 
 setup(
     name="greynoise",
