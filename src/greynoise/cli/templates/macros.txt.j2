@@ -1,0 +1,14 @@
+{% macro result_header(loop) %}
+┌───────────────────────────┐
+│ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
+└───────────────────────────┘
+{% endmacro %}
+
+{% macro verbose_list(elements, verbose) %}
+{% for element in elements[:20 if not verbose else None] -%}
+{{ caller(element) }}
+{%- endfor -%}
+{% if elements | length > 20 and not verbose -%}
+Showing results 1 - 20. Run again with -v for full output.
+{% endif -%}
+{% endmacro %}

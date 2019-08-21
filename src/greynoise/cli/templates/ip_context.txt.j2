@@ -1,0 +1,48 @@
+{% import "macros.txt.j2" as macros %}
+{%- if ip_context.seen %}
+         OVERVIEW:
+----------------------------
+Actor: {{ ip_context.actor }}
+Classification: {{ ip_context.classification }}
+First seen: {{ ip_context.first_seen }}
+IP: {{ ip_context.ip }}
+Last seen: {{ ip_context.last_seen }}
+Tags:
+{%- call(tag) macros.verbose_list(ip_context.tags, verbose) -%}
+- {{ tag }}
+{% endcall %}
+         METADATA:
+----------------------------
+ASN: {{ ip_context.metadata.asn }}
+Category: {{ ip_context.metadata.category }}
+Location: {{ ip_context.metadata.location }}
+Organization: {{ ip_context.metadata.organization }}
+OS: {{ ip_context.metadata.os }}
+rDNS: {{ ip_context.metadata.rdns }}
+Tor: {{ ip_context.metadata.tor }}
+
+         RAW DATA:
+----------------------------
+{%- if ip_context.raw_data.scan %}
+[Scan]
+{%- call(scan) macros.verbose_list(ip_context.raw_data.scan, verbose) -%}
+- Port/Proto: {{ scan.port }}/{{ scan.protocol }}
+{% endcall -%}
+{% endif %}
+
+{%- if ip_context.raw_data.web.paths %}
+[Paths]
+{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths, verbose) -%}
+- {{ path }}
+{% endcall -%}
+{% endif %}
+
+{%- if ip_context.raw_data.ja3 %}
+[JA3]
+{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3, verbose) -%}
+- Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
+{% endcall -%}
+{% endif %}
+{%- else -%}
+{{ ip_context.ip }} has not been seen in scans in the past 30 days.
+{% endif %}

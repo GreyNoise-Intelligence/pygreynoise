@@ -1,7 +1,5 @@
 """GreyNoise API client test cases."""
 
-import datetime
-
 import pytest
 from mock import Mock, patch
 
@@ -224,38 +222,6 @@ class TestGetNoiseStatusBulk(object):
         assert str(exception.value) == "`ip_addresses` must be a list"
 
 
-class TestGetNoise(object):
-    """GreyNoise client bulk test cases."""
-
-    @pytest.mark.parametrize(
-        "date, api_responses, expected_noise_ips",
-        (
-            (None, [{"complete": True}], []),
-            (
-                datetime.date(2019, 1, 1),
-                [
-                    {"noise_ips": ["0.0.0.0"], "offset": 1, "complete": False},
-                    {"complete": True},
-                ],
-                ["0.0.0.0"],
-            ),
-        ),
-    )
-    def test_get_noise(self, client, date, api_responses, expected_noise_ips):
-        """Get noise IPs."""
-        client._request = Mock(side_effect=api_responses)
-        noise_ips = client.get_noise(date)
-        assert noise_ips == expected_noise_ips
-
-    def test_get_noise_invalid_date(self, client):
-        """ValueError is raised when date is invalid."""
-        with pytest.raises(ValueError) as exception:
-            client.get_noise("invalid")
-
-        expected_error = "date argument must be an instance of datetime.date"
-        assert str(exception.value) == expected_error
-
-
 class TestGetActors(object):
     """GreyNoise client actors test cases."""
 
@@ -265,4 +231,35 @@ class TestGetActors(object):
 
         client._request = Mock(return_value=expected_response)
         actors = client.get_actors()
+        client._request.assert_called_with("research/actors")
         assert actors == expected_response
+
+
+class TestRunQuery(object):
+    """GreyNoise client run GNQL query test cases."""
+
+    def test_run_query(self, client):
+        """Run GNQL query."""
+        query = "<query>"
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.run_query(query)
+        client._request.assert_called_with("experimental/gnql", params={"query": query})
+        assert response == expected_response
+
+
+class TestRunStatsQuery(object):
+    """GreyNoise client run GNQL stats query test cases."""
+
+    def test_run_query(self, client):
+        """Run GNQL stats query."""
+        query = "<query>"
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.run_stats_query(query)
+        client._request.assert_called_with(
+            "experimental/gnql/stats", params={"query": query}
+        )
+        assert response == expected_response
