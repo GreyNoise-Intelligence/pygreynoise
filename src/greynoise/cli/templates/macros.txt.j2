@@ -1,9 +1,12 @@
+# Render result header based on loop index and length
 {% macro result_header(loop) %}
 ┌───────────────────────────┐
 │ {{ "{:^25}".format("Result {} of {}".format(loop.index, loop.length)) }} │
 └───────────────────────────┘
 {% endmacro %}
 
+# Render all elements of a list when verbose=True
+# Otherwise, render first 20 elements and a message to remind user about verbose flag
 {% macro verbose_list(elements, verbose) %}
 {% for element in elements[:20 if not verbose else None] -%}
 {{ caller(element) }}
@@ -11,4 +14,14 @@
 {% if elements | length > 20 and not verbose -%}
 Showing results 1 - 20. Run again with -v for full output.
 {% endif -%}
+{% endmacro %}
+
+# Render tuples of element names and counts properly aligned
+# Width is based on the longest element in the list for each column
+{% macro column_list(elements, field_name) %}
+{%- set left_width = elements | map(attribute=field_name) | map('length') | max %}
+{%- set right_width = elements | map(attribute='count') | map('string') | map('length') | max %}
+{%- for element in elements %}
+- {{ "%-*s" | format(left_width, element[field_name]) }} {{ "%*s" | format(right_width, element.count) }}
+{%- endfor %}
 {% endmacro %}
