@@ -67,13 +67,13 @@ Get statistics
 
 It's also possible to get statistics related to a GNQL query to better understand how
 results are distributed in terms of different information such as organization, country,
-operating system, etc.:
+operating system, etc.::
 
-   >>> api_client.run_stats_query('classification:malicious tags:"Bluekeep Exploit"')
-   
-   {"query":"classification:malicious tags:'Bluekeep Exploit'","count":24,"stats":{"classifications":[{"classification":"malicious","count":24}],"organizations":[{"organization":"DigitalOcean, LLC","count":7},{"organization":"OVH SAS","count":6},{"organization":"China Unicom Shanghai network","count":3},{"organization":"Linode, LLC","count":3},{"organization":"Amarutu Technology Ltd","count":1},{"organization":"Amazon.com, Inc.","count":1},{"organization":"CHINANET-BACKBONE","count":1},{"organization":"INT-NETWORK","count":1},{"organization":"WideOpenWest Finance LLC","count":1}],"actors":null,"countries":[{"country":"Canada","count":6},{"country":"United States","count":6},{"country":"China","count":4},{"country":"Germany","count":3},{"country":"Netherlands","count":3},{"country":"France","count":1},{"country":"United Kingdom","count":1}],"tags":[{"tag":"Bluekeep Exploit","count":24},{"tag":"RDP Scanner","count":24},
-   -- SNIP --
-   {"tag":"Telnet Scanner","count":1}],"operating_systems":[{"operating_system":"Linux 3.11+","count":16},{"operating_system":"Windows 7/8","count":3},{"operating_system":"Mac OS X","count":2},{"operating_system":"Linux 2.2-3.x","count":1}],"categories":[{"category":"hosting","count":17},{"category":"isp","count":6},{"category":"business","count":1}],"asns":[{"asn":"AS14061","count":7},{"asn":"AS16276","count":6},{"asn":"AS17621","count":3},{"asn":"AS63949","count":3},{"asn":"AS12083","count":1},{"asn":"AS14618","count":1},{"asn":"AS202425","count":1},{"asn":"AS206264","count":1},{"asn":"AS4134","count":1}]}}
+    >>> api_client.run_stats_query('classification:malicious tags:"Bluekeep Exploit"')
+    
+    {"query":"classification:malicious tags:'Bluekeep Exploit'","count":24,"stats":{"classifications":[{"classification":"malicious","count":24}],"organizations":[{"organization":"DigitalOcean, LLC","count":7},{"organization":"OVH SAS","count":6},{"organization":"China Unicom Shanghai network","count":3},{"organization":"Linode, LLC","count":3},{"organization":"Amarutu Technology Ltd","count":1},{"organization":"Amazon.com, Inc.","count":1},{"organization":"CHINANET-BACKBONE","count":1},{"organization":"INT-NETWORK","count":1},{"organization":"WideOpenWest Finance LLC","count":1}],"actors":null,"countries":[{"country":"Canada","count":6},{"country":"United States","count":6},{"country":"China","count":4},{"country":"Germany","count":3},{"country":"Netherlands","count":3},{"country":"France","count":1},{"country":"United Kingdom","count":1}],"tags":[{"tag":"Bluekeep Exploit","count":24},{"tag":"RDP Scanner","count":24},
+    -- SNIP --
+    {"tag":"Telnet Scanner","count":1}],"operating_systems":[{"operating_system":"Linux 3.11+","count":16},{"operating_system":"Windows 7/8","count":3},{"operating_system":"Mac OS X","count":2},{"operating_system":"Linux 2.2-3.x","count":1}],"categories":[{"category":"hosting","count":17},{"category":"isp","count":6},{"category":"business","count":1}],"asns":[{"asn":"AS14061","count":7},{"asn":"AS16276","count":6},{"asn":"AS17621","count":3},{"asn":"AS63949","count":3},{"asn":"AS12083","count":1},{"asn":"AS14618","count":1},{"asn":"AS202425","count":1},{"asn":"AS206264","count":1},{"asn":"AS4134","count":1}]}}
 
 
 Command line interface
