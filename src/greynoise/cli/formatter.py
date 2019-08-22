@@ -20,6 +20,8 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "header": ansimarkup.parse("<bold>"),
         "key": ansimarkup.parse("<blue>"),
         "value": ansimarkup.parse("<green>"),
+        "noise": ansimarkup.parse("<light-yellow>"),
+        "not-noise": ansimarkup.parse("<dim>"),
     }
 )
 
