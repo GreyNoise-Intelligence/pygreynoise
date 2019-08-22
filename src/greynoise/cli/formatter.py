@@ -107,7 +107,7 @@ def gnql_query_formatter(results, verbose):
                     metadata = ip_context["metadata"]
                     metadata["location"] = get_location(metadata)
 
-    template = JINJA2_ENV.get_template("gnql.txt.j2")
+    template = JINJA2_ENV.get_template("gnql_query.txt.j2")
     return template.render(results=results, verbose=verbose)
 
 
