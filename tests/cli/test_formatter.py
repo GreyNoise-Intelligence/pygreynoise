@@ -275,7 +275,7 @@ class TestGNQLStatsFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        """\
+                        u"""\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
