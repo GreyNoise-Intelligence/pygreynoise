@@ -27,22 +27,80 @@ Once the client object has been created, it's possible to check if a given IP is
 considered internet noise or has been observed scanning or attacking devices across the
 Internet as follows::
 
-   >>> api_client.get_noise_status('8.8.8.8')
-   
-   {"ip":"8.8.8.8","noise":false,"code":"0x05","code_message":"This IP is commonly spoofed in Internet-scan activity"}
+    >>> api_client.get_noise_status('8.8.8.8')
+    {
+      "ip": "8.8.8.8",
+      "noise": false,
+      "code": "0x05",
+      "code_message": "This IP is commonly spoofed in Internet-scan activity"
+    }
 
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-   >>> client.get_noise_status_bulk(['8.8.8.8', '58.220.219.247'])
-
-   [{"ip":"8.8.8.8","noise":false,"code":"0x05","code_message":"This IP is commonly spoofed in Internet-scan activity"},{"ip":"58.220.219.247","noise":true,"code":"0x01","code_message":"The IP has been observed by the GreyNoise sensor network"}]
+    >>> client.get_noise_status_bulk(['8.8.8.8', '58.220.219.247'])
+    [
+      {
+        "ip": "8.8.8.8",
+        "noise": false,
+        "code": "0x05",
+        "code_message": "This IP is commonly spoofed in Internet-scan activity"
+      },
+      {
+        "ip": "58.220.219.247",
+        "noise": true,
+        "code": "0x01",
+        "code_message": "The IP has been observed by the GreyNoise sensor network"
+      }
+    ]
 
 Detailed context information for any given IP address is also available::
 
-   >>> api_client.get_context('58.220.219.247')
-
-   {"ip":"58.220.219.247","seen":true,"classification":"malicious","first_seen":"2019-04-04","last_seen":"2019-08-21","actor":"unknown","tags":["MSSQL Bruteforcer","MSSQL Scanner","RDP Scanner"],"metadata":{"country":"China","country_code":"CN","city":"Kunshan","organization":"CHINANET jiangsu province network","asn":"AS4134","tor":false,"os":"Windows 7/8","category":"isp"},"raw_data":{"scan":[{"port":1433,"protocol":"TCP"},{"port":3389,"protocol":"TCP"},{"port":65529,"protocol":"TCP"}],"web":{"paths":[],"useragents":[]},"ja3":[]}}
+    >>> api_client.get_context('58.220.219.247')
+    {
+      "ip": "58.220.219.247",
+      "seen": true,
+      "classification": "malicious",
+      "first_seen": "2019-04-04",
+      "last_seen": "2019-08-21",
+      "actor": "unknown",
+      "tags": [
+        "MSSQL Bruteforcer",
+        "MSSQL Scanner",
+        "RDP Scanner"
+      ],
+      "metadata": {
+        "country": "China",
+        "country_code": "CN",
+        "city": "Kunshan",
+        "organization": "CHINANET jiangsu province network",
+        "asn": "AS4134",
+        "tor": false,
+        "os": "Windows 7/8",
+        "category": "isp"
+      },
+      "raw_data": {
+        "scan": [
+          {
+            "port": 1433,
+            "protocol": "TCP"
+          },
+          {
+            "port": 3389,
+            "protocol": "TCP"
+          },
+          {
+            "port": 65529,
+            "protocol": "TCP"
+          }
+        ],
+        "web": {
+          "paths": [],
+          "useragents": []
+        },
+        "ja3": []
+      }
+    }
 
 
 GNQL
@@ -55,11 +113,94 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-   >>> api_client.run_query('classification:malicious tags:"Bluekeep Exploit"')
-
-   {"complete":true,"count":24,"data":[{"ip":"144.217.253.168","seen":true,"classification":"malicious","first_seen":"2019-06-04","last_seen":"2019-08-21","actor":"unknown","tags":["RDP Scanner","Bluekeep Exploit"],"metadata":{"country":"Canada","country_code":"CA","city":"Montréal","organization":"OVH SAS","rdns":"ns541387.ip-144-217-253.net","asn":"AS16276","tor":false,"os":"Linux 3.11+","category":"hosting"},"raw_data":{"scan":[{"port":3389,"protocol":"TCP"}],"web":{},"ja3":[]}},
-   -- SNIP --
-   {"ip":"91.213.112.119","seen":true,"classification":"malicious","first_seen":"2019-04-18","last_seen":"2019-06-03","actor":"unknown","tags":["Bluekeep Exploit","RDP Scanner","TLS/SSL Crawler","Tor","VNC Scanner","Web Scanner","Windows RDP Cookie Hijacker CVE-2014-6318"],"metadata":{"country":"Netherlands","country_code":"NL","city":"","organization":"Onsweb B.V.","rdns":"no-reverse.onlinesystemen.nl","asn":"AS42755","tor":true,"os":"Linux 3.11+","category":"business"},"raw_data":{"scan":[{"port":443,"protocol":"TCP"},{"port":3389,"protocol":"TCP"},{"port":5900,"protocol":"TCP"}],"web":{},"ja3":[]}}],"message":"ok","query":"classification:malicious tags:'Bluekeep Exploit'"}
+    >>> api_client.run_query('classification:malicious tags:"Bluekeep Exploit"')
+    {
+      "complete": true,
+      "count": 2,
+      "data": [
+        {
+          "ip": "144.217.253.168",
+          "seen": true,
+          "classification": "malicious",
+          "first_seen": "2019-06-04",
+          "last_seen": "2019-08-21",
+          "actor": "unknown",
+          "tags": [
+            "RDP Scanner",
+            "Bluekeep Exploit"
+          ],
+          "metadata": {
+            "country": "Canada",
+            "country_code": "CA",
+            "city": "Montréal",
+            "organization": "OVH SAS",
+            "rdns": "ns541387.ip-144-217-253.net",
+            "asn": "AS16276",
+            "tor": false,
+            "os": "Linux 3.11+",
+            "category": "hosting"
+          },
+          "raw_data": {
+            "scan": [
+              {
+                "port": 3389,
+                "protocol": "TCP"
+              }
+            ],
+            "web": {},
+            "ja3": []
+          }
+        },
+        {
+          "ip": "91.213.112.119",
+          "seen": true,
+          "classification": "malicious",
+          "first_seen": "2019-04-18",
+          "last_seen": "2019-06-03",
+          "actor": "unknown",
+          "tags": [
+            "Bluekeep Exploit",
+            "RDP Scanner",
+            "TLS/SSL Crawler",
+            "Tor",
+            "VNC Scanner",
+            "Web Scanner",
+            "Windows RDP Cookie Hijacker CVE-2014-6318"
+          ],
+          "metadata": {
+            "country": "Netherlands",
+            "country_code": "NL",
+            "city": "",
+            "organization": "Onsweb B.V.",
+            "rdns": "no-reverse.onlinesystemen.nl",
+            "asn": "AS42755",
+            "tor": true,
+            "os": "Linux 3.11+",
+            "category": "business"
+          },
+          "raw_data": {
+            "scan": [
+              {
+                "port": 443,
+                "protocol": "TCP"
+              },
+              {
+                "port": 3389,
+                "protocol": "TCP"
+              },
+              {
+                "port": 5900,
+                "protocol": "TCP"
+              }
+            ],
+            "web": {},
+            "ja3": []
+          }
+        }
+      ],
+      "message": "ok",
+      "query": "classification:malicious tags:'Bluekeep Exploit'"
+    }
 
 
 Get statistics
@@ -70,10 +211,171 @@ results are distributed in terms of different information such as organization, 
 operating system, etc.::
 
     >>> api_client.run_stats_query('classification:malicious tags:"Bluekeep Exploit"')
-    
-    {"query":"classification:malicious tags:'Bluekeep Exploit'","count":24,"stats":{"classifications":[{"classification":"malicious","count":24}],"organizations":[{"organization":"DigitalOcean, LLC","count":7},{"organization":"OVH SAS","count":6},{"organization":"China Unicom Shanghai network","count":3},{"organization":"Linode, LLC","count":3},{"organization":"Amarutu Technology Ltd","count":1},{"organization":"Amazon.com, Inc.","count":1},{"organization":"CHINANET-BACKBONE","count":1},{"organization":"INT-NETWORK","count":1},{"organization":"WideOpenWest Finance LLC","count":1}],"actors":null,"countries":[{"country":"Canada","count":6},{"country":"United States","count":6},{"country":"China","count":4},{"country":"Germany","count":3},{"country":"Netherlands","count":3},{"country":"France","count":1},{"country":"United Kingdom","count":1}],"tags":[{"tag":"Bluekeep Exploit","count":24},{"tag":"RDP Scanner","count":24},
-    -- SNIP --
-    {"tag":"Telnet Scanner","count":1}],"operating_systems":[{"operating_system":"Linux 3.11+","count":16},{"operating_system":"Windows 7/8","count":3},{"operating_system":"Mac OS X","count":2},{"operating_system":"Linux 2.2-3.x","count":1}],"categories":[{"category":"hosting","count":17},{"category":"isp","count":6},{"category":"business","count":1}],"asns":[{"asn":"AS14061","count":7},{"asn":"AS16276","count":6},{"asn":"AS17621","count":3},{"asn":"AS63949","count":3},{"asn":"AS12083","count":1},{"asn":"AS14618","count":1},{"asn":"AS202425","count":1},{"asn":"AS206264","count":1},{"asn":"AS4134","count":1}]}}
+    {
+      "query": "classification:malicious tags:'Bluekeep Exploit'",
+      "count": 24,
+      "stats": {
+        "classifications": [
+          {
+            "classification": "malicious",
+            "count": 24
+          }
+        ],
+        "organizations": [
+          {
+            "organization": "DigitalOcean, LLC",
+            "count": 7
+          },
+          {
+            "organization": "OVH SAS",
+            "count": 6
+          },
+          {
+            "organization": "China Unicom Shanghai network",
+            "count": 3
+          },
+          {
+            "organization": "Linode, LLC",
+            "count": 3
+          },
+          {
+            "organization": "Amarutu Technology Ltd",
+            "count": 1
+          },
+          {
+            "organization": "Amazon.com, Inc.",
+            "count": 1
+          },
+          {
+            "organization": "CHINANET-BACKBONE",
+            "count": 1
+          },
+          {
+            "organization": "INT-NETWORK",
+            "count": 1
+          },
+          {
+            "organization": "WideOpenWest Finance LLC",
+            "count": 1
+          }
+        ],
+        "actors": null,
+        "countries": [
+          {
+            "country": "Canada",
+            "count": 6
+          },
+          {
+            "country": "United States",
+            "count": 6
+          },
+          {
+            "country": "China",
+            "count": 4
+          },
+          {
+            "country": "Germany",
+            "count": 3
+          },
+          {
+            "country": "Netherlands",
+            "count": 3
+          },
+          {
+            "country": "France",
+            "count": 1
+          },
+          {
+            "country": "United Kingdom",
+            "count": 1
+          }
+        ],
+        "tags": [
+          {
+            "tag": "Bluekeep Exploit",
+            "count": 24
+          },
+          {
+            "tag": "RDP Scanner",
+            "count": 24
+          },
+          {
+            "tag": "Telnet Scanner",
+            "count": 1
+          }
+        ],
+        "operating_systems": [
+          {
+            "operating_system": "Linux 3.11+",
+            "count": 16
+          },
+          {
+            "operating_system": "Windows 7/8",
+            "count": 3
+          },
+          {
+            "operating_system": "Mac OS X",
+            "count": 2
+          },
+          {
+            "operating_system": "Linux 2.2-3.x",
+            "count": 1
+          }
+        ],
+        "categories": [
+          {
+            "category": "hosting",
+            "count": 17
+          },
+          {
+            "category": "isp",
+            "count": 6
+          },
+          {
+            "category": "business",
+            "count": 1
+          }
+        ],
+        "asns": [
+          {
+            "asn": "AS14061",
+            "count": 7
+          },
+          {
+            "asn": "AS16276",
+            "count": 6
+          },
+          {
+            "asn": "AS17621",
+            "count": 3
+          },
+          {
+            "asn": "AS63949",
+            "count": 3
+          },
+          {
+            "asn": "AS12083",
+            "count": 1
+          },
+          {
+            "asn": "AS14618",
+            "count": 1
+          },
+          {
+            "asn": "AS202425",
+            "count": 1
+          },
+          {
+            "asn": "AS206264",
+            "count": 1
+          },
+          {
+            "asn": "AS4134",
+            "count": 1
+          }
+        ]
+      }
+    }
 
 
 Command line interface
