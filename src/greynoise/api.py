@@ -90,7 +90,11 @@ class GreyNoise(object):
         if not 200 <= response.status_code < 300:
             raise RequestFailure(response.status_code, response.content)
 
-        return response.json()
+        body = response.json()
+        if "error" in body:
+            raise RequestFailure(response.status_code, body)
+
+        return body
 
     def get_noise_status(self, ip_address):
         """Get activity associated with an IP address.
