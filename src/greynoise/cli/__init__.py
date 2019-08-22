@@ -26,9 +26,10 @@ from greynoise.util import load_config
     default="txt",
     help="Output format",
 )
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
-def main(context, api_key, output_format, verbose):
+def main(context, api_key, output_format, input_file, verbose):
     """Entry point for the greynoise CLI.
 
     :param argv: Command line arguments
@@ -54,6 +55,7 @@ def main(context, api_key, output_format, verbose):
 
     context.obj = {
         "api_client": GreyNoise(api_key),
+        "input_file": input_file,
         "output_format": output_format,
         "verbose": verbose,
     }
