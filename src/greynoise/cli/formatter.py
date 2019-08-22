@@ -61,10 +61,11 @@ def ip_multi_quick_check_formatter(ip_multi_quick_check, verbose):
 
 def gnql_query_formatter(gnql, verbose):
     """Convert GNQL query result into human-readable text."""
-    for ip_context in gnql["data"]:
-        if ip_context["seen"]:
-            metadata = ip_context["metadata"]
-            metadata["location"] = get_location(metadata)
+    if "data" in gnql:
+        for ip_context in gnql["data"]:
+            if ip_context["seen"]:
+                metadata = ip_context["metadata"]
+                metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("gnql.txt.j2")
     return template.render(gnql=gnql, verbose=verbose)

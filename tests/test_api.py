@@ -4,7 +4,7 @@ import pytest
 from mock import Mock, patch
 
 from greynoise.api import GreyNoise
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 
 
 @pytest.fixture
@@ -43,6 +43,22 @@ class TestRequest(object):
         """Exception is raised on response status code failure."""
         client.session = Mock()
         client.session.get().status_code = status_code
+        with pytest.raises(RequestFailure):
+            client._request("endpoint")
+
+    def test_rate_limit_error(self, client):
+        """Exception is raised on rate limit response."""
+        client.session = Mock()
+        client.session.get().status_code = 429
+        with pytest.raises(RateLimitError):
+            client._request("endpoint")
+
+    def test_error_in_payload(self, client):
+        """Exception is raised on error in payload."""
+        expected_response = {"error": "error description"}
+        client.session = Mock()
+        client.session.get().status_code = 200
+        client.session.get().json.return_value = expected_response
         with pytest.raises(RequestFailure):
             client._request("endpoint")
 

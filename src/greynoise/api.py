@@ -4,7 +4,7 @@ import logging
 
 import requests
 
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config, validate_ip
 
 LOGGER = logging.getLogger(__name__)
@@ -87,10 +87,17 @@ class GreyNoise(object):
         response = self.session.get(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
-        if response.status_code not in range(200, 299):
+
+        if response.status_code == 429:
+            raise RateLimitError()
+        if not 200 <= response.status_code < 300:
             raise RequestFailure(response.status_code, response.content)
 
-        return response.json()
+        body = response.json()
+        if "error" in body:
+            raise RequestFailure(response.status_code, body)
+
+        return body
 
     def get_noise_status(self, ip_address):
         """Get activity associated with an IP address.
