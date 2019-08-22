@@ -3,7 +3,7 @@
           <header>OVERVIEW</header>
 ----------------------------
 <key>Actor</key>: <value>{{ ip_context.actor }}</value>
-<key>Classification</key>: <value>{{ ip_context.classification }}</value>
+<key>Classification</key>: {{ macros.classification(ip_context.classification) }}
 <key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
 <key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>

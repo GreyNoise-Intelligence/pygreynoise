@@ -22,6 +22,9 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "value": ansimarkup.parse("<green>"),
         "noise": ansimarkup.parse("<light-yellow>"),
         "not-noise": ansimarkup.parse("<dim>"),
+        "malicious": ansimarkup.parse("<light-red>"),
+        "unknown": ansimarkup.parse("<dim>"),
+        "benign": ansimarkup.parse("<light-green>"),
     }
 )
 
