@@ -3,13 +3,48 @@
 
 from __future__ import print_function
 
+import functools
 import json
 from xml.dom.minidom import parseString
 
+import ansimarkup
+import colorama
 from dicttoxml import dicttoxml
 from jinja2 import Environment, PackageLoader
 
 JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
+
+colorama.init()
+ANSI_MARKUP = ansimarkup.AnsiMarkup(
+    tags={
+        "header": ansimarkup.parse("<bold>"),
+        "key": ansimarkup.parse("<blue>"),
+        "value": ansimarkup.parse("<green>"),
+        "noise": ansimarkup.parse("<light-yellow>"),
+        "not-noise": ansimarkup.parse("<dim>"),
+        "malicious": ansimarkup.parse("<light-red>"),
+        "unknown": ansimarkup.parse("<dim>"),
+        "benign": ansimarkup.parse("<light-green>"),
+    }
+)
+
+
+def colored_output(function):
+    """Decorator that converts ansi markup into ansi escape sequences.
+
+    :param function: Function that will return text using ansi markup.
+    :type function: callable
+    :returns: Wrapped function that converts markup into escape sequences.
+    :rtype: callable
+
+    """
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        output = function(*args, **kwargs)
+        return ANSI_MARKUP(output)
+
+    return wrapper
 
 
 def json_formatter(result, _verbose):
@@ -37,6 +72,7 @@ def get_location(metadata):
     return " ".join(location)
 
 
+@colored_output
 def ip_context_formatter(ip_context, verbose):
     """Convert IP context result into human-readable text."""
     if ip_context["seen"]:
@@ -47,18 +83,21 @@ def ip_context_formatter(ip_context, verbose):
     return template.render(ip_context=ip_context, verbose=verbose)
 
 
+@colored_output
 def ip_quick_check_formatter(ip_quick_check, verbose):
     """Convert IP quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
     return template.render(ip_quick_check=ip_quick_check, verbose=verbose)
 
 
+@colored_output
 def ip_multi_quick_check_formatter(ip_multi_quick_check, verbose):
     """Convert IP multi quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_multi_quick_check.txt.j2")
     return template.render(ip_multi_quick_check=ip_multi_quick_check, verbose=verbose)
 
 
+@colored_output
 def gnql_query_formatter(gnql, verbose):
     """Convert GNQL query result into human-readable text."""
     if "data" in gnql:
@@ -71,12 +110,14 @@ def gnql_query_formatter(gnql, verbose):
     return template.render(gnql=gnql, verbose=verbose)
 
 
+@colored_output
 def gnql_stats_formatter(gnql_stats, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
     return template.render(gnql_stats=gnql_stats, verbose=verbose)
 
 
+@colored_output
 def actors_formatter(actors, verbose):
     """Convert actors result into human-readable text."""
     template = JINJA2_ENV.get_template("actors.txt.j2")

@@ -22,6 +22,19 @@ Showing results 1 - 20. Run again with -v for full output.
 {%- set left_width = elements | map(attribute=field_name) | map('length') | max %}
 {%- set right_width = elements | map(attribute='count') | map('string') | map('length') | max %}
 {%- for element in elements %}
-- {{ "%-*s" | format(left_width, element[field_name]) }} {{ "%*s" | format(right_width, element.count) }}
+- <key>{{ "%-*s" | format(left_width, element[field_name]) }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
 {%- endfor %}
+{% endmacro %}
+
+# Render classification with proper color
+{% macro classification(value) %}
+{%- if value == "benign" -%}
+<benign>{{ value }}</benign>
+{%- elif value == "unknown" -%}
+<unknown>{{ value }}</unknown>
+{%- elif value == "malicious" -%}
+<malicious>{{ value }}</malicious>
+{%- else -%}
+<value>{{ value }}</value>
+{%- endif -%}
 {% endmacro %}

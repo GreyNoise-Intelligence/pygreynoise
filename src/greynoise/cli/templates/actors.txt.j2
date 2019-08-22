@@ -2,9 +2,9 @@
 
 {% for actor in actors %}
 {{ macros.result_header(loop) }}
-Name: {{ actor.name }}
-IPs:
+<key>Name</key>: <value>{{ actor.name }}</value>
+<key>IPs</key>:
 {%- call(ip) macros.verbose_list(actor.ips, verbose) -%}
-- {{ ip }}
+- <value>{{ ip }}</value>
 {% endcall -%}
 {% endfor %}

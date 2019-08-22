@@ -6,6 +6,7 @@ import textwrap
 import pytest
 
 from greynoise.cli.formatter import (
+    ANSI_MARKUP,
     actors_formatter,
     gnql_query_formatter,
     gnql_stats_formatter,
@@ -52,45 +53,47 @@ EXAMPLE_IP_CONTEXT = {
     "tags": ["<tag#1>", "<tag#2>", "<tag#3>"],
 }
 
-EXAMPLE_IP_CONTEXT_OUTPUT = textwrap.dedent(
-    """\
-             OVERVIEW:
-    ----------------------------
-    Actor: <actor>
-    Classification: <classification>
-    First seen: <first_seen>
-    IP: <ip_address>
-    Last seen: <last_seen>
-    Tags:
-    - <tag#1>
-    - <tag#2>
-    - <tag#3>
+EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
+    textwrap.dedent(
+        """\
+                  <header>OVERVIEW</header>
+        ----------------------------
+        <key>Actor</key>: <value><actor></value>
+        <key>Classification</key>: <value><classification></value>
+        <key>First seen</key>: <value><first_seen></value>
+        <key>IP</key>: <value><ip_address></value>
+        <key>Last seen</key>: <value><last_seen></value>
+        <key>Tags</key>:
+        - <value><tag#1></value>
+        - <value><tag#2></value>
+        - <value><tag#3></value>
 
-             METADATA:
-    ----------------------------
-    ASN: <asn>
-    Category: <category>
-    Location: <city>, <country> (<country_code>)
-    Organization: <organization>
-    OS: <os>
-    rDNS: <rdns>
-    Tor: False
+                  <header>METADATA</header>
+        ----------------------------
+        <key>ASN</key>: <value><asn></value>
+        <key>Category</key>: <value><category></value>
+        <key>Location</key>: <value><city>, <country> (<country_code>)</value>
+        <key>Organization</key>: <value><organization></value>
+        <key>OS</key>: <value><os></value>
+        <key>rDNS</key>: <value><rdns></value>
+        <key>Tor</key>: <value>False</value>
 
-             RAW DATA:
-    ----------------------------
-    [Scan]
-    - Port/Proto: 123456/TCP
-    - Port/Proto: 123456/UDP
+                  <header>RAW DATA</header>
+        ----------------------------
+        [Scan]
+        - <key>Port/Proto</key>: <value>123456/TCP</value>
+        - <key>Port/Proto</key>: <value>123456/UDP</value>
 
-    [Paths]
-    - /
-    - /favicon.ico
-    - /robots.txt
+        [Paths]
+        - <value>/</value>
+        - <value>/favicon.ico</value>
+        - <value>/robots.txt</value>
 
-    [JA3]
-    - Port: 123456, Fingerprint: <fingerprint#1>
-    - Port: 123456, Fingerprint: <fingerprint#2>
-    - Port: 123456, Fingerprint: <fingerprint#3>"""
+        [JA3]
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#1></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#2></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>"""  # noqa
+    )
 )
 
 
@@ -139,13 +142,24 @@ class TestIPQuickCheckFormatter(object):
     @pytest.mark.parametrize(
         "result, expected",
         (
-            ({"ip": "0.0.0.0", "noise": True}, "0.0.0.0 is classified as NOISE."),
-            ({"ip": "0.0.0.0", "noise": False}, "0.0.0.0 is classified as NOT NOISE."),
+            (
+                {"ip": "0.0.0.0", "noise": True},
+                ANSI_MARKUP.parse(
+                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>."
+                ),
+            ),
+            (
+                {"ip": "0.0.0.0", "noise": False},
+                ANSI_MARKUP.parse(
+                    "<not-noise>0.0.0.0</not-noise> "
+                    "is classified as <bold>NOT NOISE</bold>."
+                ),
+            ),
         ),
     )
     def test_format_ip_quick_check(self, result, expected):
         """Format IP quick check."""
-        assert ip_quick_check_formatter(result, verbose=False) == expected
+        assert ip_quick_check_formatter(result, verbose=False).strip("\n") == expected
 
 
 class TestIPMultiQuickCheckFormatter(object):
@@ -156,16 +170,20 @@ class TestIPMultiQuickCheckFormatter(object):
         (
             (
                 [{"ip": "0.0.0.0", "noise": True}, {"ip": "0.0.0.1", "noise": False}],
-                (
-                    "\n0.0.0.0 is classified as NOISE.\n"
-                    "0.0.0.1 is classified as NOT NOISE."
+                ANSI_MARKUP.parse(
+                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>.\n"
+                    "<not-noise>0.0.0.1</not-noise> "
+                    "is classified as <bold>NOT NOISE</bold>."
                 ),
             ),
         ),
     )
     def test_format_multi_ip_quick_check(self, result, expected):
         """Format IP multi quick check."""
-        assert ip_multi_quick_check_formatter(result, verbose=False) == expected
+        assert (
+            ip_multi_quick_check_formatter(result, verbose=False).strip("\n")
+            == expected
+        )
 
 
 class TestGNQLQueryFormatter(object):
@@ -241,35 +259,37 @@ class TestGNQLStatsFormatter(object):
                         ],
                     },
                 },
-                textwrap.dedent(
-                    """\
-                    ASNs:
-                    - <asn>      1
-                    - <long_asn> 1
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        """\
+                        <header>ASNs</header>:
+                        - <key><asn>     </key> <value>1</value>
+                        - <key><long_asn></key> <value>1</value>
 
-                    Categories:
-                    - <category>      1
-                    - <long_category> 1
+                        <header>Categories</header>:
+                        - <key><category>     </key> <value>1</value>
+                        - <key><long_category></key> <value>1</value>
 
-                    Classifications:
-                    - <classification>      1
-                    - <long_classification> 1
+                        <header>Classifications</header>:
+                        - <key><classification>     </key> <value>1</value>
+                        - <key><long_classification></key> <value>1</value>
 
-                    Countries:
-                    - <country>      1
-                    - <long_country> 1
+                        <header>Countries</header>:
+                        - <key><country>     </key> <value>1</value>
+                        - <key><long_country></key> <value>1</value>
 
-                    Operating systems:
-                    - <operating_system>      1
-                    - <long_operating_system> 1
+                        <header>Operating systems</header>:
+                        - <key><operating_system>     </key> <value>1</value>
+                        - <key><long_operating_system></key> <value>1</value>
 
-                    Organizations:
-                    - <organization>      1
-                    - <long_organization> 1
+                        <header>Organizations</header>:
+                        - <key><organization>     </key> <value>1</value>
+                        - <key><long_organization></key> <value>1</value>
 
-                    Tags:
-                    - <tag>      1
-                    - <long_tag> 1"""
+                        <header>Tags</header>:
+                        - <key><tag>     </key> <value>1</value>
+                        - <key><long_tag></key> <value>1</value>"""
+                    )
                 ),
             ),
         ),
@@ -290,26 +310,28 @@ class TestActorsFormatter(object):
                     {"name": "<name#1>", "ips": ["<ip#1>", "<ip#2>"]},
                     {"name": "<name#2>", "ips": ["<ip#3>", "<ip#4>"]},
                 ],
-                textwrap.dedent(
-                    u"""\
-                    ┌───────────────────────────┐
-                    │       Result 1 of 2       │
-                    └───────────────────────────┘
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                        ┌───────────────────────────┐
+                        │       Result 1 of 2       │
+                        └───────────────────────────┘
 
-                    Name: <name#1>
-                    IPs:
-                    - <ip#1>
-                    - <ip#2>
+                        <key>Name</key>: <value><name#1></value>
+                        <key>IPs</key>:
+                        - <value><ip#1></value>
+                        - <value><ip#2></value>
 
 
-                    ┌───────────────────────────┐
-                    │       Result 2 of 2       │
-                    └───────────────────────────┘
+                        ┌───────────────────────────┐
+                        │       Result 2 of 2       │
+                        └───────────────────────────┘
 
-                    Name: <name#2>
-                    IPs:
-                    - <ip#3>
-                    - <ip#4>"""
+                        <key>Name</key>: <value><name#2></value>
+                        <key>IPs</key>:
+                        - <value><ip#3></value>
+                        - <value><ip#4></value>"""
+                    )
                 ),
             ),
         ),

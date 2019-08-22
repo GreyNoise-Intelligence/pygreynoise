@@ -1,46 +1,46 @@
 {% import "macros.txt.j2" as macros %}
 {%- if ip_context.seen %}
-         OVERVIEW:
+          <header>OVERVIEW</header>
 ----------------------------
-Actor: {{ ip_context.actor }}
-Classification: {{ ip_context.classification }}
-First seen: {{ ip_context.first_seen }}
-IP: {{ ip_context.ip }}
-Last seen: {{ ip_context.last_seen }}
-Tags:
+<key>Actor</key>: <value>{{ ip_context.actor }}</value>
+<key>Classification</key>: {{ macros.classification(ip_context.classification) }}
+<key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
+<key>IP</key>: <value>{{ ip_context.ip }}</value>
+<key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
+<key>Tags</key>:
 {%- call(tag) macros.verbose_list(ip_context.tags, verbose) -%}
-- {{ tag }}
+- <value>{{ tag }}</value>
 {% endcall %}
-         METADATA:
+          <header>METADATA</header>
 ----------------------------
-ASN: {{ ip_context.metadata.asn }}
-Category: {{ ip_context.metadata.category }}
-Location: {{ ip_context.metadata.location }}
-Organization: {{ ip_context.metadata.organization }}
-OS: {{ ip_context.metadata.os }}
-rDNS: {{ ip_context.metadata.rdns }}
-Tor: {{ ip_context.metadata.tor }}
+<key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
+<key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
+<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>
+<key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
+<key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
+<key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>
+<key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>
 
-         RAW DATA:
+          <header>RAW DATA</header>
 ----------------------------
 {%- if ip_context.raw_data.scan %}
 [Scan]
 {%- call(scan) macros.verbose_list(ip_context.raw_data.scan, verbose) -%}
-- Port/Proto: {{ scan.port }}/{{ scan.protocol }}
+- <key>Port/Proto</key>: <value>{{ scan.port }}/{{ scan.protocol }}</value>
 {% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.web.paths %}
 [Paths]
 {%- call(path) macros.verbose_list(ip_context.raw_data.web.paths, verbose) -%}
-- {{ path }}
+- <value>{{ path }}</value>
 {% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.ja3 %}
 [JA3]
 {%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3, verbose) -%}
-- Port: {{ ja3.port }}, Fingerprint: {{ ja3.fingerprint }}
+- <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
 {% endcall -%}
 {% endif %}
 {%- else -%}
