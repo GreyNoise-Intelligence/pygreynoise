@@ -1,5 +1,9 @@
 {% import "macros.txt.j2" as macros %}
+{% if gnql.data %}
 {% for ip_context in gnql.data %}
 {{ macros.result_header(loop) }}
 {%- include "ip_context.txt.j2" %}
 {%- endfor %}
+{% else %}
+No results found for this query.
+{% endif %}
