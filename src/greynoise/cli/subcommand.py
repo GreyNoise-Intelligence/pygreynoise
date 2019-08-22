@@ -98,7 +98,7 @@ def gnql():
 
 
 @gnql.command()
-@click.argument("query")
+@click.argument("query", required=False)
 @click.pass_obj
 @echo_result
 def query(obj, query):
@@ -109,7 +109,7 @@ def query(obj, query):
 
 
 @gnql.command()
-@click.argument("query")
+@click.argument("query", required=False)
 @click.pass_obj
 @echo_result
 def stats(obj, query):
