@@ -12,3 +12,11 @@
 Showing results 1 - 20. Run again with -v for full output.
 {% endif -%}
 {% endmacro %}
+
+{% macro column_list(elements, field_name) %}
+{%- set left_width = elements | map(attribute=field_name) | map('length') | max %}
+{%- set right_width = elements | map(attribute='count') | map('string') | map('length') | max %}
+{%- for element in elements %}
+- {{ "%-*s" | format(left_width, element[field_name]) }} {{ "%*s" | format(right_width, element.count) }}
+{%- endfor %}
+{% endmacro %}
