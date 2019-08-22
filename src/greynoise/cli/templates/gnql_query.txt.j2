@@ -1,8 +1,6 @@
 {% import "macros.txt.j2" as macros %}
 {% for result in results -%}
-╔═══════════════════════════╗
-║ <header>{{ "{:^25}".format("Query {} of {}".format(loop.index, loop.length)) }}</header> ║
-╚═══════════════════════════╝
+{{ macros.query_header(loop) -}}
 Query: {{ result.query }}
 {%- if result.data %}
 {%- for ip_context in result.data %}
