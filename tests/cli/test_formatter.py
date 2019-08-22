@@ -145,20 +145,21 @@ class TestIPQuickCheckFormatter(object):
             (
                 {"ip": "0.0.0.0", "noise": True},
                 ANSI_MARKUP.parse(
-                    "<value>0.0.0.0</value> is classified as <bold>NOISE</bold>."
+                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>."
                 ),
             ),
             (
                 {"ip": "0.0.0.0", "noise": False},
                 ANSI_MARKUP.parse(
-                    "<value>0.0.0.0</value> is classified as <bold>NOT NOISE</bold>."
+                    "<not-noise>0.0.0.0</not-noise> "
+                    "is classified as <bold>NOT NOISE</bold>."
                 ),
             ),
         ),
     )
     def test_format_ip_quick_check(self, result, expected):
         """Format IP quick check."""
-        assert ip_quick_check_formatter(result, verbose=False) == expected
+        assert ip_quick_check_formatter(result, verbose=False).strip("\n") == expected
 
 
 class TestIPMultiQuickCheckFormatter(object):
@@ -170,15 +171,19 @@ class TestIPMultiQuickCheckFormatter(object):
             (
                 [{"ip": "0.0.0.0", "noise": True}, {"ip": "0.0.0.1", "noise": False}],
                 ANSI_MARKUP.parse(
-                    "\n<value>0.0.0.0</value> is classified as <bold>NOISE</bold>.\n"
-                    "<value>0.0.0.1</value> is classified as <bold>NOT NOISE</bold>."
+                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>.\n"
+                    "<not-noise>0.0.0.1</not-noise> "
+                    "is classified as <bold>NOT NOISE</bold>."
                 ),
             ),
         ),
     )
     def test_format_multi_ip_quick_check(self, result, expected):
         """Format IP multi quick check."""
-        assert ip_multi_quick_check_formatter(result, verbose=False) == expected
+        assert (
+            ip_multi_quick_check_formatter(result, verbose=False).strip("\n")
+            == expected
+        )
 
 
 class TestGNQLQueryFormatter(object):
