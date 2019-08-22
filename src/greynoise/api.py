@@ -80,7 +80,7 @@ class GreyNoise(object):
         if params is None:
             params = {}
         headers = {
-            "X-Request-Client": "pyGreyNoise v{}".format(self.CLIENT_VERSION),
+            "User-Agent": "greyNoise/{}".format(self.CLIENT_VERSION),
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
