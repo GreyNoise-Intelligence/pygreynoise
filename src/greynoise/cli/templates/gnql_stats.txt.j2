@@ -1,41 +1,41 @@
 {% import "macros.txt.j2" as macros %}
 
 {%- if gnql_stats.stats.actors %}
-Actors:
+<header>Actors<header>:
 {{- macros.column_list(gnql_stats.stats.actors, "actor") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.asns %}
-ASNs:
+<header>ASNs</header>:
 {{- macros.column_list(gnql_stats.stats.asns, "asn") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.categories %}
-Categories:
+<header>Categories</header>:
 {{- macros.column_list(gnql_stats.stats.categories, "category") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.classifications %}
-Classifications:
+<header>Classifications</header>:
 {{- macros.column_list(gnql_stats.stats.classifications, "classification") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.countries %}
-Countries:
+<header>Countries</header>:
 {{- macros.column_list(gnql_stats.stats.countries, "country") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.operating_systems %}
-Operating systems:
+<header>Operating systems</header>:
 {{- macros.column_list(gnql_stats.stats.operating_systems, "operating_system") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.organizations %}
-Organizations:
+<header>Organizations</header>:
 {{- macros.column_list(gnql_stats.stats.organizations, "organization") }}
 {%- endif %}
 
 {%- if gnql_stats.stats.tags %}
-Tags:
+<header>Tags</header>:
 {{- macros.column_list(gnql_stats.stats.tags, "tag") }}
 {%- endif %}
