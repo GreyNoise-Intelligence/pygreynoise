@@ -11,7 +11,12 @@ from greynoise.cli.subcommand import actors, gnql, ip, setup
 from greynoise.util import load_config
 
 
-@click.group(cls=DefaultGroup, default="gnql", default_if_no_args=True)
+@click.group(
+    cls=DefaultGroup,
+    default="gnql",
+    default_if_no_args=True,
+    context_settings={"help_option_names": ("-h", "--help")},
+)
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
     "-f",
