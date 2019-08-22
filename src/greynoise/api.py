@@ -23,7 +23,7 @@ class GreyNoise(object):
 
     NAME = "GreyNoise"
     BASE_URL = "https://enterprise.api.greynoise.io"
-    CLIENT_VERSION = 1
+    CLIENT_VERSION = "0.2.0"
     API_VERSION = "v2"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
@@ -80,7 +80,7 @@ class GreyNoise(object):
         if params is None:
             params = {}
         headers = {
-            "X-Request-Client": "pyGreyNoise v{}".format(self.CLIENT_VERSION),
+            "User-Agent": "greyNoise/{}".format(self.CLIENT_VERSION),
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
