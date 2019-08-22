@@ -3,13 +3,43 @@
 
 from __future__ import print_function
 
+import functools
 import json
 from xml.dom.minidom import parseString
 
+import ansimarkup
+import colorama
 from dicttoxml import dicttoxml
 from jinja2 import Environment, PackageLoader
 
 JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
+
+colorama.init()
+ANSI_MARKUP = ansimarkup.AnsiMarkup(
+    tags={
+        "header": ansimarkup.parse("<bold>"),
+        "key": ansimarkup.parse("<blue>"),
+        "value": ansimarkup.parse("<green>"),
+    }
+)
+
+
+def colored_output(function):
+    """Decorator that converts ansi markup into ansi escape sequences.
+
+    :param function: Function that will return text using ansi markup.
+    :type function: callable
+    :returns: Wrapped function that converts markup into escape sequences.
+    :rtype: callable
+
+    """
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        output = function(*args, **kwargs)
+        return ANSI_MARKUP(output)
+
+    return wrapper
 
 
 def json_formatter(result, _verbose):
