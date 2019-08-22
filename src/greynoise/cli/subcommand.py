@@ -105,7 +105,13 @@ def query(obj, query):
     """Run GNQL query."""
     obj["subcommand"] = "gnql.query"
     api_client = obj["api_client"]
-    return api_client.run_query(query=query)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(api_client.run_query(query=line.strip()) for line in input_file)
+    if query:
+        results.append(api_client.run_query(query=query))
+    return results
 
 
 @gnql.command()
@@ -116,4 +122,12 @@ def stats(obj, query):
     """Run GNQL stats query."""
     obj["subcommand"] = "gnql.stats"
     api_client = obj["api_client"]
-    return api_client.run_stats_query(query=query)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(
+            api_client.run_stats_query(query=line.strip()) for line in input_file
+        )
+    if query:
+        results.append(api_client.run_stats_query(query=query))
+    return results
