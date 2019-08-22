@@ -6,6 +6,7 @@ import textwrap
 import pytest
 from click.testing import CliRunner
 from mock import Mock, patch
+from six import StringIO
 
 from greynoise.cli.subcommand import (
     actors,
@@ -232,39 +233,49 @@ class TestActors(object):
         api_client.get_actors.assert_called_with()
 
 
-class TestGNQL(object):
+class TestGNQLQuery(object):
     """"GNQL subcommand tests."""
 
-    def test_gnql(self):
-        """Run GQNQL query."""
+    def test_gnql_query(self):
+        """Run GNQL query."""
         runner = CliRunner()
 
         query = "<query>"
         api_client = Mock()
         api_client.run_query.return_value = []
-        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
-        expected = "[]\n"
+        obj = {
+            "api_client": api_client,
+            "input_file": StringIO(),
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = json.dumps([[]], indent=4, sort_keys=True)
 
         result = runner.invoke(gnql, [query], obj=obj)
         assert result.exit_code == 0
-        assert result.output == expected
+        assert result.output.strip("\n") == expected
         api_client.run_query.assert_called_with(query=query)
 
 
-class TestStats(object):
+class TestGNQLStats(object):
     """"GNQL stats subcommand tests."""
 
     def test_stats(self):
-        """Run GQNQL stats query."""
+        """Run GNQL stats query."""
         runner = CliRunner()
 
         query = "<query>"
         api_client = Mock()
         api_client.run_stats_query.return_value = []
-        obj = {"api_client": api_client, "output_format": "json", "verbose": False}
-        expected = "[]\n"
+        obj = {
+            "api_client": api_client,
+            "input_file": StringIO(),
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = json.dumps([[]], indent=4, sort_keys=True)
 
         result = runner.invoke(stats, [query], obj=obj)
         assert result.exit_code == 0
-        assert result.output == expected
+        assert result.output.strip("\n") == expected
         api_client.run_stats_query.assert_called_with(query=query)

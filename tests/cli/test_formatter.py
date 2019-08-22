@@ -193,20 +193,29 @@ class TestGNQLQueryFormatter(object):
         "result, expected",
         (
             (
-                {
-                    "complete": True,
-                    "count": 1,
-                    "data": [EXAMPLE_IP_CONTEXT],
-                    "message": "ok",
-                    "query": "<ip_address>",
-                },
-                textwrap.dedent(
-                    u"""\
-                    ┌───────────────────────────┐
-                    │       Result 1 of 1       │
-                    └───────────────────────────┘
+                [
+                    {
+                        "complete": True,
+                        "count": 1,
+                        "data": [EXAMPLE_IP_CONTEXT],
+                        "message": "ok",
+                        "query": "<ip_address>",
+                    }
+                ],
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                        ╔═══════════════════════════╗
+                        ║ <header>      Query 1 of 1       </header> ║
+                        ╚═══════════════════════════╝
+                        Query: <ip_address>
 
-                    """
+                        ┌───────────────────────────┐
+                        │       Result 1 of 1       │
+                        └───────────────────────────┘
+
+                        """
+                    )
                 )
                 + EXAMPLE_IP_CONTEXT_OUTPUT,
             ),
@@ -224,44 +233,53 @@ class TestGNQLStatsFormatter(object):
         "result, expected",
         (
             (
-                {
-                    "count": 2,
-                    "query": "<ip_address>",
-                    "stats": {
-                        "actors": None,
-                        "asns": [
-                            {"asn": "<asn>", "count": 1},
-                            {"asn": "<long_asn>", "count": 1},
-                        ],
-                        "categories": [
-                            {"category": "<category>", "count": 1},
-                            {"category": "<long_category>", "count": 1},
-                        ],
-                        "classifications": [
-                            {"classification": "<classification>", "count": 1},
-                            {"classification": "<long_classification>", "count": 1},
-                        ],
-                        "countries": [
-                            {"country": "<country>", "count": 1},
-                            {"country": "<long_country>", "count": 1},
-                        ],
-                        "operating_systems": [
-                            {"operating_system": "<operating_system>", "count": 1},
-                            {"operating_system": "<long_operating_system>", "count": 1},
-                        ],
-                        "organizations": [
-                            {"organization": "<organization>", "count": 1},
-                            {"organization": "<long_organization>", "count": 1},
-                        ],
-                        "tags": [
-                            {"tag": "<tag>", "count": 1},
-                            {"tag": "<long_tag>", "count": 1},
-                        ],
-                    },
-                },
+                [
+                    {
+                        "count": 2,
+                        "query": "<ip_address>",
+                        "stats": {
+                            "actors": None,
+                            "asns": [
+                                {"asn": "<asn>", "count": 1},
+                                {"asn": "<long_asn>", "count": 1},
+                            ],
+                            "categories": [
+                                {"category": "<category>", "count": 1},
+                                {"category": "<long_category>", "count": 1},
+                            ],
+                            "classifications": [
+                                {"classification": "<classification>", "count": 1},
+                                {"classification": "<long_classification>", "count": 1},
+                            ],
+                            "countries": [
+                                {"country": "<country>", "count": 1},
+                                {"country": "<long_country>", "count": 1},
+                            ],
+                            "operating_systems": [
+                                {"operating_system": "<operating_system>", "count": 1},
+                                {
+                                    "operating_system": "<long_operating_system>",
+                                    "count": 1,
+                                },
+                            ],
+                            "organizations": [
+                                {"organization": "<organization>", "count": 1},
+                                {"organization": "<long_organization>", "count": 1},
+                            ],
+                            "tags": [
+                                {"tag": "<tag>", "count": 1},
+                                {"tag": "<long_tag>", "count": 1},
+                            ],
+                        },
+                    }
+                ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
                         """\
+                        ╔═══════════════════════════╗
+                        ║ <header>      Query 1 of 1       </header> ║
+                        ╚═══════════════════════════╝
+                        Query: <ip_address>
                         <header>ASNs</header>:
                         - <key><asn>     </key> <value>1</value>
                         - <key><long_asn></key> <value>1</value>
