@@ -1,9 +1,15 @@
 {% import "macros.txt.j2" as macros %}
-{% if gnql.data %}
-{% for ip_context in gnql.data %}
+{% for result in results -%}
+╔═══════════════════════════╗
+║ <header>{{ "{:^25}".format("Query {} of {}".format(loop.index, loop.length)) }}</header> ║
+╚═══════════════════════════╝
+Query: {{ result.query }}
+{%- if result.data %}
+{%- for ip_context in result.data %}
 {{ macros.result_header(loop) }}
 {%- include "ip_context.txt.j2" %}
 {%- endfor %}
 {% else %}
 No results found for this query.
 {% endif %}
+{% endfor %}

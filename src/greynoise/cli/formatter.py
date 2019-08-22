@@ -98,23 +98,24 @@ def ip_multi_quick_check_formatter(ip_multi_quick_check, verbose):
 
 
 @colored_output
-def gnql_query_formatter(gnql, verbose):
+def gnql_query_formatter(results, verbose):
     """Convert GNQL query result into human-readable text."""
-    if "data" in gnql:
-        for ip_context in gnql["data"]:
-            if ip_context["seen"]:
-                metadata = ip_context["metadata"]
-                metadata["location"] = get_location(metadata)
+    for result in results:
+        if "data" in result:
+            for ip_context in result["data"]:
+                if ip_context["seen"]:
+                    metadata = ip_context["metadata"]
+                    metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("gnql.txt.j2")
-    return template.render(gnql=gnql, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
-def gnql_stats_formatter(gnql_stats, verbose):
+def gnql_stats_formatter(results, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    return template.render(gnql_stats=gnql_stats, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output

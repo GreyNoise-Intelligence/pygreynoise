@@ -1,41 +1,50 @@
 {% import "macros.txt.j2" as macros %}
-
-{%- if gnql_stats.stats.actors %}
+{% for result in results %}
+╔═══════════════════════════╗
+║ <header>{{ "{:^25}".format("Query {} of {}".format(loop.index, loop.length)) }}</header> ║
+╚═══════════════════════════╝
+Query: {{ result.query }}
+{%- if result.count > 0 %}
+{%- if result.stats.actors %}
 <header>Actors<header>:
-{{- macros.column_list(gnql_stats.stats.actors, "actor") }}
+{{- macros.column_list(result.stats.actors, "actor") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.asns %}
+{%- if result.stats.asns %}
 <header>ASNs</header>:
-{{- macros.column_list(gnql_stats.stats.asns, "asn") }}
+{{- macros.column_list(result.stats.asns, "asn") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.categories %}
+{%- if result.stats.categories %}
 <header>Categories</header>:
-{{- macros.column_list(gnql_stats.stats.categories, "category") }}
+{{- macros.column_list(result.stats.categories, "category") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.classifications %}
+{%- if result.stats.classifications %}
 <header>Classifications</header>:
-{{- macros.column_list(gnql_stats.stats.classifications, "classification") }}
+{{- macros.column_list(result.stats.classifications, "classification") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.countries %}
+{%- if result.stats.countries %}
 <header>Countries</header>:
-{{- macros.column_list(gnql_stats.stats.countries, "country") }}
+{{- macros.column_list(result.stats.countries, "country") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.operating_systems %}
+{%- if result.stats.operating_systems %}
 <header>Operating systems</header>:
-{{- macros.column_list(gnql_stats.stats.operating_systems, "operating_system") }}
+{{- macros.column_list(result.stats.operating_systems, "operating_system") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.organizations %}
+{%- if result.stats.organizations %}
 <header>Organizations</header>:
-{{- macros.column_list(gnql_stats.stats.organizations, "organization") }}
+{{- macros.column_list(result.stats.organizations, "organization") }}
 {%- endif %}
 
-{%- if gnql_stats.stats.tags %}
+{%- if result.stats.tags %}
 <header>Tags</header>:
-{{- macros.column_list(gnql_stats.stats.tags, "tag") }}
+{{- macros.column_list(result.stats.tags, "tag") }}
 {%- endif %}
+{%- else %}
+No results found for this query.
+{%- endif %}
+{% endfor %}
