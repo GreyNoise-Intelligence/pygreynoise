@@ -216,92 +216,92 @@ It's also possible to get statistics related to a GNQL query to better understan
 results are distributed in terms of different information such as organization, country,
 operating system, etc.::
 
-   $ greynoise gnql stats 'classification:malicious tags:"Bluekeep Exploit"'
-   ASNs:
-   - AS14061: 7
-   - AS16276: 6
-   - AS17621: 3
-   - AS63949: 3
-   - AS12083: 1
-   - AS14618: 1
-   - AS202425: 1
-   - AS206264: 1
-   - AS4134: 1
+    $ greynoise gnql stats 'classification:malicious tags:"Bluekeep Exploit"'
+    ASNs:
+    - AS14061: 7
+    - AS16276: 6
+    - AS17621: 3
+    - AS63949: 3
+    - AS12083: 1
+    - AS14618: 1
+    - AS202425: 1
+    - AS206264: 1
+    - AS4134: 1
 
-   Categories:
-   - hosting: 17
-   - isp: 6
-   - business: 1
+    Categories:
+    - hosting: 17
+    - isp: 6
+    - business: 1
 
-   Classifications:
-   - malicious: 24
+    Classifications:
+    - malicious: 24
 
-   Countries:
-   - Canada: 6
-   - United States: 6
-   - China: 4
-   - Germany: 3
-   - Netherlands: 3
-   - France: 1
-   - United Kingdom: 1
+    Countries:
+    - Canada: 6
+    - United States: 6
+    - China: 4
+    - Germany: 3
+    - Netherlands: 3
+    - France: 1
+    - United Kingdom: 1
 
-   Operating systems:
-   - Linux 3.11+: 16
-   - Windows 7/8: 3
-   - Mac OS X: 2
-   - Linux 2.2-3.x: 1
+    Operating systems:
+    - Linux 3.11+: 16
+    - Windows 7/8: 3
+    - Mac OS X: 2
+    - Linux 2.2-3.x: 1
+    
+    Organizations:
+    - DigitalOcean, LLC: 7
+    - OVH SAS: 6
+    - China Unicom Shanghai network: 3
+    - Linode, LLC: 3
+    - Amarutu Technology Ltd: 1
+    - Amazon.com, Inc.: 1
+    - CHINANET-BACKBONE: 1
+    - INT-NETWORK: 1
+    - WideOpenWest Finance LLC: 1
 
-   Organizations:
-   - DigitalOcean, LLC: 7
-   - OVH SAS: 6
-   - China Unicom Shanghai network: 3
-   - Linode, LLC: 3
-   - Amarutu Technology Ltd: 1
-   - Amazon.com, Inc.: 1
-   - CHINANET-BACKBONE: 1
-   - INT-NETWORK: 1
-   - WideOpenWest Finance LLC: 1
-
-   Tags:
-   - Bluekeep Exploit: 24
-   - RDP Scanner: 24
-   - ZMap Client: 9
-   - DNS Scanner: 8
-   - Web Scanner: 7
-   - TLS/SSL Crawler: 6
-   - HTTP Alt Scanner: 4
-   - SSH Scanner: 4
-   - VNC Scanner: 3
-   - FTP Scanner: 2
-   - Ping Scanner: 2
-   - SMB Scanner: 2
-   - SSH Bruteforcer: 2
-   - Tor: 2
-   - Web Crawler: 2
-   - Bitcoin Node Scanner: 1
-   - Bluekeep Scanner: 1
-   - CPanel Scanner: 1
-   - Cassandra Scanner: 1
-   - CounterStrike Server Scanner: 1
-   - Dockerd Scanner: 1
-   - Elasticsearch Scanner: 1
-   - IPSec VPN Scanner: 1
-   - IRC Scanner: 1
-   - LDAP Scanner: 1
-   - MSSQL Scanner: 1
-   - Masscan Client: 1
-   - Minecraft Scanner: 1
-   - MongoDB Scanner: 1
-   - MySQL Scanner: 1
-   - POP3 Scanner: 1
-   - PPTP VPN Scanner: 1
-   - Postgres Scanner: 1
-   - Privoxy Proxy Scanner: 1
-   - Python Requests Client: 1
-   - RabbitMQ Scanner: 1
-   - Redis Scanner: 1
-   - SMTP Scanner: 1
-   - SOCKS Proxy Scanner: 1
-   - SSH Worm: 1
-   - Telnet Scanner: 1
+    Tags:
+    - Bluekeep Exploit: 24
+    - RDP Scanner: 24
+    - ZMap Client: 9
+    - DNS Scanner: 8
+    - Web Scanner: 7
+    - TLS/SSL Crawler: 6
+    - HTTP Alt Scanner: 4
+    - SSH Scanner: 4
+    - VNC Scanner: 3
+    - FTP Scanner: 2
+    - Ping Scanner: 2
+    - SMB Scanner: 2
+    - SSH Bruteforcer: 2
+    - Tor: 2
+    - Web Crawler: 2
+    - Bitcoin Node Scanner: 1
+    - Bluekeep Scanner: 1
+    - CPanel Scanner: 1
+    - Cassandra Scanner: 1
+    - CounterStrike Server Scanner: 1
+    - Dockerd Scanner: 1
+    - Elasticsearch Scanner: 1
+    - IPSec VPN Scanner: 1
+    - IRC Scanner: 1
+    - LDAP Scanner: 1
+    - MSSQL Scanner: 1
+    - Masscan Client: 1
+    - Minecraft Scanner: 1
+    - MongoDB Scanner: 1
+    - MySQL Scanner: 1
+    - POP3 Scanner: 1
+    - PPTP VPN Scanner: 1
+    - Postgres Scanner: 1
+    - Privoxy Proxy Scanner: 1
+    - Python Requests Client: 1
+    - RabbitMQ Scanner: 1
+    - Redis Scanner: 1
+    - SMTP Scanner: 1
+    - SOCKS Proxy Scanner: 1
+    - SSH Worm: 1
+    - Telnet Scanner: 1
 
