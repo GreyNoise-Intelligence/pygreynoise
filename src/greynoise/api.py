@@ -23,7 +23,7 @@ class GreyNoise(object):
 
     NAME = "GreyNoise"
     BASE_URL = "https://enterprise.api.greynoise.io"
-    CLIENT_VERSION = 1
+    CLIENT_VERSION = "0.2.0"
     API_VERSION = "v2"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
