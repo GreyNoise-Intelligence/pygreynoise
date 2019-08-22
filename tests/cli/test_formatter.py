@@ -212,64 +212,64 @@ class TestGNQLStatsFormatter(object):
                     "stats": {
                         "actors": None,
                         "asns": [
-                            {"asn": "<asn#1>", "count": 1},
-                            {"asn": "<asn#2>", "count": 1},
+                            {"asn": "<asn>", "count": 1},
+                            {"asn": "<long_asn>", "count": 1},
                         ],
                         "categories": [
-                            {"category": "<category#1>", "count": 1},
-                            {"category": "<category#2>", "count": 1},
+                            {"category": "<category>", "count": 1},
+                            {"category": "<long_category>", "count": 1},
                         ],
                         "classifications": [
-                            {"classification": "<classification#1>", "count": 1},
-                            {"classification": "<classification#2>", "count": 1},
+                            {"classification": "<classification>", "count": 1},
+                            {"classification": "<long_classification>", "count": 1},
                         ],
                         "countries": [
-                            {"country": "<country#1>", "count": 1},
-                            {"country": "<country#2>", "count": 1},
+                            {"country": "<country>", "count": 1},
+                            {"country": "<long_country>", "count": 1},
                         ],
                         "operating_systems": [
-                            {"operating_system": "<operating_system#1>", "count": 1},
-                            {"operating_system": "<operating_system#2>", "count": 1},
+                            {"operating_system": "<operating_system>", "count": 1},
+                            {"operating_system": "<long_operating_system>", "count": 1},
                         ],
                         "organizations": [
-                            {"organization": "<organization#1>", "count": 1},
-                            {"organization": "<organization#2>", "count": 1},
+                            {"organization": "<organization>", "count": 1},
+                            {"organization": "<long_organization>", "count": 1},
                         ],
                         "tags": [
-                            {"tag": "<tag#1>", "count": 1},
-                            {"tag": "<tag#2>", "count": 1},
+                            {"tag": "<tag>", "count": 1},
+                            {"tag": "<long_tag>", "count": 1},
                         ],
                     },
                 },
                 textwrap.dedent(
                     """\
                     ASNs:
-                    - <asn#1>: 1
-                    - <asn#2>: 1
+                    - <asn>      1
+                    - <long_asn> 1
 
                     Categories:
-                    - <category#1>: 1
-                    - <category#2>: 1
+                    - <category>      1
+                    - <long_category> 1
 
                     Classifications:
-                    - <classification#1>: 1
-                    - <classification#2>: 1
+                    - <classification>      1
+                    - <long_classification> 1
 
                     Countries:
-                    - <country#1>: 1
-                    - <country#2>: 1
+                    - <country>      1
+                    - <long_country> 1
 
                     Operating systems:
-                    - <operating_system#1>: 1
-                    - <operating_system#2>: 1
+                    - <operating_system>      1
+                    - <long_operating_system> 1
 
                     Organizations:
-                    - <organization#1>: 1
-                    - <organization#2>: 1
+                    - <organization>      1
+                    - <long_organization> 1
 
                     Tags:
-                    - <tag#1>: 1
-                    - <tag#2>: 1"""
+                    - <tag>      1
+                    - <long_tag> 1"""
                 ),
             ),
         ),
