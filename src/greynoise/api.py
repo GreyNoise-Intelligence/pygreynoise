@@ -87,7 +87,7 @@ class GreyNoise(object):
         response = self.session.get(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
-        if response.status_code not in range(200, 299):
+        if not 200 <= response.status_code < 300:
             raise RequestFailure(response.status_code, response.content)
 
         return response.json()
