@@ -15,7 +15,7 @@ INSTALL_REQUIRES = ["click", "click-default-group", "dicttoxml", "jinja2", "requ
 
 setup(
     name="greynoise",
-    version="0.1.5",
+    version="0.2.0",
     description="Abstraction to interact with GreyNoise API.",
     url="https://greynoise.io/",
     author="GreyNoise Intelligence",
