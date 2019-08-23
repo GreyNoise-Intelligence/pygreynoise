@@ -69,14 +69,28 @@ def context(obj, ip_address):
 
 
 @ip.command()
-@click.argument("ip_address", callback=ip_address_parameter)
+@click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
 @click.pass_obj
 @echo_result
 def quick_check(obj, ip_address):
     """Run IP quick check query."""
     obj["subcommand"] = "ip.quick_check"
     api_client = obj["api_client"]
-    return api_client.get_noise_status(ip_address=ip_address)
+    input_file = obj["input_file"]
+
+    if input_file is not None:
+        ip_addresses = [line.strip() for line in input_file]
+    else:
+        ip_addresses = []
+    ip_addresses.extend(list(ip_address))
+
+    results = []
+    if ip_addresses:
+        if len(ip_addresses) == 1:
+            results.append(api_client.get_noise_status(ip_address=ip_addresses[0]))
+        else:
+            results.extend(api_client.get_noise_status_bulk(ip_addresses=ip_addresses))
+    return results
 
 
 @ip.command()

@@ -85,10 +85,10 @@ def ip_context_formatter(results, verbose):
 
 
 @colored_output
-def ip_quick_check_formatter(ip_quick_check, verbose):
+def ip_quick_check_formatter(results, verbose):
     """Convert IP quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
-    return template.render(ip_quick_check=ip_quick_check, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
