@@ -30,6 +30,9 @@ def ip_address_parameter(_context, _parameter, value):
     :raises click.BadParameter: when IP address value is invalid
 
     """
+    if value is None:
+        return value
+
     try:
         validate_ip(value)
     except ValueError:

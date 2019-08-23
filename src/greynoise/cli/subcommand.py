@@ -63,7 +63,7 @@ def context(obj, ip_address):
         results.extend(
             api_client.get_context(ip_address=line.strip()) for line in input_file
         )
-    if query:
+    if ip_address:
         results.append(api_client.get_context(ip_address=ip_address))
     return results
 

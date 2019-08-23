@@ -128,7 +128,24 @@ class TestIPContextFormatter(object):
     """IP context formatter tests."""
 
     @pytest.mark.parametrize(
-        "result, expected", ((EXAMPLE_IP_CONTEXT, EXAMPLE_IP_CONTEXT_OUTPUT),)
+        "result, expected",
+        (
+            (
+                [EXAMPLE_IP_CONTEXT],
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: <ip_address>
+
+                        """
+                    )
+                )
+                + EXAMPLE_IP_CONTEXT_OUTPUT,
+            ),
+        ),
     )
     def test_format_ip_context(self, result, expected):
         """Format IP context."""
@@ -255,6 +272,7 @@ class TestGNQLStatsFormatter(object):
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
                         Query: <ip_address>
+
                         <header>ASNs</header>:
                         - <key><asn>     </key> <value>1</value>
                         - <key><long_asn></key> <value>1</value>
