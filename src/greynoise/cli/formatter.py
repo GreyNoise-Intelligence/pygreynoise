@@ -92,13 +92,6 @@ def ip_quick_check_formatter(results, verbose):
 
 
 @colored_output
-def ip_multi_quick_check_formatter(ip_multi_quick_check, verbose):
-    """Convert IP multi quick check result into human-readable text."""
-    template = JINJA2_ENV.get_template("ip_multi_quick_check.txt.j2")
-    return template.render(ip_multi_quick_check=ip_multi_quick_check, verbose=verbose)
-
-
-@colored_output
 def gnql_query_formatter(results, verbose):
     """Convert GNQL query result into human-readable text."""
     for result in results:
@@ -132,7 +125,6 @@ FORMATTERS = {
     "txt": {
         "ip.context": ip_context_formatter,
         "ip.quick_check": ip_quick_check_formatter,
-        "ip.multi_quick_check": ip_multi_quick_check_formatter,
         "gnql.query": gnql_query_formatter,
         "gnql.stats": gnql_stats_formatter,
         "actors": actors_formatter,

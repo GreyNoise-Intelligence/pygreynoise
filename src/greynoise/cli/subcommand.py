@@ -93,17 +93,6 @@ def quick_check(obj, ip_address):
     return results
 
 
-@ip.command()
-@click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
-@click.pass_obj
-@echo_result
-def multi_quick_check(obj, ip_address):
-    """Run IP multi quick check query."""
-    obj["subcommand"] = "ip.multi_quick_check"
-    api_client = obj["api_client"]
-    return api_client.get_noise_status_bulk(ip_addresses=list(ip_address))
-
-
 @click.command()
 @click.pass_obj
 @echo_result

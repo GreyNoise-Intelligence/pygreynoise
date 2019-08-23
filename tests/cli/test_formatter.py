@@ -11,7 +11,6 @@ from greynoise.cli.formatter import (
     gnql_query_formatter,
     gnql_stats_formatter,
     ip_context_formatter,
-    ip_multi_quick_check_formatter,
     ip_quick_check_formatter,
     json_formatter,
     xml_formatter,
@@ -143,13 +142,13 @@ class TestIPQuickCheckFormatter(object):
         "result, expected",
         (
             (
-                {"ip": "0.0.0.0", "noise": True},
+                [{"ip": "0.0.0.0", "noise": True}],
                 ANSI_MARKUP.parse(
                     "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>."
                 ),
             ),
             (
-                {"ip": "0.0.0.0", "noise": False},
+                [{"ip": "0.0.0.0", "noise": False}],
                 ANSI_MARKUP.parse(
                     "<not-noise>0.0.0.0</not-noise> "
                     "is classified as <bold>NOT NOISE</bold>."
@@ -160,30 +159,6 @@ class TestIPQuickCheckFormatter(object):
     def test_format_ip_quick_check(self, result, expected):
         """Format IP quick check."""
         assert ip_quick_check_formatter(result, verbose=False).strip("\n") == expected
-
-
-class TestIPMultiQuickCheckFormatter(object):
-    """IP multi quick check formatter tests."""
-
-    @pytest.mark.parametrize(
-        "result, expected",
-        (
-            (
-                [{"ip": "0.0.0.0", "noise": True}, {"ip": "0.0.0.1", "noise": False}],
-                ANSI_MARKUP.parse(
-                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>.\n"
-                    "<not-noise>0.0.0.1</not-noise> "
-                    "is classified as <bold>NOT NOISE</bold>."
-                ),
-            ),
-        ),
-    )
-    def test_format_multi_ip_quick_check(self, result, expected):
-        """Format IP multi quick check."""
-        assert (
-            ip_multi_quick_check_formatter(result, verbose=False).strip("\n")
-            == expected
-        )
 
 
 class TestGNQLQueryFormatter(object):
