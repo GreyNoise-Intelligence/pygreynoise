@@ -1,3 +1,10 @@
+# Render header based on loop index and length
+{% macro header(loop) %}
+╔═══════════════════════════╗
+║ <header>{{ "{:^25}".format("{} {} of {}".format(caller(), loop.index, loop.length)) }}</header> ║
+╚═══════════════════════════╝
+{% endmacro %}
+
 # Render result header based on loop index and length
 {% macro result_header(loop) %}
 ┌───────────────────────────┐

@@ -9,13 +9,13 @@ class TestMain(object):
     """Main command tests."""
 
     def test_no_arguments_passed(self):
-        """Main command fails if no arguments are passed."""
+        """Main succeeds even if no arguments are passed."""
         runner = CliRunner()
         with patch("greynoise.cli.load_config") as load_config:
             load_config.return_value = {"api_key": "<api_key>"}
             result = runner.invoke(main, [])
 
-        assert result.exit_code == 2
+        assert result.exit_code == 0
 
     def test_api_key_not_found(self):
         """Main command fails if API key is not found."""

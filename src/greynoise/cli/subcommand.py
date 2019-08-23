@@ -50,36 +50,47 @@ def ip():
 
 
 @ip.command()
-@click.argument("ip_address", callback=ip_address_parameter)
+@click.argument("ip_address", callback=ip_address_parameter, required=False)
 @click.pass_obj
 @echo_result
 def context(obj, ip_address):
     """Run IP context query."""
     obj["subcommand"] = "ip.context"
     api_client = obj["api_client"]
-    return api_client.get_context(ip_address=ip_address)
-
-
-@ip.command()
-@click.argument("ip_address", callback=ip_address_parameter)
-@click.pass_obj
-@echo_result
-def quick_check(obj, ip_address):
-    """Run IP quick check query."""
-    obj["subcommand"] = "ip.quick_check"
-    api_client = obj["api_client"]
-    return api_client.get_noise_status(ip_address=ip_address)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(
+            api_client.get_context(ip_address=line.strip()) for line in input_file
+        )
+    if ip_address:
+        results.append(api_client.get_context(ip_address=ip_address))
+    return results
 
 
 @ip.command()
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
 @click.pass_obj
 @echo_result
-def multi_quick_check(obj, ip_address):
-    """Run IP multi quick check query."""
-    obj["subcommand"] = "ip.multi_quick_check"
+def quick_check(obj, ip_address):
+    """Run IP quick check query."""
+    obj["subcommand"] = "ip.quick_check"
     api_client = obj["api_client"]
-    return api_client.get_noise_status_bulk(ip_addresses=list(ip_address))
+    input_file = obj["input_file"]
+
+    if input_file is not None:
+        ip_addresses = [line.strip() for line in input_file]
+    else:
+        ip_addresses = []
+    ip_addresses.extend(list(ip_address))
+
+    results = []
+    if ip_addresses:
+        if len(ip_addresses) == 1:
+            results.append(api_client.get_noise_status(ip_address=ip_addresses[0]))
+        else:
+            results.extend(api_client.get_noise_status_bulk(ip_addresses=ip_addresses))
+    return results
 
 
 @click.command()
@@ -98,22 +109,36 @@ def gnql():
 
 
 @gnql.command()
-@click.argument("query")
+@click.argument("query", required=False)
 @click.pass_obj
 @echo_result
 def query(obj, query):
     """Run GNQL query."""
     obj["subcommand"] = "gnql.query"
     api_client = obj["api_client"]
-    return api_client.run_query(query=query)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(api_client.run_query(query=line.strip()) for line in input_file)
+    if query:
+        results.append(api_client.run_query(query=query))
+    return results
 
 
 @gnql.command()
-@click.argument("query")
+@click.argument("query", required=False)
 @click.pass_obj
 @echo_result
 def stats(obj, query):
     """Run GNQL stats query."""
     obj["subcommand"] = "gnql.stats"
     api_client = obj["api_client"]
-    return api_client.run_stats_query(query=query)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(
+            api_client.run_stats_query(query=line.strip()) for line in input_file
+        )
+    if query:
+        results.append(api_client.run_stats_query(query=query))
+    return results

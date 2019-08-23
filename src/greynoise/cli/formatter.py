@@ -73,48 +73,43 @@ def get_location(metadata):
 
 
 @colored_output
-def ip_context_formatter(ip_context, verbose):
+def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
-    if ip_context["seen"]:
-        metadata = ip_context["metadata"]
-        metadata["location"] = get_location(metadata)
+    for ip_context in results:
+        if ip_context["seen"]:
+            metadata = ip_context["metadata"]
+            metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("ip_context.txt.j2")
-    return template.render(ip_context=ip_context, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
-def ip_quick_check_formatter(ip_quick_check, verbose):
+def ip_quick_check_formatter(results, verbose):
     """Convert IP quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
-    return template.render(ip_quick_check=ip_quick_check, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
-def ip_multi_quick_check_formatter(ip_multi_quick_check, verbose):
-    """Convert IP multi quick check result into human-readable text."""
-    template = JINJA2_ENV.get_template("ip_multi_quick_check.txt.j2")
-    return template.render(ip_multi_quick_check=ip_multi_quick_check, verbose=verbose)
-
-
-@colored_output
-def gnql_query_formatter(gnql, verbose):
+def gnql_query_formatter(results, verbose):
     """Convert GNQL query result into human-readable text."""
-    if "data" in gnql:
-        for ip_context in gnql["data"]:
-            if ip_context["seen"]:
-                metadata = ip_context["metadata"]
-                metadata["location"] = get_location(metadata)
+    for result in results:
+        if "data" in result:
+            for ip_context in result["data"]:
+                if ip_context["seen"]:
+                    metadata = ip_context["metadata"]
+                    metadata["location"] = get_location(metadata)
 
-    template = JINJA2_ENV.get_template("gnql.txt.j2")
-    return template.render(gnql=gnql, verbose=verbose)
+    template = JINJA2_ENV.get_template("gnql_query.txt.j2")
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
-def gnql_stats_formatter(gnql_stats, verbose):
+def gnql_stats_formatter(results, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    return template.render(gnql_stats=gnql_stats, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output
@@ -130,7 +125,6 @@ FORMATTERS = {
     "txt": {
         "ip.context": ip_context_formatter,
         "ip.quick_check": ip_quick_check_formatter,
-        "ip.multi_quick_check": ip_multi_quick_check_formatter,
         "gnql.query": gnql_query_formatter,
         "gnql.stats": gnql_stats_formatter,
         "actors": actors_formatter,

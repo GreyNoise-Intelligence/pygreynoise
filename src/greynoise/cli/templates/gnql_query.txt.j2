@@ -1,0 +1,13 @@
+{% import "macros.txt.j2" as macros %}
+{% for result in results -%}
+{% call macros.header(loop) %}Query{% endcall -%}
+Query: {{ result.query }}
+{%- if result.data %}
+{%- for ip_context in result.data %}
+{{ macros.result_header(loop) }}
+{%- include "ip_context_result.txt.j2" %}
+{%- endfor %}
+{% else %}
+No results found for this query.
+{% endif %}
+{% endfor %}

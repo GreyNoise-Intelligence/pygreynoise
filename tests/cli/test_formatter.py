@@ -11,7 +11,6 @@ from greynoise.cli.formatter import (
     gnql_query_formatter,
     gnql_stats_formatter,
     ip_context_formatter,
-    ip_multi_quick_check_formatter,
     ip_quick_check_formatter,
     json_formatter,
     xml_formatter,
@@ -129,7 +128,24 @@ class TestIPContextFormatter(object):
     """IP context formatter tests."""
 
     @pytest.mark.parametrize(
-        "result, expected", ((EXAMPLE_IP_CONTEXT, EXAMPLE_IP_CONTEXT_OUTPUT),)
+        "result, expected",
+        (
+            (
+                [EXAMPLE_IP_CONTEXT],
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: <ip_address>
+
+                        """
+                    )
+                )
+                + EXAMPLE_IP_CONTEXT_OUTPUT,
+            ),
+        ),
     )
     def test_format_ip_context(self, result, expected):
         """Format IP context."""
@@ -143,13 +159,13 @@ class TestIPQuickCheckFormatter(object):
         "result, expected",
         (
             (
-                {"ip": "0.0.0.0", "noise": True},
+                [{"ip": "0.0.0.0", "noise": True}],
                 ANSI_MARKUP.parse(
                     "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>."
                 ),
             ),
             (
-                {"ip": "0.0.0.0", "noise": False},
+                [{"ip": "0.0.0.0", "noise": False}],
                 ANSI_MARKUP.parse(
                     "<not-noise>0.0.0.0</not-noise> "
                     "is classified as <bold>NOT NOISE</bold>."
@@ -162,30 +178,6 @@ class TestIPQuickCheckFormatter(object):
         assert ip_quick_check_formatter(result, verbose=False).strip("\n") == expected
 
 
-class TestIPMultiQuickCheckFormatter(object):
-    """IP multi quick check formatter tests."""
-
-    @pytest.mark.parametrize(
-        "result, expected",
-        (
-            (
-                [{"ip": "0.0.0.0", "noise": True}, {"ip": "0.0.0.1", "noise": False}],
-                ANSI_MARKUP.parse(
-                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>.\n"
-                    "<not-noise>0.0.0.1</not-noise> "
-                    "is classified as <bold>NOT NOISE</bold>."
-                ),
-            ),
-        ),
-    )
-    def test_format_multi_ip_quick_check(self, result, expected):
-        """Format IP multi quick check."""
-        assert (
-            ip_multi_quick_check_formatter(result, verbose=False).strip("\n")
-            == expected
-        )
-
-
 class TestGNQLQueryFormatter(object):
     """GNQL query formatter tests."""
 
@@ -193,20 +185,29 @@ class TestGNQLQueryFormatter(object):
         "result, expected",
         (
             (
-                {
-                    "complete": True,
-                    "count": 1,
-                    "data": [EXAMPLE_IP_CONTEXT],
-                    "message": "ok",
-                    "query": "<ip_address>",
-                },
-                textwrap.dedent(
-                    u"""\
-                    ┌───────────────────────────┐
-                    │       Result 1 of 1       │
-                    └───────────────────────────┘
+                [
+                    {
+                        "complete": True,
+                        "count": 1,
+                        "data": [EXAMPLE_IP_CONTEXT],
+                        "message": "ok",
+                        "query": "<ip_address>",
+                    }
+                ],
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                        ╔═══════════════════════════╗
+                        ║ <header>      Query 1 of 1       </header> ║
+                        ╚═══════════════════════════╝
+                        Query: <ip_address>
 
-                    """
+                        ┌───────────────────────────┐
+                        │       Result 1 of 1       │
+                        └───────────────────────────┘
+
+                        """
+                    )
                 )
                 + EXAMPLE_IP_CONTEXT_OUTPUT,
             ),
@@ -224,44 +225,54 @@ class TestGNQLStatsFormatter(object):
         "result, expected",
         (
             (
-                {
-                    "count": 2,
-                    "query": "<ip_address>",
-                    "stats": {
-                        "actors": None,
-                        "asns": [
-                            {"asn": "<asn>", "count": 1},
-                            {"asn": "<long_asn>", "count": 1},
-                        ],
-                        "categories": [
-                            {"category": "<category>", "count": 1},
-                            {"category": "<long_category>", "count": 1},
-                        ],
-                        "classifications": [
-                            {"classification": "<classification>", "count": 1},
-                            {"classification": "<long_classification>", "count": 1},
-                        ],
-                        "countries": [
-                            {"country": "<country>", "count": 1},
-                            {"country": "<long_country>", "count": 1},
-                        ],
-                        "operating_systems": [
-                            {"operating_system": "<operating_system>", "count": 1},
-                            {"operating_system": "<long_operating_system>", "count": 1},
-                        ],
-                        "organizations": [
-                            {"organization": "<organization>", "count": 1},
-                            {"organization": "<long_organization>", "count": 1},
-                        ],
-                        "tags": [
-                            {"tag": "<tag>", "count": 1},
-                            {"tag": "<long_tag>", "count": 1},
-                        ],
-                    },
-                },
+                [
+                    {
+                        "count": 2,
+                        "query": "<ip_address>",
+                        "stats": {
+                            "actors": None,
+                            "asns": [
+                                {"asn": "<asn>", "count": 1},
+                                {"asn": "<long_asn>", "count": 1},
+                            ],
+                            "categories": [
+                                {"category": "<category>", "count": 1},
+                                {"category": "<long_category>", "count": 1},
+                            ],
+                            "classifications": [
+                                {"classification": "<classification>", "count": 1},
+                                {"classification": "<long_classification>", "count": 1},
+                            ],
+                            "countries": [
+                                {"country": "<country>", "count": 1},
+                                {"country": "<long_country>", "count": 1},
+                            ],
+                            "operating_systems": [
+                                {"operating_system": "<operating_system>", "count": 1},
+                                {
+                                    "operating_system": "<long_operating_system>",
+                                    "count": 1,
+                                },
+                            ],
+                            "organizations": [
+                                {"organization": "<organization>", "count": 1},
+                                {"organization": "<long_organization>", "count": 1},
+                            ],
+                            "tags": [
+                                {"tag": "<tag>", "count": 1},
+                                {"tag": "<long_tag>", "count": 1},
+                            ],
+                        },
+                    }
+                ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        """\
+                        u"""\
+                        ╔═══════════════════════════╗
+                        ║ <header>      Query 1 of 1       </header> ║
+                        ╚═══════════════════════════╝
+                        Query: <ip_address>
+
                         <header>ASNs</header>:
                         - <key><asn>     </key> <value>1</value>
                         - <key><long_asn></key> <value>1</value>

@@ -1,5 +1,7 @@
-{% if ip_quick_check.noise %}
+{% for ip_quick_check in results %}
+{%- if ip_quick_check.noise %}
 <noise>{{ ip_quick_check.ip }}</noise> is classified as <bold>NOISE</bold>.
-{%- else -%}
+{%- else %}
 <not-noise>{{ ip_quick_check.ip }}</not-noise> is classified as <bold>NOT NOISE</bold>.
-{% endif %}
+{%- endif %}
+{%- endfor %}
