@@ -73,14 +73,15 @@ def get_location(metadata):
 
 
 @colored_output
-def ip_context_formatter(ip_context, verbose):
+def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
-    if ip_context["seen"]:
-        metadata = ip_context["metadata"]
-        metadata["location"] = get_location(metadata)
+    for ip_context in results:
+        if ip_context["seen"]:
+            metadata = ip_context["metadata"]
+            metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("ip_context.txt.j2")
-    return template.render(ip_context=ip_context, verbose=verbose)
+    return template.render(results=results, verbose=verbose)
 
 
 @colored_output

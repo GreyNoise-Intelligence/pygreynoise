@@ -1,48 +1,6 @@
 {% import "macros.txt.j2" as macros %}
-{%- if ip_context.seen %}
-          <header>OVERVIEW</header>
-----------------------------
-<key>Actor</key>: <value>{{ ip_context.actor }}</value>
-<key>Classification</key>: {{ macros.classification(ip_context.classification) }}
-<key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
-<key>IP</key>: <value>{{ ip_context.ip }}</value>
-<key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
-<key>Tags</key>:
-{%- call(tag) macros.verbose_list(ip_context.tags, verbose) -%}
-- <value>{{ tag }}</value>
-{% endcall %}
-          <header>METADATA</header>
-----------------------------
-<key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
-<key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
-<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>
-<key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
-<key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
-<key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>
-<key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>
-
-          <header>RAW DATA</header>
-----------------------------
-{%- if ip_context.raw_data.scan %}
-[Scan]
-{%- call(scan) macros.verbose_list(ip_context.raw_data.scan, verbose) -%}
-- <key>Port/Proto</key>: <value>{{ scan.port }}/{{ scan.protocol }}</value>
-{% endcall -%}
-{% endif %}
-
-{%- if ip_context.raw_data.web.paths %}
-[Paths]
-{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths, verbose) -%}
-- <value>{{ path }}</value>
-{% endcall -%}
-{% endif %}
-
-{%- if ip_context.raw_data.ja3 %}
-[JA3]
-{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3, verbose) -%}
-- <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
-{% endcall -%}
-{% endif %}
-{%- else -%}
-{{ ip_context.ip }} has not been seen in scans in the past 30 days.
-{% endif %}
+{% for ip_context in results -%}
+{% call macros.header(loop) %}Context{% endcall -%}
+IP address: {{ ip_context.ip }}
+{% include "ip_context_result.txt.j2" %}
+{%- endfor %}

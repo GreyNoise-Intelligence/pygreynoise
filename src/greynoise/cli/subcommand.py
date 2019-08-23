@@ -50,14 +50,22 @@ def ip():
 
 
 @ip.command()
-@click.argument("ip_address", callback=ip_address_parameter)
+@click.argument("ip_address", callback=ip_address_parameter, required=False)
 @click.pass_obj
 @echo_result
 def context(obj, ip_address):
     """Run IP context query."""
     obj["subcommand"] = "ip.context"
     api_client = obj["api_client"]
-    return api_client.get_context(ip_address=ip_address)
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(
+            api_client.get_context(ip_address=line.strip()) for line in input_file
+        )
+    if query:
+        results.append(api_client.get_context(ip_address=ip_address))
+    return results
 
 
 @ip.command()

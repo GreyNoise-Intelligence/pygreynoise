@@ -1,7 +1,7 @@
-# Render query header based on loop index and length
-{% macro query_header(loop) %}
+# Render header based on loop index and length
+{% macro header(loop) %}
 ╔═══════════════════════════╗
-║ <header>{{ "{:^25}".format("Query {} of {}".format(loop.index, loop.length)) }}</header> ║
+║ <header>{{ "{:^25}".format("{} {} of {}".format(caller(), loop.index, loop.length)) }}</header> ║
 ╚═══════════════════════════╝
 {% endmacro %}
 

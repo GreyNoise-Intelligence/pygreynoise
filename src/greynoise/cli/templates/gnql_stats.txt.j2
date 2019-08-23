@@ -1,8 +1,8 @@
 {% import "macros.txt.j2" as macros %}
-{% for result in results %}
-{{ macros.query_header(loop) -}}
+{% for result in results -%}
+{% call macros.header(loop) %}Query{% endcall -%}
 Query: {{ result.query }}
-{%- if result.count > 0 %}
+{% if result.count > 0 %}
 {%- if result.stats.actors %}
 <header>Actors<header>:
 {{- macros.column_list(result.stats.actors, "actor") }}
@@ -44,5 +44,5 @@ Query: {{ result.query }}
 {%- endif %}
 {%- else %}
 No results found for this query.
-{%- endif %}
+{% endif %}
 {% endfor %}
