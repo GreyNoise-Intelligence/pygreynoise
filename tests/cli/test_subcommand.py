@@ -9,6 +9,7 @@ from mock import Mock, patch
 from six import StringIO
 
 from greynoise.cli.subcommand import actors, context, gnql, quick_check, setup, stats
+from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
 
 
@@ -103,6 +104,26 @@ class TestIPContext(object):
         assert expected in result.output
         api_client.get_context.assert_not_called()
 
+    def test_request_failure(self):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.get_context.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        obj = {
+            "api_client": api_client,
+            "input_file": None,
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = "API error: forbidden"
+
+        result = runner.invoke(context, ["0.0.0.0"], obj=obj)
+        assert result.exit_code == -1
+        assert expected in result.output
+
 
 class TestIPQuickCheck(object):
     """IP quick check subcommand tests."""
@@ -187,6 +208,26 @@ class TestIPQuickCheck(object):
         assert expected in result.output
         api_client.get_noise_status.assert_not_called()
 
+    def test_request_failure(self):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.get_noise_status.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        obj = {
+            "api_client": api_client,
+            "input_file": None,
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = "API error: forbidden"
+
+        result = runner.invoke(quick_check, ["0.0.0.0"], obj=obj)
+        assert result.exit_code == -1
+        assert expected in result.output
+
 
 class TestActors(object):
     """Actors subcommand tests."""
@@ -209,6 +250,26 @@ class TestActors(object):
         assert result.exit_code == 0
         assert result.output == expected
         api_client.get_actors.assert_called_with()
+
+    def test_request_failure(self):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.get_actors.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        obj = {
+            "api_client": api_client,
+            "input_file": None,
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = "API error: forbidden"
+
+        result = runner.invoke(actors, obj=obj)
+        assert result.exit_code == -1
+        assert expected in result.output
 
 
 class TestGNQLQuery(object):
@@ -234,6 +295,26 @@ class TestGNQLQuery(object):
         assert result.output.strip("\n") == expected
         api_client.run_query.assert_called_with(query=query)
 
+    def test_request_failure(self):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.run_query.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        obj = {
+            "api_client": api_client,
+            "input_file": None,
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = "API error: forbidden"
+
+        result = runner.invoke(gnql, ["<query>"], obj=obj)
+        assert result.exit_code == -1
+        assert expected in result.output
+
 
 class TestGNQLStats(object):
     """"GNQL stats subcommand tests."""
@@ -257,3 +338,23 @@ class TestGNQLStats(object):
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.run_stats_query.assert_called_with(query=query)
+
+    def test_request_failure(self):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.run_stats_query.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        obj = {
+            "api_client": api_client,
+            "input_file": None,
+            "output_format": "json",
+            "verbose": False,
+        }
+        expected = "API error: forbidden"
+
+        result = runner.invoke(stats, ["<query>"], obj=obj)
+        assert result.exit_code == -1
+        assert expected in result.output
