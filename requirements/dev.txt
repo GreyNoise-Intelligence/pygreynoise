@@ -2,5 +2,5 @@
 -r test.txt
 bumpversion==0.5.3
 ipython==7.7.0;python_version>='3'
-pre-commit==1.18.2
+pre-commit==1.18.3
 tox==3.13.2
