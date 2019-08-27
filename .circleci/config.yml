@@ -56,6 +56,11 @@ jobs:
           name: Install dependencies
           command: pip install -r requirements/test.txt -e .
       - run:
+          name: Style check (yamllint)
+          command: |
+            . venv/bin/activate
+            yamllint .
+      - run:
           name: Style check (black)
           command: black --check setup.py src tests docs
       - run:
@@ -68,10 +73,20 @@ jobs:
           name: Static analysis (pylint)
           command: |
             mkdir workspace
-            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' setup.py src > workspace/pylint.txt
+            pylint \
+              --exit-zero \
+              -r n \
+              --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
+              setup.py src > workspace/pylint.txt
       - run:
           name: Test cases
-          command: pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
+          command: |
+            . venv/bin/activate
+            pytest \
+              --cov=greynoise \
+              --cov-report=xml:workspace/coverage/report.xml \
+              --junitxml=workspace/test_results/pytest.xml \
+              tests
       - persist_to_workspace:
           root: workspace
           paths:
@@ -98,7 +113,10 @@ jobs:
           command: |
             rm -rf $SONAR_SCANNER_HOME
             mkdir -p $SONAR_SCANNER_HOME
-            curl -sSLo $HOME/.sonar/sonar-scanner.zip http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
+            curl \
+              -sSLo \
+              $HOME/.sonar/sonar-scanner.zip \
+              http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
             unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
             rm $HOME/.sonar/sonar-scanner.zip
       - run:
@@ -106,7 +124,9 @@ jobs:
           command: |
             export PATH=$SONAR_SCANNER_HOME/bin:$PATH
             export SONAR_SCANNER_OPTS="-server"
-            sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.branch.name=$CIRCLE_BRANCH
+            sonar-scanner \
+              -Dsonar.login=$SONAR_AUTH_TOKEN \
+              -Dsonar.branch.name=$CIRCLE_BRANCH
 
   deploy:
     docker:
