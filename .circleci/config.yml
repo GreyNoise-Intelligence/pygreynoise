@@ -1,25 +1,28 @@
+---
 version: 2.1
 workflows:
   version: 2
   build:
     jobs:
-      - python2
-      - python3
+      - py27
+      - py35
+      - py36
+      - py37
       - sonarcloud:
           requires:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
-            - python3
+            - py37
       - deploy:
           requires:
             # deploy only when test cases have passed
-            - python3
+            - py37
           filters:
             tags:
               only: /v.*/
 
 jobs:
-  python2:
+  py27:
     docker:
       - image: circleci/python:2.7
     steps:
@@ -42,7 +45,51 @@ jobs:
           path: workspace/test_results
 
 
-  python3:
+  py35:
+    docker:
+      - image: circleci/python:3.5
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/test.txt -e .
+      - run:
+          name: Static analysis (flake8)
+          command: |
+            . venv/bin/activate
+            flake8 setup.py src tests docs
+      - run:
+          name: Test cases
+          command: |
+            . venv/bin/activate
+            pytest tests
+
+  py36:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/test.txt -e .
+      - run:
+          name: Static analysis (flake8)
+          command: |
+            . venv/bin/activate
+            flake8 setup.py src tests docs
+      - run:
+          name: Test cases
+          command: |
+            . venv/bin/activate
+            pytest tests
+
+  py37:
     docker:
       - image: circleci/python:3.7
     steps:
@@ -75,7 +122,7 @@ jobs:
             mkdir workspace
             pylint \
               --exit-zero \
-              -r n \
+              --reports no \
               --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
               setup.py src > workspace/pylint.txt
       - run:
