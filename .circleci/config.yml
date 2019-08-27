@@ -35,6 +35,7 @@ jobs:
       - run:
           name: Install dependencies
           command: pip install -r requirements/test.txt -e .
+            pip install -r requirements/test.txt -e .
       - run:
           name: Static analysis (flake8)
           command: flake8 setup.py src tests docs
@@ -55,6 +56,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            pip install --upgrade pip
             pip install -r requirements/test.txt -e .
       - run:
           name: Static analysis (flake8)
@@ -77,6 +79,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            pip install --upgrade pip
             pip install -r requirements/test.txt -e .
       - run:
           name: Static analysis (flake8)
@@ -102,6 +105,8 @@ jobs:
       - run:
           name: Install dependencies
           command: pip install -r requirements/test.txt -e .
+            pip install --upgrade pip
+            pip install -r requirements/test.txt -e .
       - run:
           name: Style check (yamllint)
           command: |
