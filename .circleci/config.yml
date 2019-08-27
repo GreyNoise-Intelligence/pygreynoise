@@ -10,6 +10,15 @@ workflows:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
             - python3
+      - deploy:
+          requires:
+            # deploy only when test cases have passed
+            - python3
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /v.*/
 
 jobs:
   python2:
@@ -104,3 +113,24 @@ jobs:
             export SONAR_SCANNER_OPTS="-server"
 
             sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.branch.name=$CIRCLE_BRANCH
+
+  deploy:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            . venv/bin/activate
+            pip install -r requirements/test.txt -e .
+      - run:
+          name: Build packages
+          command: |
+            . venv/bin/activate
+            python3 setup.py sdist bdist_wheel
+      - run:
+          name: Upload package to pypi
+          command: |
+            . venv/bin/activate
+            twine upload --username __token__ --disable-progress-bar dist/*
