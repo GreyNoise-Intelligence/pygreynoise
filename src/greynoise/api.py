@@ -155,6 +155,10 @@ class GreyNoise(object):
         validate_ip(ip_address)
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         response = self._request(endpoint)
+
+        if "ip" not in response:
+            response["ip"] = ip_address
+
         return response
 
     def get_actors(self):
