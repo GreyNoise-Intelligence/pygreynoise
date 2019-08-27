@@ -3,10 +3,11 @@
 import functools
 
 import click
-from click_default_group import DefaultGroup
 
+from click_default_group import DefaultGroup
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
+from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, save_config
 
 
@@ -35,6 +36,28 @@ def echo_result(function):
     return wrapper
 
 
+def handle_exceptions(function):
+    """Print error and exit on API client exception.
+
+    :param function: Subcommand that returns a result from the API.
+    :type function: callable
+    :returns: Wrapped function that prints subcommand results
+    :rtype: callable
+
+    """
+
+    @functools.wraps(function)
+    def wrapper(obj, *args, **kwargs):
+        try:
+            return function(obj, *args, **kwargs)
+        except RequestFailure as exception:
+            status_code, body = exception.args
+            click.echo("API error: {}".format(body["error"]))
+            click.get_current_context().exit(-1)
+
+    return wrapper
+
+
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
 def setup(api_key):
@@ -53,6 +76,7 @@ def ip():
 @click.argument("ip_address", callback=ip_address_parameter, required=False)
 @click.pass_obj
 @echo_result
+@handle_exceptions
 def context(obj, ip_address):
     """Run IP context query."""
     obj["subcommand"] = "ip.context"
@@ -72,6 +96,7 @@ def context(obj, ip_address):
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
 @click.pass_obj
 @echo_result
+@handle_exceptions
 def quick_check(obj, ip_address):
     """Run IP quick check query."""
     obj["subcommand"] = "ip.quick_check"
@@ -96,6 +121,7 @@ def quick_check(obj, ip_address):
 @click.command()
 @click.pass_obj
 @echo_result
+@handle_exceptions
 def actors(obj):
     """Run actors query."""
     obj["subcommand"] = "actors"
@@ -112,6 +138,7 @@ def gnql():
 @click.argument("query", required=False)
 @click.pass_obj
 @echo_result
+@handle_exceptions
 def query(obj, query):
     """Run GNQL query."""
     obj["subcommand"] = "gnql.query"
@@ -129,6 +156,7 @@ def query(obj, query):
 @click.argument("query", required=False)
 @click.pass_obj
 @echo_result
+@handle_exceptions
 def stats(obj, query):
     """Run GNQL stats query."""
     obj["subcommand"] = "gnql.stats"
