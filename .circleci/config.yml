@@ -21,97 +21,50 @@ workflows:
             tags:
               only: /v.*/
 
+DEFAULT_STEPS: &DEFAULT_STEPS
+  - checkout
+  - run: &CREATE_VIRTUALENV_STEP
+      name: Create virtualenv
+      command: |
+        virtualenv venv
+        echo ". venv/bin/activate" >> $BASH_ENV
+  - run: &INSTALL_DEPENDENCIES_STEP
+      name: Install dependencies
+      command: |
+        pip install --upgrade pip
+        pip install -r requirements/test.txt -e .
+  - run:
+      name: Test cases
+      command: pytest --junitxml=workspace/test_results/pytest.xml tests
+  - store_test_results:
+      path: workspace/test_results
+
 jobs:
   py27:
     docker:
       - image: circleci/python:2.7
-    steps:
-      - checkout
-      - run:
-          name: Create virtualenv
-          command: |
-            virtualenv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
-            pip install -r requirements/test.txt -e .
-      - run:
-          name: Static analysis (flake8)
-          command: flake8 setup.py src tests docs
-      - run:
-          name: Test cases
-          command: pytest --junitxml=workspace/test_results/pytest.xml tests
-      - store_test_results:
-          path: workspace/test_results
-
+    steps: *DEFAULT_STEPS
 
   py35:
     docker:
       - image: circleci/python:3.5
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements/test.txt -e .
-      - run:
-          name: Static analysis (flake8)
-          command: |
-            . venv/bin/activate
-            flake8 setup.py src tests docs
-      - run:
-          name: Test cases
-          command: |
-            . venv/bin/activate
-            pytest tests
+    steps: *DEFAULT_STEPS
 
   py36:
     docker:
       - image: circleci/python:3.6
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements/test.txt -e .
-      - run:
-          name: Static analysis (flake8)
-          command: |
-            . venv/bin/activate
-            flake8 setup.py src tests docs
-      - run:
-          name: Test cases
-          command: |
-            . venv/bin/activate
-            pytest tests
+    steps: *DEFAULT_STEPS
 
   py37:
     docker:
       - image: circleci/python:3.7
     steps:
       - checkout
-      - run:
-          name: Create virtualenv
-          command: |
-            python3 -m venv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
-            pip install --upgrade pip
-            pip install -r requirements/test.txt -e .
+      - run: *CREATE_VIRTUALENV_STEP
+      - run: *INSTALL_DEPENDENCIES_STEP
       - run:
           name: Style check (yamllint)
-          command: |
-            . venv/bin/activate
-            yamllint .
+          command: yamllint .
       - run:
           name: Style check (black)
           command: black --check setup.py src tests docs
@@ -159,7 +112,9 @@ jobs:
           name: Setup environment variables
           command: |
             echo "SONAR_SCANNER_VERSION=3.3.0.1492" >> $BASH_ENV
-            echo 'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' >> $BASH_ENV
+            echo \
+              'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' \
+              >> $BASH_ENV
       - run:
           name: Install sonar scanner
           command: |
@@ -185,14 +140,8 @@ jobs:
       - image: circleci/python:3.7
     steps:
       - checkout
-      - run:
-          name: Create virtualenv
-          command: |
-            virtualenv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
+      - run: *CREATE_VIRTUALENV_STEP
+      - run: *INSTALL_DEPENDENCIES_STEP
       - run:
           name: Build packages
           command: python3 setup.py sdist bdist_wheel
