@@ -131,19 +131,44 @@ class TestIPContextFormatter(object):
         "result, expected",
         (
             (
-                [EXAMPLE_IP_CONTEXT],
+                [
+                    EXAMPLE_IP_CONTEXT,
+                    {"error": "commonly spoofed ip", "ip": "<ip_address#2>"},
+                    {"ip": "<ip_address#3>", "seen": False},
+                ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
                         u"""\
                         ╔═══════════════════════════╗
-                        ║ <header>     Context 1 of 1      </header> ║
+                        ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address>
 
                         """
                     )
                 )
-                + EXAMPLE_IP_CONTEXT_OUTPUT,
+                + EXAMPLE_IP_CONTEXT_OUTPUT
+                + ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""
+
+
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 2 of 3      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: <ip_address#2>
+
+                        commonly spoofed ip
+
+
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 3 of 3      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: <ip_address#3>
+
+                        <ip_address#3> has not been seen in scans in the past 30 days."""  # noqa
+                    )
+                ),
             ),
         ),
     )

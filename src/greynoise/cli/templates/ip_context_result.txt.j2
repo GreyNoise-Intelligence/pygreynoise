@@ -43,6 +43,8 @@
 - <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
 {% endcall -%}
 {% endif %}
-{%- else %}
+{%- elif ip_context.error %}
+{{ ip_context.error }}
+{% else %}
 {{ ip_context.ip }} has not been seen in scans in the past 30 days.
 {% endif %}

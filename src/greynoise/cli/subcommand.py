@@ -8,7 +8,7 @@ from click_default_group import DefaultGroup
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
-from greynoise.util import CONFIG_FILE, save_config
+from greynoise.util import CONFIG_FILE, save_config, validate_ip
 
 
 def echo_result(function):
@@ -85,7 +85,9 @@ def context(obj, ip_address):
     results = []
     if input_file is not None:
         results.extend(
-            api_client.get_context(ip_address=line.strip()) for line in input_file
+            api_client.get_context(ip_address=line.strip())
+            for line in input_file
+            if validate_ip(line, strict=False)
         )
     if ip_address:
         results.append(api_client.get_context(ip_address=ip_address))
@@ -104,7 +106,9 @@ def quick_check(obj, ip_address):
     input_file = obj["input_file"]
 
     if input_file is not None:
-        ip_addresses = [line.strip() for line in input_file]
+        ip_addresses = [
+            line.strip() for line in input_file if validate_ip(line, strict=False)
+        ]
     else:
         ip_addresses = []
     ip_addresses.extend(list(ip_address))

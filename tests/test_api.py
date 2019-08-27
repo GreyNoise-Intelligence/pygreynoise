@@ -53,15 +53,6 @@ class TestRequest(object):
         with pytest.raises(RateLimitError):
             client._request("endpoint")
 
-    def test_error_in_payload(self, client):
-        """Exception is raised on error in payload."""
-        expected_response = {"error": "error description"}
-        client.session = Mock()
-        client.session.get().status_code = 200
-        client.session.get().json.return_value = expected_response
-        with pytest.raises(RequestFailure):
-            client._request("endpoint")
-
     def test_json(self, client):
         """Response's json payload is returned."""
         expected_response = {"expected": "response"}

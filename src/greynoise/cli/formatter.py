@@ -9,8 +9,9 @@ from xml.dom.minidom import parseString
 
 import ansimarkup
 import colorama
-from dicttoxml import dicttoxml
 from jinja2 import Environment, PackageLoader
+
+from dicttoxml import dicttoxml
 
 JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
 
@@ -76,7 +77,7 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if ip_context["seen"]:
+        if "seen" in ip_context and ip_context["seen"]:
             metadata = ip_context["metadata"]
             metadata["location"] = get_location(metadata)
 
