@@ -21,6 +21,8 @@ workflows:
             # release to pypi only when test cases pass
             - py37
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /v.*/
 
