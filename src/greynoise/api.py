@@ -2,6 +2,7 @@
 
 import logging
 
+import cachetools
 import requests
 
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -55,6 +56,10 @@ class GreyNoise(object):
             "engaging in Internet-wide scans or attacks in over 60 days"
         ),
     }
+
+    MAX_SIZE = 1000
+    TTL = 3600
+    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
 
     def __init__(self, api_key=None, timeout=7):
         if api_key is None:
@@ -153,9 +158,12 @@ class GreyNoise(object):
         """
         LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
-        endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
-        response = self._request(endpoint)
 
+        if ip_address not in self.IP_CONTEXT_CACHE:
+            endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
+            self.IP_CONTEXT_CACHE[ip_address] = self._request(endpoint)
+
+        response = self.IP_CONTEXT_CACHE[ip_address]
         if "ip" not in response:
             response["ip"] = ip_address
 
