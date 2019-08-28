@@ -16,7 +16,7 @@ workflows:
             - python3
           filters:
             branches:
-              only: master
+              ignore: /.*/
             tags:
               only: /v.*/
 
