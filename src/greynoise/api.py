@@ -1,6 +1,7 @@
 """GreyNoise API client."""
 
 import logging
+from collections import OrderedDict
 
 import cachetools
 import requests
@@ -143,14 +144,37 @@ class GreyNoise(object):
             for ip_address in ip_addresses
             if validate_ip(ip_address, strict=False)
         ]
-        results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
-        if isinstance(results, list):
-            for result in results:
-                code = result["code"]
-                result["code_message"] = self.CODE_MESSAGES.get(
-                    code, self.UNKNOWN_CODE_MESSAGE.format(code)
-                )
-        return results
+
+        results = OrderedDict()
+        for ip_address in ip_addresses:
+            if ip_address in self.IP_QUICK_CHECK_CACHE:
+                results[ip_address] = self.IP_QUICK_CHECK_CACHE[ip_address]
+            else:
+                # Keep the same ordering as in the input
+                results[ip_address] = None
+
+        api_ip_addresses = [
+            ip_address for ip_address, result in results.items() if result is None
+        ]
+        if api_ip_addresses:
+            api_results = self._request(
+                self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
+            )
+            # Return inmmediately on unexpected result type
+            if not isinstance(api_results, list):
+                return api_results
+
+            for api_result in api_results:
+                ip_address = api_result["ip"]
+                self.IP_QUICK_CHECK_CACHE[ip_address] = api_result
+                results[ip_address] = api_result
+
+        for result in results.values():
+            code = result["code"]
+            result["code_message"] = self.CODE_MESSAGES.get(
+                code, self.UNKNOWN_CODE_MESSAGE.format(code)
+            )
+        return list(results.values())
 
     def get_context(self, ip_address):
         """Get context associated with an IP address.
