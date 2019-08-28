@@ -10,6 +10,15 @@ workflows:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
             - python3
+      - deploy:
+          requires:
+            # deploy only when test cases have passed
+            - python3
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /v.*/
 
 jobs:
   python2:
@@ -18,21 +27,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
+          name: Create virtualenv
           command: |
             virtualenv venv
-            . venv/bin/activate
-            pip install -r requirements/test.txt -e .
+            echo ". venv/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/test.txt -e .
       - run:
           name: Static analysis (flake8)
-          command: |
-            . venv/bin/activate
-            flake8 setup.py src tests docs
+          command: flake8 setup.py src tests docs
       - run:
           name: Test cases
-          command: |
-            . venv/bin/activate
-            pytest --junitxml=workspace/test_results/pytest.xml tests
+          command: pytest --junitxml=workspace/test_results/pytest.xml tests
       - store_test_results:
           path: workspace/test_results
 
@@ -43,37 +50,30 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
+          name: Create virtualenv
           command: |
             python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements/test.txt -e .
+            echo ". venv/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/test.txt -e .
       - run:
           name: Style check (black)
-          command: |
-            . venv/bin/activate
-            black --check setup.py src tests docs
+          command: black --check setup.py src tests docs
       - run:
           name: Style check (isort)
-          command: |
-            . venv/bin/activate
-            isort --check-only setup.py src/**/*.py tests/**/*.py docs/**/*.py
+          command: isort --check-only setup.py src/**/*.py tests/**/*.py docs/**/*.py
       - run:
           name: Static analysis (flake8)
-          command: |
-            . venv/bin/activate
-            flake8 setup.py src tests docs
+          command: flake8 setup.py src tests docs
       - run:
           name: Static analysis (pylint)
           command: |
-            . venv/bin/activate
             mkdir workspace
             pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' setup.py src > workspace/pylint.txt
       - run:
           name: Test cases
-          command: |
-            . venv/bin/activate
-            pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
+          command: pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
       - persist_to_workspace:
           root: workspace
           paths:
@@ -91,16 +91,41 @@ jobs:
       - attach_workspace:
           at: workspace
       - run:
-          name: Sonar scanner
+          name: Setup environment variables
           command: |
-            SONAR_SCANNER_VERSION=3.3.0.1492
-            export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION
+            echo "SONAR_SCANNER_VERSION=3.3.0.1492" >> $BASH_ENV
+            echo 'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' >> $BASH_ENV
+      - run:
+          name: Install sonar scanner
+          command: |
             rm -rf $SONAR_SCANNER_HOME
             mkdir -p $SONAR_SCANNER_HOME
             curl -sSLo $HOME/.sonar/sonar-scanner.zip http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
             unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
             rm $HOME/.sonar/sonar-scanner.zip
+      - run:
+          name: Run sonar scanner
+          command: |
             export PATH=$SONAR_SCANNER_HOME/bin:$PATH
             export SONAR_SCANNER_OPTS="-server"
-
             sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.branch.name=$CIRCLE_BRANCH
+
+  deploy:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Create virtualenv
+          command: |
+            virtualenv venv
+            echo ". venv/bin/activate" >> $BASH_ENV
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/test.txt -e .
+      - run:
+          name: Build packages
+          command: python3 setup.py sdist bdist_wheel
+      - run:
+          name: Upload package to pypi
+          command: twine upload --username __token__ --disable-progress-bar dist/*
