@@ -59,6 +59,7 @@ class GreyNoise(object):
 
     MAX_SIZE = 1000
     TTL = 3600
+    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
     IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
 
     def __init__(self, api_key=None, timeout=7):
@@ -112,8 +113,12 @@ class GreyNoise(object):
         """
         LOGGER.debug("Getting noise status for %s...", ip_address)
         validate_ip(ip_address)
-        endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
-        result = self._request(endpoint)
+
+        if ip_address not in self.IP_QUICK_CHECK_CACHE:
+            endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
+            self.IP_QUICK_CHECK_CACHE[ip_address] = self._request(endpoint)
+
+        result = self.IP_QUICK_CHECK_CACHE[ip_address]
         code = result["code"]
         result["code_message"] = self.CODE_MESSAGES.get(
             code, self.UNKNOWN_CODE_MESSAGE.format(code)
