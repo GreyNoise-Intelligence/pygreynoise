@@ -1,30 +1,39 @@
 ---
 version: 2.1
+
+TAG_FILTER: &TAG_FILTER
+  filters:
+    tags:
+      only: /v.*/
+
 workflows:
   version: 2
   build:
     jobs:
-      - py27
-      - py35
-      - py36
+      - py27:
+          <<: *TAG_FILTER
+      - py35:
+          <<: *TAG_FILTER
+      - py36:
+          <<: *TAG_FILTER
       - py37:
-          filters:
-            tags:
-              only: /v.*/
+          <<: *TAG_FILTER
       - sonarcloud:
           requires:
-            # generate static analysis and coverage reports in python3 job
+            # generate static analysis and coverage reports in py37 job
             # and upload them to sonarcloud.io in sonarcloud job
             - py37
       - pypi:
           requires:
-            # release to pypi only when test cases pass
+            # release to pypi only when test cases pass in all python versions
+            - py27
+            - py35
+            - py36
             - py37
           filters:
+            <<: *TAG_FILTER
             branches:
               ignore: /.*/
-            tags:
-              only: /v.*/
 
 DEFAULT_STEPS: &DEFAULT_STEPS
   - checkout
