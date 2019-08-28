@@ -15,8 +15,6 @@ workflows:
             # deploy only when test cases have passed
             - python3
           filters:
-            branches:
-              ignore: /.*/
             tags:
               only: /v.*/
 
