@@ -10,7 +10,7 @@ workflows:
       - py37:
           filters:
             tags:
-              only: /.*/
+              only: /v.*/
       - sonarcloud:
           requires:
             # generate static analysis and coverage reports in python3 job
