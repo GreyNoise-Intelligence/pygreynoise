@@ -13,13 +13,14 @@ workflows:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
             - py37
+          filters:
+            tags:
+              only: /.*/
       - pypi:
           requires:
             # release to pypi only when test cases pass
             - py37
           filters:
-            branches:
-              only: master
             tags:
               only: /v.*/
 
