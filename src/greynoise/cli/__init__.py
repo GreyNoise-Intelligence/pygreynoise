@@ -4,8 +4,8 @@ import os
 import sys
 
 import click
-from click_default_group import DefaultGroup
 
+from click_default_group import DefaultGroup
 from greynoise.api import GreyNoise
 from greynoise.cli.subcommand import actors, gnql, ip, setup
 from greynoise.util import load_config
@@ -36,7 +36,7 @@ def main(context, api_key, output_format, input_file, verbose):
     :type: list
 
     """
-    if api_key is None:
+    if api_key is None and context.invoked_subcommand != "setup":
         config = load_config()
         if not config["api_key"]:
             prog = os.path.basename(sys.argv[0])
