@@ -1,23 +1,26 @@
 ---
 version: 2.1
 
-TAG_FILTER: &TAG_FILTER
-  filters:
-    tags:
-      only: /v.*/
+TAGS_FILTER: &TAGS_FILTER
+  tags:
+    only: /v.*/
 
 workflows:
   version: 2
   build:
     jobs:
       - py27:
-          <<: *TAG_FILTER
+          filters:
+            <<: *TAGS_FILTER
       - py35:
-          <<: *TAG_FILTER
+          filters:
+            <<: *TAGS_FILTER
       - py36:
-          <<: *TAG_FILTER
+          filters:
+            <<: *TAGS_FILTER
       - py37:
-          <<: *TAG_FILTER
+          filters:
+            <<: *TAGS_FILTER
       - sonarcloud:
           requires:
             # generate static analysis and coverage reports in py37 job
@@ -31,7 +34,7 @@ workflows:
             - py36
             - py37
           filters:
-            <<: *TAG_FILTER
+            <<: *TAGS_FILTER
             branches:
               ignore: /.*/
 
