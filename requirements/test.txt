@@ -7,3 +7,4 @@ isort==4.3.21
 mock==3.0.5
 pytest-cov==2.7.1
 twine==1.13.0
+yamllint==1.17.0

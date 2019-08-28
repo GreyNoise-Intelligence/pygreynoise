@@ -2,6 +2,7 @@
 
 import json
 import textwrap
+from collections import OrderedDict
 
 import pytest
 from click.testing import CliRunner
@@ -158,7 +159,9 @@ class TestIPQuickCheck(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {"ip": "0.0.0.0", "noise": True}
+        api_client.get_noise_status.return_value = OrderedDict(
+            (("ip", "0.0.0.0"), ("noise", True))
+        )
         obj = {
             "api_client": api_client,
             "input_file": None,

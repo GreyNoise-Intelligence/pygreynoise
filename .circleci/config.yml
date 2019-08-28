@@ -1,60 +1,72 @@
+---
 version: 2.1
 workflows:
   version: 2
   build:
     jobs:
-      - python2
-      - python3
+      - py27
+      - py35
+      - py36
+      - py37
       - sonarcloud:
           requires:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
-            - python3
-      - deploy:
+            - py37
+      - pypi:
           requires:
-            # deploy only when test cases have passed
-            - python3
+            # release to pypi only when test cases pass
+            - py37
           filters:
+            branches:
+              only: master
             tags:
               only: /v.*/
 
+DEFAULT_STEPS: &DEFAULT_STEPS
+  - checkout
+  - run: &CREATE_VIRTUALENV_STEP
+      name: Create virtualenv
+      command: |
+        virtualenv venv
+        echo ". venv/bin/activate" >> $BASH_ENV
+  - run: &INSTALL_DEPENDENCIES_STEP
+      name: Install dependencies
+      command: |
+        pip install --upgrade pip
+        pip install -r requirements/test.txt -e .
+  - run:
+      name: Test cases
+      command: pytest --junitxml=workspace/test_results/pytest.xml tests
+  - store_test_results:
+      path: workspace/test_results
+
 jobs:
-  python2:
+  py27:
     docker:
       - image: circleci/python:2.7
-    steps:
-      - checkout
-      - run:
-          name: Create virtualenv
-          command: |
-            virtualenv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
-      - run:
-          name: Static analysis (flake8)
-          command: flake8 setup.py src tests docs
-      - run:
-          name: Test cases
-          command: pytest --junitxml=workspace/test_results/pytest.xml tests
-      - store_test_results:
-          path: workspace/test_results
+    steps: *DEFAULT_STEPS
 
+  py35:
+    docker:
+      - image: circleci/python:3.5
+    steps: *DEFAULT_STEPS
 
-  python3:
+  py36:
+    docker:
+      - image: circleci/python:3.6
+    steps: *DEFAULT_STEPS
+
+  py37:
     docker:
       - image: circleci/python:3.7
     steps:
       - checkout
+      - run: *CREATE_VIRTUALENV_STEP
+      - run: *INSTALL_DEPENDENCIES_STEP
       - run:
-          name: Create virtualenv
-          command: |
-            python3 -m venv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
+          name: Style check (yamllint)
+          command: yamllint .
       - run:
           name: Style check (black)
           command: black --check setup.py src tests docs
@@ -68,10 +80,20 @@ jobs:
           name: Static analysis (pylint)
           command: |
             mkdir workspace
-            pylint --exit-zero -r n --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' setup.py src > workspace/pylint.txt
+            pylint \
+              --exit-zero \
+              --reports no \
+              --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
+              setup.py src > workspace/pylint.txt
       - run:
           name: Test cases
-          command: pytest --cov=greynoise --cov-report=xml:workspace/coverage/report.xml --junitxml=workspace/test_results/pytest.xml tests
+          command: |
+            . venv/bin/activate
+            pytest \
+              --cov=greynoise \
+              --cov-report=xml:workspace/coverage/report.xml \
+              --junitxml=workspace/test_results/pytest.xml \
+              tests
       - persist_to_workspace:
           root: workspace
           paths:
@@ -92,13 +114,18 @@ jobs:
           name: Setup environment variables
           command: |
             echo "SONAR_SCANNER_VERSION=3.3.0.1492" >> $BASH_ENV
-            echo 'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' >> $BASH_ENV
+            echo \
+              'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' \
+              >> $BASH_ENV
       - run:
           name: Install sonar scanner
           command: |
             rm -rf $SONAR_SCANNER_HOME
             mkdir -p $SONAR_SCANNER_HOME
-            curl -sSLo $HOME/.sonar/sonar-scanner.zip http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
+            curl \
+              -sSLo \
+              $HOME/.sonar/sonar-scanner.zip \
+              http://repo1.maven.org/maven2/org/sonarsource/scanner/cli/sonar-scanner-cli/$SONAR_SCANNER_VERSION/sonar-scanner-cli-$SONAR_SCANNER_VERSION.zip
             unzip $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
             rm $HOME/.sonar/sonar-scanner.zip
       - run:
@@ -106,21 +133,17 @@ jobs:
           command: |
             export PATH=$SONAR_SCANNER_HOME/bin:$PATH
             export SONAR_SCANNER_OPTS="-server"
-            sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.branch.name=$CIRCLE_BRANCH
+            sonar-scanner \
+              -Dsonar.login=$SONAR_AUTH_TOKEN \
+              -Dsonar.branch.name=$CIRCLE_BRANCH
 
-  deploy:
+  pypi:
     docker:
       - image: circleci/python:3.7
     steps:
       - checkout
-      - run:
-          name: Create virtualenv
-          command: |
-            virtualenv venv
-            echo ". venv/bin/activate" >> $BASH_ENV
-      - run:
-          name: Install dependencies
-          command: pip install -r requirements/test.txt -e .
+      - run: *CREATE_VIRTUALENV_STEP
+      - run: *INSTALL_DEPENDENCIES_STEP
       - run:
           name: Build packages
           command: python3 setup.py sdist bdist_wheel

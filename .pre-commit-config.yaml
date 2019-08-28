@@ -1,6 +1,13 @@
+---
 repos:
   - repo: local
     hooks:
+      - id: yamllint
+        name: Style check (yamllint)
+        entry: yamllint
+        language: system
+        types:
+          - yaml
       - id: black
         name: Style check (black)
         entry: black
