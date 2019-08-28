@@ -13,11 +13,13 @@ workflows:
             # generate static analysis and coverage reports in python3 job
             # and upload them to sonarcloud.io in sonarcloud job
             - py37
-      - deploy:
+      - pypi:
           requires:
-            # deploy only when test cases have passed
+            # release to pypi only when test cases pass
             - py37
           filters:
+            branches:
+              only: master
             tags:
               only: /v.*/
 
@@ -135,7 +137,7 @@ jobs:
               -Dsonar.login=$SONAR_AUTH_TOKEN \
               -Dsonar.branch.name=$CIRCLE_BRANCH
 
-  deploy:
+  pypi:
     docker:
       - image: circleci/python:3.7
     steps:
