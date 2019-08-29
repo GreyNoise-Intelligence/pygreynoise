@@ -11,6 +11,8 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 def client():
     """API client fixture."""
     client = GreyNoise(api_key="<api_key>")
+    client.IP_QUICK_CHECK_CACHE.clear()
+    client.IP_CONTEXT_CACHE.clear()
     yield client
 
 
@@ -97,33 +99,33 @@ class TestGetNoiseStatus(object):
         (
             (
                 "0.0.0.0",
-                {"code": "0x00", "ip_address": "0.0.0.0", "noise": False},
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
                 {
                     "code": "0x00",
                     "code_message": "IP has never been observed scanning the Internet",
-                    "ip_address": "0.0.0.0",
+                    "ip": "0.0.0.0",
                     "noise": False,
                 },
             ),
             (
                 "127.0.0.1",
-                {"code": "0x01", "ip_address": "127.0.0.1", "noise": False},
+                {"code": "0x01", "ip": "127.0.0.1", "noise": False},
                 {
                     "code": "0x01",
                     "code_message": (
                         "IP has been observed by the GreyNoise sensor network"
                     ),
-                    "ip_address": "127.0.0.1",
+                    "ip": "127.0.0.1",
                     "noise": False,
                 },
             ),
             (
                 "10.0.0.0",
-                {"code": "0x99", "ip_address": "10.0.0.0", "noise": True},
+                {"code": "0x99", "ip": "10.0.0.0", "noise": True},
                 {
                     "code": "0x99",
                     "code_message": "Code message unknown: 0x99",
-                    "ip_address": "10.0.0.0",
+                    "ip": "10.0.0.0",
                     "noise": True,
                 },
             ),
@@ -160,9 +162,9 @@ class TestGetNoiseStatusBulk(object):
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
                 [
-                    {"code": "0x00", "ip_address": "0.0.0.0", "noise": False},
-                    {"code": "0x01", "ip_address": "127.0.0.1", "noise": False},
-                    {"code": "0x99", "ip_address": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                    {"code": "0x01", "ip": "127.0.0.1", "noise": False},
+                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
                 ],
                 [
                     {
@@ -170,7 +172,7 @@ class TestGetNoiseStatusBulk(object):
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip_address": "0.0.0.0",
+                        "ip": "0.0.0.0",
                         "noise": False,
                     },
                     {
@@ -178,13 +180,13 @@ class TestGetNoiseStatusBulk(object):
                         "code_message": (
                             "IP has been observed by the GreyNoise sensor network"
                         ),
-                        "ip_address": "127.0.0.1",
+                        "ip": "127.0.0.1",
                         "noise": False,
                     },
                     {
                         "code": "0x99",
                         "code_message": "Code message unknown: 0x99",
-                        "ip_address": "10.0.0.0",
+                        "ip": "10.0.0.0",
                         "noise": False,
                     },
                 ],
@@ -192,14 +194,14 @@ class TestGetNoiseStatusBulk(object):
             (
                 ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
                 ["0.0.0.0"],
-                [{"code": "0x00", "ip_address": "0.0.0.0", "noise": False}],
+                [{"code": "0x00", "ip": "0.0.0.0", "noise": False}],
                 [
                     {
                         "code": "0x00",
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip_address": "0.0.0.0",
+                        "ip": "0.0.0.0",
                         "noise": False,
                     }
                 ],
