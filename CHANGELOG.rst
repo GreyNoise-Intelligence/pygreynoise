@@ -1,18 +1,24 @@
+=========
 Changelog
----------
+=========
 
-`0.3.0`_ unreleased
-~~~~~~~~~~~~~~~~~~~
+Version `0.3.0`_
+================
+**Date**: unreleased
 
 * API client: use LRU cache for IP context and quick check calls.
 
-`0.2.2`_ 08-22-19
-~~~~~~~~~~~~~~~~~
+
+Version `0.2.2`_
+================
+**Date**: August 22, 2019
 
 * CLI: fix ``setup`` subcommand when configuration directory doesn't exist.
 
-`0.2.1`_ 08-22-19
-~~~~~~~~~~~~~~~~~
+
+Version `0.2.1`_
+================
+**Date**: August 22, 2019
 
 * API client
 
@@ -24,11 +30,12 @@ Changelog
   * Colored output.
   * Add ``-i / --input`` option.
 
-`0.2.0`_ 08-22-19
-~~~~~~~~~~~~~~~~~
+
+Version `0.2.0`_
+================
+**Date**: August 21, 2019
 
 * Complete codebase refactoring.
-
 
 
 .. _`0.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/df4af7c392c50a5a0ebb5d761d7c67de6208c2c1...v0.2.0

@@ -1,3 +1,4 @@
+================
 Python GreyNoise
 ================
 
@@ -29,7 +30,7 @@ This is an abstract python library built on top of the `GreyNoise`_ service. It 
 .. _GreyNoise: https://greynoise.io/
 
 Quick Start
------------
+===========
 **Install the library**:
 
 ``pip install greynoise`` or ``python setup.py install``
