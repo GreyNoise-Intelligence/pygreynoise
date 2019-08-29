@@ -11,14 +11,14 @@ Version `0.3.0`_
 
 Version `0.2.2`_
 ================
-**Date**: August 22, 2019
+**Date**: August 28, 2019
 
 * CLI: fix ``setup`` subcommand when configuration directory doesn't exist.
 
 
 Version `0.2.1`_
 ================
-**Date**: August 22, 2019
+**Date**: August 28, 2019
 
 * API client
 
