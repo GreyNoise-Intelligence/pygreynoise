@@ -21,9 +21,6 @@ Python GreyNoise
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
 
-.. image:: https://quay.io/repository/greynoiseintel/pygreynoise/status
-    :target: https://quay.io/repository/greynoiseintel/pygreynoise
-
 This is an abstract python library built on top of the `GreyNoise`_ service. It is preferred that users use this library when implementing integrations or plan to use GreyNoise within their code. The library includes a small client to interact with the API.
 
 .. _GreyNoise: https://greynoise.io/
