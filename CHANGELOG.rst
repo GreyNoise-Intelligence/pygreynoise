@@ -7,6 +7,7 @@ Version `0.3.0`_
 **Date**: unreleased
 
 * API client: use LRU cache for IP context and quick check calls.
+* CLI: add help subcommand.
 
 
 Version `0.2.2`_

@@ -59,6 +59,13 @@ def handle_exceptions(function):
 
 
 @click.command()
+@click.pass_context
+def help(context):
+    """Get help string."""
+    click.echo(context.parent.get_help())
+
+
+@click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
 def setup(api_key):
     """Configure API key."""
