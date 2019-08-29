@@ -160,10 +160,6 @@ class GreyNoise(object):
             api_results = self._request(
                 self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
             )
-            # Return inmmediately on unexpected result type
-            if not isinstance(api_results, list):
-                return api_results
-
             for api_result in api_results:
                 ip_address = api_result["ip"]
                 self.IP_QUICK_CHECK_CACHE[ip_address] = api_result
