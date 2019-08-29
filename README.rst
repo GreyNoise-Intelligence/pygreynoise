@@ -37,18 +37,3 @@ Quick Start
 **Save your configuration**:
 
 ``greynoise setup --api-key <your-API-key>``
-
-Changelog
----------
-03-27-19
-~~~~~~~~
-* Merge CLI and pip module
-
-11-08-18
-~~~~~~~~
-* Change: Updated codes to reflect latest documents
-* Bugfix: Handle cases when code is unknown
-
-05-25-18
-~~~~~~~~
-* Complete overhaul of the library
