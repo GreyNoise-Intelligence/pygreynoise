@@ -13,6 +13,7 @@ def read(fname):
 
 INSTALL_REQUIRES = [
     "ansimarkup",
+    "cachetools",
     "click-default-group",  # must be before click, otherwise "setup.py install" fails
     "click",
     "dicttoxml",
