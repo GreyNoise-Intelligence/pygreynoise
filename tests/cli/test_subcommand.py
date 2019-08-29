@@ -5,13 +5,36 @@ import textwrap
 from collections import OrderedDict
 
 import pytest
+from click import Context
 from click.testing import CliRunner
 from mock import Mock, patch
 from six import StringIO
 
-from greynoise.cli.subcommand import actors, context, gnql, quick_check, setup, stats
+from greynoise.cli import main
+from greynoise.cli.subcommand import (
+    actors,
+    context,
+    gnql,
+    help,
+    quick_check,
+    setup,
+    stats,
+)
 from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
+
+
+class TestHelp(object):
+    """Help subcommand test cases."""
+
+    def test_help(self):
+        """Get help."""
+        runner = CliRunner()
+        expected_output = "Usage: greynoise [OPTIONS] COMMAND [ARGS]..."
+
+        result = runner.invoke(help, parent=Context(main, info_name="greynoise"))
+        assert result.exit_code == 0
+        assert expected_output in result.output
 
 
 class TestSetup(object):
