@@ -1,34 +1,16 @@
-"""GreyNoise API client."""
-
 import logging
 from collections import OrderedDict
 
 import cachetools
-import requests
 
-from greynoise.exceptions import RateLimitError, RequestFailure
-from greynoise.util import load_config, validate_ip
+from greynoise.api.base import Base
+from greynoise.util import validate_ip
 
 LOGGER = logging.getLogger(__name__)
 
 
-class GreyNoise(object):
+class IP(Base):
 
-    """GreyNoise API client.
-
-    :param api_key: Key use to access the API.
-    :type api_key: str
-    :param timeout: API requests timeout in seconds.
-    :type timeout: int
-
-    """
-
-    NAME = "GreyNoise"
-    BASE_URL = "https://enterprise.api.greynoise.io"
-    CLIENT_VERSION = "0.2.2"
-    API_VERSION = "v2"
-    EP_GNQL = "experimental/gnql"
-    EP_GNQL_STATS = "experimental/gnql/stats"
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
@@ -62,48 +44,7 @@ class GreyNoise(object):
     IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
     IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
 
-    def __init__(self, api_key=None, timeout=7, use_cache=True):
-        if api_key is None:
-            api_key = load_config()["api_key"]
-        self.api_key = api_key
-        self.timeout = timeout
-        self.use_cache = use_cache
-        self.session = requests.Session()
-
-    def _request(self, endpoint, params=None, json=None):
-        """Handle the requesting of information from the API.
-
-        :param endpoint: Endpoint to send the request to.
-        :type endpoint: str
-        :param params: Request parameters.
-        :type param: dict
-        :param json: Request's JSON payload.
-        :type json: dict
-        :returns: Response's JSON payload
-        :rtype: dict
-        :raises RequestFailure: when HTTP status code is not 2xx
-
-        """
-        if params is None:
-            params = {}
-        headers = {
-            "User-Agent": "greyNoise/{}".format(self.CLIENT_VERSION),
-            "key": self.api_key,
-        }
-        url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
-        response = self.session.get(
-            url, headers=headers, timeout=self.timeout, params=params, json=json
-        )
-
-        body = response.json()
-        if response.status_code == 429:
-            raise RateLimitError()
-        if not 200 <= response.status_code < 300:
-            raise RequestFailure(response.status_code, body)
-
-        return body
-
-    def get_noise_status(self, ip_address):
+    def quick_check(self, ip_address):
         """Get activity associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
@@ -132,7 +73,7 @@ class GreyNoise(object):
         )
         return response
 
-    def get_noise_status_bulk(self, ip_addresses):
+    def multi_quick_check(self, ip_addresses):
         """Get activity associated with multiple IP addresses.
 
         :param ip_addresses: IP addresses to use in the look-up.
@@ -178,7 +119,7 @@ class GreyNoise(object):
             )
         return results
 
-    def get_context(self, ip_address):
+    def context(self, ip_address):
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
@@ -204,16 +145,4 @@ class GreyNoise(object):
         if "ip" not in response:
             response["ip"] = ip_address
 
-        return response
-
-    def run_query(self, query):
-        """Run GNQL query."""
-        LOGGER.debug("Running GNQL query: %s...", query)
-        response = self._request(self.EP_GNQL, params={"query": query})
-        return response
-
-    def run_stats_query(self, query):
-        """Run GNQL stats query."""
-        LOGGER.debug("Running GNQL stats query: %s...", query)
-        response = self._request(self.EP_GNQL_STATS, params={"query": query})
         return response
