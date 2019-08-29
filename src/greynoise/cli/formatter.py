@@ -54,6 +54,7 @@ def json_formatter(result, _verbose):
 
 
 def xml_formatter(result, _verbose):
+    """Format result as xml."""
     return parseString(dicttoxml(result)).toprettyxml()
 
 

@@ -51,7 +51,7 @@ def handle_exceptions(function):
         try:
             return function(obj, *args, **kwargs)
         except RequestFailure as exception:
-            status_code, body = exception.args
+            body = exception.args[1]
             click.echo("API error: {}".format(body["error"]))
             click.get_current_context().exit(-1)
 

@@ -1,5 +1,6 @@
+========
 Tutorial
-########
+========
 
 API client
 ==========
@@ -465,7 +466,7 @@ Detailed context information for any given IP address is also available::
  Port/Proto: 1433/TCP
  Port/Proto: 3389/TCP
  Port/Proto: 65529/TCP
- 
+
 
 GNQL
 ----
@@ -503,8 +504,8 @@ as malicious and tagged as a Bluekeep Exploit::
           RAW DATA:
  ----------------------------
  Port/Proto: 3389/TCP
- 
- 
+
+
 .. note::
 
    This is the default command, that is, you can save some typing by just
@@ -552,7 +553,7 @@ operating system, etc.::
     - Windows 7/8: 3
     - Mac OS X: 2
     - Linux 2.2-3.x: 1
-    
+
     Organizations:
     - DigitalOcean, LLC: 7
     - OVH SAS: 6
