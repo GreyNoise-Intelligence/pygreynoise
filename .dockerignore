@@ -1,0 +1,10 @@
+# Version control
+.git
+
+# Documentation
+docs
+
+# Unit test / coverage reports
+.pytest_cache
+.tox
+htmlcov
