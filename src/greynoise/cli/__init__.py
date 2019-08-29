@@ -30,12 +30,7 @@ from greynoise.util import load_config
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
 def main(context, api_key, output_format, input_file, verbose):
-    """Entry point for the greynoise CLI.
-
-    :param argv: Command line arguments
-    :type: list
-
-    """
+    """GreyNoise CLI."""
     if api_key is None and context.invoked_subcommand != "setup":
         config = load_config()
         if not config["api_key"]:
