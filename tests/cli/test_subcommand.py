@@ -44,12 +44,13 @@ class TestSetup(object):
 class TestIPContext(object):
     """IP context subcommand tests."""
 
-    def test_ip_context(self):
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_ip_context(self, ip_address, expected_response):
         """Get IP address context."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
+        api_client.get_context.return_value = expected_response
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -57,16 +58,34 @@ class TestIPContext(object):
             "verbose": False,
         }
 
-        result = runner.invoke(context, ["0.0.0.0"], obj=obj)
+        result = runner.invoke(context, [ip_address], obj=obj)
         assert result.exit_code == 0
-        assert result.output == textwrap.dedent(
-            """\
-            [
-                {}
-            ]
-            """
+        assert result.output.strip("\n") == json.dumps(
+            [expected_response], indent=4, sort_keys=True
         )
-        api_client.get_context.assert_called_with(ip_address="0.0.0.0")
+        api_client.get_context.assert_called_with(ip_address=ip_address)
+
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_input_file(self, ip_address, expected_response):
+        """Get IP address context from input file."""
+        runner = CliRunner()
+        expected_response = {}
+
+        api_client = Mock()
+        api_client.get_context.return_value = expected_response
+        obj = {
+            "api_client": api_client,
+            "input_file": StringIO(ip_address),
+            "output_format": "json",
+            "verbose": False,
+        }
+
+        result = runner.invoke(context, obj=obj)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected_response], indent=4, sort_keys=True
+        )
+        api_client.get_context.assert_called_with(ip_address=ip_address)
 
     def test_missing_ip_address(self):
         """IP context succeeds even if no ip_address is passed."""
@@ -130,15 +149,17 @@ class TestIPQuickCheck(object):
     """IP quick check subcommand tests."""
 
     @pytest.mark.parametrize(
-        "output_format, expected",
+        "ip_address, output_format, expected",
         (
             (
+                "0.0.0.0",
                 "json",
                 json.dumps(
                     [{"ip": "0.0.0.0", "noise": True}], indent=4, sort_keys=True
                 ),
             ),
             (
+                "0.0.0.0",
                 "xml",
                 textwrap.dedent(
                     """\
@@ -151,16 +172,16 @@ class TestIPQuickCheck(object):
                     </root>"""
                 ),
             ),
-            ("txt", "0.0.0.0 is classified as NOISE."),
+            ("0.0.0.0", "txt", "0.0.0.0 is classified as NOISE."),
         ),
     )
-    def test_ip_quick_check(self, output_format, expected):
+    def test_ip_quick_check(self, ip_address, output_format, expected):
         """Quickly check IP address."""
         runner = CliRunner()
 
         api_client = Mock()
         api_client.get_noise_status.return_value = OrderedDict(
-            (("ip", "0.0.0.0"), ("noise", True))
+            (("ip", ip_address), ("noise", True))
         )
         obj = {
             "api_client": api_client,
@@ -169,10 +190,48 @@ class TestIPQuickCheck(object):
             "verbose": False,
         }
 
-        result = runner.invoke(quick_check, ["0.0.0.0"], obj=obj)
+        result = runner.invoke(quick_check, [ip_address], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.get_noise_status.assert_called_with(ip_address="0.0.0.0")
+        api_client.get_noise_status.assert_called_with(ip_address=ip_address)
+
+    @pytest.mark.parametrize(
+        "ip_addresses, mock_response, expected",
+        (
+            (
+                ["0.0.0.0", "0.0.0.1"],
+                [
+                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
+                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                ],
+                json.dumps(
+                    [
+                        {"ip": "0.0.0.0", "noise": True},
+                        {"ip": "0.0.0.1", "noise": False},
+                    ],
+                    indent=4,
+                    sort_keys=True,
+                ),
+            ),
+        ),
+    )
+    def test_input_file(self, ip_addresses, mock_response, expected):
+        """Quickly check IP address from input file."""
+        runner = CliRunner()
+
+        api_client = Mock()
+        api_client.get_noise_status_bulk.return_value = mock_response
+        obj = {
+            "api_client": api_client,
+            "input_file": StringIO("\n".join(ip_addresses)),
+            "output_format": "json",
+            "verbose": False,
+        }
+
+        result = runner.invoke(quick_check, obj=obj)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.get_noise_status_bulk.assert_called_with(ip_addresses=ip_addresses)
 
     def test_missing_ip_address(self):
         """IP quick check succeeds even if no ip_address is passed."""
