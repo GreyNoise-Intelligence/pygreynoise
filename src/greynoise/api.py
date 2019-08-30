@@ -1,7 +1,9 @@
 """GreyNoise API client."""
 
 import logging
+from collections import OrderedDict
 
+import cachetools
 import requests
 
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -30,7 +32,6 @@ class GreyNoise(object):
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
-    EP_RESEARCH_ACTORS = "research/actors"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
         "0x00": "IP has never been observed scanning the Internet",
@@ -56,11 +57,17 @@ class GreyNoise(object):
         ),
     }
 
-    def __init__(self, api_key=None, timeout=7):
+    MAX_SIZE = 1000
+    TTL = 3600
+    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
+    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
+
+    def __init__(self, api_key=None, timeout=7, use_cache=True):
         if api_key is None:
             api_key = load_config()["api_key"]
         self.api_key = api_key
         self.timeout = timeout
+        self.use_cache = use_cache
         self.session = requests.Session()
 
     def _request(self, endpoint, params=None, json=None):
@@ -107,13 +114,23 @@ class GreyNoise(object):
         """
         LOGGER.debug("Getting noise status for %s...", ip_address)
         validate_ip(ip_address)
+
         endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
-        result = self._request(endpoint)
-        code = result["code"]
-        result["code_message"] = self.CODE_MESSAGES.get(
+        if self.use_cache:
+            cache = self.IP_QUICK_CHECK_CACHE
+            response = (
+                cache[ip_address]
+                if ip_address in cache
+                else cache.setdefault(ip_address, self._request(endpoint))
+            )
+        else:
+            response = self._request(endpoint)
+
+        code = response["code"]
+        response["code_message"] = self.CODE_MESSAGES.get(
             code, self.UNKNOWN_CODE_MESSAGE.format(code)
         )
-        return result
+        return response
 
     def get_noise_status_bulk(self, ip_addresses):
         """Get activity associated with multiple IP addresses.
@@ -133,13 +150,32 @@ class GreyNoise(object):
             for ip_address in ip_addresses
             if validate_ip(ip_address, strict=False)
         ]
-        results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
-        if isinstance(results, list):
-            for result in results:
-                code = result["code"]
-                result["code_message"] = self.CODE_MESSAGES.get(
-                    code, self.UNKNOWN_CODE_MESSAGE.format(code)
+
+        if self.use_cache:
+            cache = self.IP_QUICK_CHECK_CACHE
+            # Keep the same ordering as in the input
+            results = OrderedDict(
+                (ip_address, cache.get(ip_address)) for ip_address in ip_addresses
+            )
+            api_ip_addresses = [
+                ip_address for ip_address, result in results.items() if result is None
+            ]
+            if api_ip_addresses:
+                api_results = self._request(
+                    self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
                 )
+                for api_result in api_results:
+                    ip_address = api_result["ip"]
+                    results[ip_address] = cache.setdefault(ip_address, api_result)
+            results = list(results.values())
+        else:
+            results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
+
+        for result in results:
+            code = result["code"]
+            result["code_message"] = self.CODE_MESSAGES.get(
+                code, self.UNKNOWN_CODE_MESSAGE.format(code)
+            )
         return results
 
     def get_context(self, ip_address):
@@ -153,23 +189,21 @@ class GreyNoise(object):
         """
         LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
+
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
-        response = self._request(endpoint)
+        if self.use_cache:
+            cache = self.IP_CONTEXT_CACHE
+            response = (
+                cache[ip_address]
+                if ip_address in self.IP_CONTEXT_CACHE
+                else cache.setdefault(ip_address, self._request(endpoint))
+            )
+        else:
+            response = self._request(endpoint)
 
         if "ip" not in response:
             response["ip"] = ip_address
 
-        return response
-
-    def get_actors(self):
-        """Get the names and IP addresses of actors scanning the Internet.
-
-        :returns: Most labeled actors scanning the intenet.
-        :rtype: list
-
-        """
-        LOGGER.debug("Getting actors...")
-        response = self._request(self.EP_RESEARCH_ACTORS)
         return response
 
     def run_query(self, query):

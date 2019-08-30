@@ -13,7 +13,7 @@ class TestMain(object):
         runner = CliRunner()
         with patch("greynoise.cli.load_config") as load_config:
             load_config.return_value = {"api_key": "<api_key>"}
-            result = runner.invoke(main, [])
+            result = runner.invoke(main)
 
         assert result.exit_code == 0
 
@@ -22,7 +22,7 @@ class TestMain(object):
         runner = CliRunner()
         with patch("greynoise.cli.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
-            result = runner.invoke(main, [])
+            result = runner.invoke(main)
 
         assert result.exit_code == -1
         assert "Error: API key not found" in result.output

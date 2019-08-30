@@ -13,6 +13,7 @@ def read(fname):
 
 INSTALL_REQUIRES = [
     "ansimarkup",
+    "cachetools",
     "click-default-group",  # must be before click, otherwise "setup.py install" fails
     "click",
     "dicttoxml",
@@ -32,7 +33,7 @@ setup(
     packages=find_packages(where="src"),
     package_data={"greynoise.cli": ["templates/*.j2"]},
     install_requires=INSTALL_REQUIRES,
-    long_description=read("README.rst"),
+    long_description=read("README.rst") + "\n\n" + read("CHANGELOG.rst"),
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[
         "Development Status :: 4 - Beta",

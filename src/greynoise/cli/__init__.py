@@ -7,13 +7,13 @@ import click
 
 from click_default_group import DefaultGroup
 from greynoise.api import GreyNoise
-from greynoise.cli.subcommand import actors, gnql, ip, setup
+from greynoise.cli import subcommand
 from greynoise.util import load_config
 
 
 @click.group(
     cls=DefaultGroup,
-    default="gnql",
+    default="query",
     default_if_no_args=True,
     context_settings={"help_option_names": ("-h", "--help")},
 )
@@ -30,12 +30,7 @@ from greynoise.util import load_config
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
 def main(context, api_key, output_format, input_file, verbose):
-    """Entry point for the greynoise CLI.
-
-    :param argv: Command line arguments
-    :type: list
-
-    """
+    """GreyNoise CLI."""
     if api_key is None and context.invoked_subcommand != "setup":
         config = load_config()
         if not config["api_key"]:
@@ -61,5 +56,11 @@ def main(context, api_key, output_format, input_file, verbose):
     }
 
 
-for new_subcommand in [actors, gnql, ip, setup]:
-    main.add_command(new_subcommand)
+SUBCOMMAND_FUNCTIONS = [
+    subcommand_function
+    for subcommand_function in vars(subcommand).values()
+    if isinstance(subcommand_function, click.Command)
+]
+
+for subcommand_function in SUBCOMMAND_FUNCTIONS:
+    main.add_command(subcommand_function)
