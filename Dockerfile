@@ -7,4 +7,3 @@ FROM python:3.7-alpine
 COPY --from=builder /app/dist/*.whl /app/
 WORKDIR /app
 RUN pip install /app/*.whl
-RUN pip install six

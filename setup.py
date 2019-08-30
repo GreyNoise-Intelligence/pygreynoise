@@ -19,6 +19,7 @@ INSTALL_REQUIRES = [
     "dicttoxml",
     "jinja2",
     "requests",
+    "six",
 ]
 
 setup(
