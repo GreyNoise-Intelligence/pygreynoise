@@ -15,49 +15,6 @@ from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
 
 
-class TestActors(object):
-    """Actors subcommand tests."""
-
-    def test_actors(self):
-        """Get actors."""
-        runner = CliRunner()
-
-        api_client = Mock()
-        api_client.get_actors.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
-        expected = "[]\n"
-
-        result = runner.invoke(subcommand.actors, obj=obj)
-        assert result.exit_code == 0
-        assert result.output == expected
-        api_client.get_actors.assert_called_with()
-
-    def test_request_failure(self):
-        """Error is displayed on API request failure."""
-        runner = CliRunner()
-
-        api_client = Mock()
-        api_client.get_actors.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
-        )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
-        expected = "API error: forbidden"
-
-        result = runner.invoke(subcommand.actors, obj=obj)
-        assert result.exit_code == -1
-        assert expected in result.output
-
-
 class TestHelp(object):
     """Help subcommand test cases."""
 

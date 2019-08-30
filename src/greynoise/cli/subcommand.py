@@ -63,17 +63,6 @@ def account():
 
 
 @click.command()
-@click.pass_obj
-@echo_result
-@handle_exceptions
-def actors(obj):
-    """Run actors query."""
-    obj["subcommand"] = "actors"
-    api_client = obj["api_client"]
-    return api_client.get_actors()
-
-
-@click.command()
 def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""
 

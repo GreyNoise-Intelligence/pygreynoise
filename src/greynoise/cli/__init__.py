@@ -58,7 +58,6 @@ def main(context, api_key, output_format, input_file, verbose):
 
 SUBCOMMAND_NAMES = [
     "account",
-    "actors",
     "alerts",
     "analyze",
     "feedback",
