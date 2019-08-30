@@ -117,7 +117,7 @@ class TestIP(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = expected_response
+        api_client.ip.return_value = expected_response
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -130,7 +130,7 @@ class TestIP(object):
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
         )
-        api_client.get_context.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address)
 
     @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
     def test_input_file(self, ip_address, expected_response):
@@ -139,7 +139,7 @@ class TestIP(object):
         expected_response = {}
 
         api_client = Mock()
-        api_client.get_context.return_value = expected_response
+        api_client.ip.return_value = expected_response
         obj = {
             "api_client": api_client,
             "input_file": StringIO(ip_address),
@@ -152,14 +152,14 @@ class TestIP(object):
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
         )
-        api_client.get_context.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address)
 
     def test_missing_ip_address(self):
         """IP subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
+        api_client.ip.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -170,14 +170,14 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, obj=obj)
         assert result.exit_code == 0
         assert result.output == "[]\n"
-        api_client.get_context.assert_not_called()
+        api_client.ip.assert_not_called()
 
     def test_invalid_ip_address(self):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
+        api_client.ip.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -189,14 +189,14 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["not-an-ip"], obj=obj)
         assert result.exit_code == 2
         assert expected in result.output
-        api_client.get_context.assert_not_called()
+        api_client.ip.assert_not_called()
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.side_effect = RequestFailure(
+        api_client.ip.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {
@@ -234,7 +234,7 @@ class TestQuery(object):
 
         query = "<query>"
         api_client = Mock()
-        api_client.run_query.return_value = []
+        api_client.query.return_value = []
         obj = {
             "api_client": api_client,
             "input_file": StringIO(),
@@ -246,14 +246,14 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, [query], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.run_query.assert_called_with(query=query)
+        api_client.query.assert_called_with(query=query)
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.run_query.side_effect = RequestFailure(
+        api_client.query.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {
@@ -304,9 +304,9 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = OrderedDict(
-            (("ip", ip_address), ("noise", True))
-        )
+        api_client.quick.return_value = [
+            OrderedDict((("ip", ip_address), ("noise", True)))
+        ]
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -317,7 +317,7 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, [ip_address], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.get_noise_status.assert_called_with(ip_address=ip_address)
+        api_client.quick.assert_called_with(ip_addresses=[ip_address])
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -344,7 +344,7 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status_bulk.return_value = mock_response
+        api_client.quick.return_value = mock_response
         obj = {
             "api_client": api_client,
             "input_file": StringIO("\n".join(ip_addresses)),
@@ -355,14 +355,14 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.get_noise_status_bulk.assert_called_with(ip_addresses=ip_addresses)
+        api_client.quick.assert_called_with(ip_addresses=ip_addresses)
 
     def test_missing_ip_address(self):
         """Quick subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {}
+        api_client.quick.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -370,17 +370,17 @@ class TestQuick(object):
             "verbose": False,
         }
 
-        result = runner.invoke(subcommand.quick, [], obj=obj)
+        result = runner.invoke(subcommand.quick, obj=obj)
         assert result.exit_code == 0
         assert result.output == "[]\n"
-        api_client.get_noise_status.assert_not_called()
+        api_client.quick.assert_not_called()
 
     def test_invalid_ip_address(self):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {}
+        api_client.quick.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -392,14 +392,14 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, ["not-an-ip"], obj=obj)
         assert result.exit_code == 2
         assert expected in result.output
-        api_client.get_noise_status.assert_not_called()
+        api_client.quick.assert_not_called()
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.side_effect = RequestFailure(
+        api_client.quick.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {
@@ -464,7 +464,7 @@ class TestStats(object):
 
         query = "<query>"
         api_client = Mock()
-        api_client.run_stats_query.return_value = []
+        api_client.stats.return_value = []
         obj = {
             "api_client": api_client,
             "input_file": StringIO(),
@@ -476,14 +476,14 @@ class TestStats(object):
         result = runner.invoke(subcommand.stats, [query], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.run_stats_query.assert_called_with(query=query)
+        api_client.stats.assert_called_with(query=query)
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.run_stats_query.side_effect = RequestFailure(
+        api_client.stats.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {
