@@ -2,6 +2,10 @@ import requests
 
 from greynoise.exceptions import RateLimitError, RequestFailure
 
+# Cache configuration
+MAX_SIZE = 1000
+TTL = 3600
+
 
 class Base(object):
     CLIENT_VERSION = "0.2.2"
