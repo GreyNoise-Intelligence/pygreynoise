@@ -4,11 +4,23 @@ import functools
 
 import click
 
-from click_default_group import DefaultGroup
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, save_config, validate_ip
+
+
+class SubcommandNotImplemented(click.ClickException):
+    """Exception used temporarily for subcommands that have not been implemented.
+
+    :param subcommand_name: Name of the subcommand to display in the error message.
+    :type subcommand_function: str
+
+    """
+
+    def __init__(self, subcommand_name):
+        message = "{!r} subcommand is not implemented yet.".format(subcommand_name)
+        super(SubcommandNotImplemented, self).__init__(message)
 
 
 def echo_result(function):
@@ -59,33 +71,55 @@ def handle_exceptions(function):
 
 
 @click.command()
+def account():
+    """View information about your GreyNoise account."""
+    raise SubcommandNotImplemented("account")
+
+
+@click.command()
+def alerts():
+    """List, create, delete, and manage your GreyNoise alerts."""
+    raise SubcommandNotImplemented("alerts")
+
+
+@click.command()
+def analyze():
+    """Analyze the IP addresses in a log file, stdin, etc."""
+    raise SubcommandNotImplemented("analyze")
+
+
+@click.command()
+def feedback():
+    """Send feedback directly to the GreyNoise team."""
+    raise SubcommandNotImplemented("feedback")
+
+
+@click.command()
+def filter():
+    """"Filter the noise from a log file, stdin, etc."""
+    raise SubcommandNotImplemented("filter")
+
+
+@click.command()
 @click.pass_context
 def help(context):
-    """Get help string."""
+    """Show this message and exit."""
     click.echo(context.parent.get_help())
 
 
 @click.command()
-@click.option("-k", "--api-key", required=True, help="Key to include in API requests")
-def setup(api_key):
-    """Configure API key."""
-    config = {"api_key": api_key}
-    save_config(config)
-    click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
+def interesting():
+    """Report an IP as "interesting"."""
+    raise SubcommandNotImplemented("interesting")
 
 
-@click.group()
-def ip():
-    """IP lookup."""
-
-
-@ip.command()
+@click.command()
 @click.argument("ip_address", callback=ip_address_parameter, required=False)
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def context(obj, ip_address):
-    """Run IP context query."""
+def ip(obj, ip_address):
+    """Query GreyNoise for all information on a given IP."""
     obj["subcommand"] = "ip.context"
     api_client = obj["api_client"]
     input_file = obj["input_file"]
@@ -101,13 +135,37 @@ def context(obj, ip_address):
     return results
 
 
-@ip.command()
+@click.command()
+def pcap():
+    """Get PCAP for a given IP address."""
+    raise SubcommandNotImplemented("pcap")
+
+
+@click.command()
+@click.argument("query", required=False)
+@click.pass_obj
+@echo_result
+@handle_exceptions
+def query(obj, query):
+    """Run a GNQL (GreyNoise Query Language) query."""
+    obj["subcommand"] = "gnql.query"
+    api_client = obj["api_client"]
+    input_file = obj["input_file"]
+    results = []
+    if input_file is not None:
+        results.extend(api_client.run_query(query=line.strip()) for line in input_file)
+    if query:
+        results.append(api_client.run_query(query=query))
+    return results
+
+
+@click.command()
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def quick_check(obj, ip_address):
-    """Run IP quick check query."""
+def quick(obj, ip_address):
+    """Quickly check whether or not one or many IPs are "noise"."""
     obj["subcommand"] = "ip.quick_check"
     api_client = obj["api_client"]
     input_file = obj["input_file"]
@@ -130,46 +188,27 @@ def quick_check(obj, ip_address):
 
 
 @click.command()
-@click.pass_obj
-@echo_result
-@handle_exceptions
-def actors(obj):
-    """Run actors query."""
-    obj["subcommand"] = "actors"
-    api_client = obj["api_client"]
-    return api_client.get_actors()
+@click.option("-k", "--api-key", required=True, help="Key to include in API requests")
+def setup(api_key):
+    """Configure API key."""
+    config = {"api_key": api_key}
+    save_config(config)
+    click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
 
-@click.group(cls=DefaultGroup, default="query", default_if_no_args=True)
-def gnql():
-    """GNQL queries."""
+@click.command()
+def signature():
+    """Submit an IDS signature to GreyNoise to be deployed to all GreyNoise nodes."""
+    raise SubcommandNotImplemented("signature")
 
 
-@gnql.command()
-@click.argument("query", required=False)
-@click.pass_obj
-@echo_result
-@handle_exceptions
-def query(obj, query):
-    """Run GNQL query."""
-    obj["subcommand"] = "gnql.query"
-    api_client = obj["api_client"]
-    input_file = obj["input_file"]
-    results = []
-    if input_file is not None:
-        results.extend(api_client.run_query(query=line.strip()) for line in input_file)
-    if query:
-        results.append(api_client.run_query(query=query))
-    return results
-
-
-@gnql.command()
+@click.command()
 @click.argument("query", required=False)
 @click.pass_obj
 @echo_result
 @handle_exceptions
 def stats(obj, query):
-    """Run GNQL stats query."""
+    """Get aggregate stats from a given GNQL query."""
     obj["subcommand"] = "gnql.stats"
     api_client = obj["api_client"]
     input_file = obj["input_file"]
@@ -181,3 +220,9 @@ def stats(obj, query):
     if query:
         results.append(api_client.run_stats_query(query=query))
     return results
+
+
+@click.command()
+def version():
+    """Get version and OS information for your GreyNoise commandline installation."""
+    raise SubcommandNotImplemented("version")

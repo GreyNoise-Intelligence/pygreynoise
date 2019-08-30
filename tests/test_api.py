@@ -375,19 +375,6 @@ class TestGetNoiseStatusBulk(object):
         assert str(exception.value) == "`ip_addresses` must be a list"
 
 
-class TestGetActors(object):
-    """GreyNoise client actors test cases."""
-
-    def test_get_actors(self, client):
-        """Get actors scanning the Internet."""
-        expected_response = [{"name": "<actor>", "ips": ["ip#1", "ip#2", "ip#3"]}]
-
-        client._request = Mock(return_value=expected_response)
-        actors = client.get_actors()
-        client._request.assert_called_with("research/actors")
-        assert actors == expected_response
-
-
 class TestRunQuery(object):
     """GreyNoise client run GNQL query test cases."""
 
