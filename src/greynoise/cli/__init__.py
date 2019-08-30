@@ -7,13 +7,13 @@ import click
 
 from click_default_group import DefaultGroup
 from greynoise.api import GreyNoise
-from greynoise.cli.subcommand import actors, gnql, help, ip, setup
+from greynoise.cli import subcommand
 from greynoise.util import load_config
 
 
 @click.group(
     cls=DefaultGroup,
-    default="gnql",
+    default="query",
     default_if_no_args=True,
     context_settings={"help_option_names": ("-h", "--help")},
 )
@@ -56,5 +56,23 @@ def main(context, api_key, output_format, input_file, verbose):
     }
 
 
-for new_subcommand in [actors, gnql, help, ip, setup]:
-    main.add_command(new_subcommand)
+SUBCOMMAND_NAMES = [
+    "account",
+    "actors",
+    "alerts",
+    "analyze",
+    "feedback",
+    "filter",
+    "help",
+    "interesting",
+    "ip",
+    "pcap",
+    "query",
+    "quick",
+    "setup",
+    "signature",
+    "stats",
+    "version",
+]
+for subcommand_name in SUBCOMMAND_NAMES:
+    main.add_command(getattr(subcommand, subcommand_name))
