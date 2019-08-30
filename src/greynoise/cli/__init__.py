@@ -56,22 +56,11 @@ def main(context, api_key, output_format, input_file, verbose):
     }
 
 
-SUBCOMMAND_NAMES = [
-    "account",
-    "alerts",
-    "analyze",
-    "feedback",
-    "filter",
-    "help",
-    "interesting",
-    "ip",
-    "pcap",
-    "query",
-    "quick",
-    "setup",
-    "signature",
-    "stats",
-    "version",
+SUBCOMMAND_FUNCTIONS = [
+    subcommand_function
+    for subcommand_function in vars(subcommand).values()
+    if isinstance(subcommand_function, click.Command)
 ]
-for subcommand_name in SUBCOMMAND_NAMES:
-    main.add_command(getattr(subcommand, subcommand_name))
+
+for subcommand_function in SUBCOMMAND_FUNCTIONS:
+    main.add_command(subcommand_function)
