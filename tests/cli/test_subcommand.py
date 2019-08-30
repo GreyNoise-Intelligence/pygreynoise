@@ -15,6 +15,71 @@ from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
 
 
+class TestAccount(object):
+    """Account subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'account' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.account)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
+class TestAlerts(object):
+    """Alerts subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'alerts' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.alerts)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
+class TestAnalyze(object):
+    """Analyze subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'analyze' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.analyze)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
+class TestFeedback(object):
+    """Feedback subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'feedback' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.feedback)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
+class TestFilter(object):
+    """Filter subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'filter' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.filter)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
 class TestHelp(object):
     """Help subcommand test cases."""
 
@@ -28,6 +93,19 @@ class TestHelp(object):
         )
         assert result.exit_code == 0
         assert expected_output in result.output
+
+
+class TestInteresting(object):
+    """Interesting subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'interesting' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.interesting)
+        assert result.exit_code == 1
+        assert result.output == expected_output
 
 
 class TestIP(object):
@@ -132,6 +210,19 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["0.0.0.0"], obj=obj)
         assert result.exit_code == -1
         assert expected in result.output
+
+
+class TestPCAP(object):
+    """PCAP subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'pcap' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.pcap)
+        assert result.exit_code == 1
+        assert result.output == expected_output
 
 
 class TestQuery(object):
@@ -324,6 +415,19 @@ class TestQuick(object):
         assert expected in result.output
 
 
+class TestSignature(object):
+    """Signature subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'signature' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.signature)
+        assert result.exit_code == 1
+        assert result.output == expected_output
+
+
 class TestSetup(object):
     """Setup subcommand test cases."""
 
@@ -393,3 +497,16 @@ class TestStats(object):
         result = runner.invoke(subcommand.stats, ["<query>"], obj=obj)
         assert result.exit_code == -1
         assert expected in result.output
+
+
+class TestVersion(object):
+    """Version subcommand test cases."""
+
+    def test_not_implemented(self):
+        """Not implemented error message returned."""
+        runner = CliRunner()
+        expected_output = "Error: 'version' subcommand is not implemented yet.\n"
+
+        result = runner.invoke(subcommand.version)
+        assert result.exit_code == 1
+        assert result.output == expected_output
