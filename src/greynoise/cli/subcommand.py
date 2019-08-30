@@ -10,6 +10,19 @@ from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, save_config, validate_ip
 
 
+class SubcommandNotImplemented(click.ClickException):
+    """Exception used temporarily for subcommands that have not been implemented.
+
+    :param subcommand_name: Name of the subcommand to display in the error message.
+    :type subcommand_function: str
+
+    """
+
+    def __init__(self, subcommand_name):
+        message = "{!r} subcommand is not implemented yet.".format(subcommand_name)
+        super(SubcommandNotImplemented, self).__init__(message)
+
+
 def echo_result(function):
     """Decorator that prints subcommand results correctly formatted.
 
@@ -60,26 +73,31 @@ def handle_exceptions(function):
 @click.command()
 def account():
     """View information about your GreyNoise account."""
+    raise SubcommandNotImplemented("account")
 
 
 @click.command()
 def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""
+    raise SubcommandNotImplemented("alerts")
 
 
 @click.command()
 def analyze():
     """Analyze the IP addresses in a log file, stdin, etc."""
+    raise SubcommandNotImplemented("analyze")
 
 
 @click.command()
 def feedback():
     """Send feedback directly to the GreyNoise team."""
+    raise SubcommandNotImplemented("feedback")
 
 
 @click.command()
 def filter():
     """"Filter the noise from a log file, stdin, etc."""
+    raise SubcommandNotImplemented("filter")
 
 
 @click.command()
@@ -92,6 +110,7 @@ def help(context):
 @click.command()
 def interesting():
     """Report an IP as "interesting"."""
+    raise SubcommandNotImplemented("interesting")
 
 
 @click.command()
@@ -119,6 +138,7 @@ def ip(obj, ip_address):
 @click.command()
 def pcap():
     """Get PCAP for a given IP address."""
+    raise SubcommandNotImplemented("pcap")
 
 
 @click.command()
@@ -179,6 +199,7 @@ def setup(api_key):
 @click.command()
 def signature():
     """Submit an IDS signature to GreyNoise to be deployed to all GreyNoise nodes."""
+    raise SubcommandNotImplemented("signature")
 
 
 @click.command()
@@ -204,3 +225,4 @@ def stats(obj, query):
 @click.command()
 def version():
     """Get version and OS information for your GreyNoise commandline installation."""
+    raise SubcommandNotImplemented("version")
