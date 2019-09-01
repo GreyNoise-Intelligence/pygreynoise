@@ -180,10 +180,7 @@ def quick(obj, ip_address):
 
     results = []
     if ip_addresses:
-        if len(ip_addresses) == 1:
-            results.append(api_client.get_noise_status(ip_address=ip_addresses[0]))
-        else:
-            results.extend(api_client.get_noise_status_bulk(ip_addresses=ip_addresses))
+        results.extend(api_client.quick(ip_addresses=ip_addresses))
     return results
 
 

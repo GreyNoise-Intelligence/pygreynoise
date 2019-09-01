@@ -304,9 +304,9 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = OrderedDict(
-            (("ip", ip_address), ("noise", True))
-        )
+        api_client.quick.return_value = [
+            OrderedDict((("ip", ip_address), ("noise", True)))
+        ]
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -317,7 +317,7 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, [ip_address], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.get_noise_status.assert_called_with(ip_address=ip_address)
+        api_client.quick.assert_called_with(ip_addresses=[ip_address])
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -344,7 +344,7 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status_bulk.return_value = mock_response
+        api_client.quick.return_value = mock_response
         obj = {
             "api_client": api_client,
             "input_file": StringIO("\n".join(ip_addresses)),
@@ -355,14 +355,14 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.get_noise_status_bulk.assert_called_with(ip_addresses=ip_addresses)
+        api_client.quick.assert_called_with(ip_addresses=ip_addresses)
 
     def test_missing_ip_address(self):
         """Quick subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {}
+        api_client.quick.return_value = []
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -373,14 +373,14 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, [], obj=obj)
         assert result.exit_code == 0
         assert result.output == "[]\n"
-        api_client.get_noise_status.assert_not_called()
+        api_client.quick.assert_not_called()
 
     def test_invalid_ip_address(self):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.return_value = {}
+        api_client.quick.return_value = []
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -392,14 +392,14 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, ["not-an-ip"], obj=obj)
         assert result.exit_code == 2
         assert expected in result.output
-        api_client.get_noise_status.assert_not_called()
+        api_client.quick.assert_not_called()
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_noise_status.side_effect = RequestFailure(
+        api_client.quick.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {
