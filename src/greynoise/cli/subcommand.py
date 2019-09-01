@@ -42,7 +42,7 @@ def echo_result(function):
             # For the text formatter, there's a separate formatter for each subcommand
             formatter = formatter[obj["subcommand"]]
 
-        output = formatter(result, obj["verbose"]).strip("\n")
+        output = formatter(result, obj.get("verbose", False)).strip("\n")
         click.echo(output)
 
     return wrapper
@@ -115,14 +115,28 @@ def interesting():
 
 @click.command()
 @click.argument("ip_address", callback=ip_address_parameter, required=False)
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def ip(obj, ip_address):
+def ip(obj, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
-    obj["subcommand"] = "ip.context"
     api_client = obj["api_client"]
-    input_file = obj["input_file"]
+    obj.update(
+        subcommand="ip.context",
+        input_file=input_file,
+        output_format=output_format,
+        verbose=verbose,
+    )
     results = []
     if input_file is not None:
         results.extend(
@@ -143,14 +157,28 @@ def pcap():
 
 @click.command()
 @click.argument("query", required=False)
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def query(obj, query):
+def query(obj, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
-    obj["subcommand"] = "gnql.query"
     api_client = obj["api_client"]
-    input_file = obj["input_file"]
+    obj.update(
+        subcommand="gnql.query",
+        input_file=input_file,
+        output_format=output_format,
+        verbose=verbose,
+    )
     results = []
     if input_file is not None:
         results.extend(api_client.query(query=line.strip()) for line in input_file)
@@ -161,14 +189,24 @@ def query(obj, query):
 
 @click.command()
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def quick(obj, ip_address):
+def quick(obj, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
-    obj["subcommand"] = "ip.quick_check"
     api_client = obj["api_client"]
-    input_file = obj["input_file"]
+    obj.update(
+        subcommand="ip.quick_check", input_file=input_file, output_format=output_format
+    )
 
     if input_file is not None:
         ip_addresses = [
@@ -201,14 +239,25 @@ def signature():
 
 @click.command()
 @click.argument("query", required=False)
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
 @click.pass_obj
 @echo_result
 @handle_exceptions
-def stats(obj, query):
+def stats(obj, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
-    obj["subcommand"] = "gnql.stats"
     api_client = obj["api_client"]
-    input_file = obj["input_file"]
+    obj.update(
+        subcommand="gnql.stats", input_file=input_file, output_format=output_format
+    )
+
     results = []
     if input_file is not None:
         results.extend(api_client.stats(query=line.strip()) for line in input_file)

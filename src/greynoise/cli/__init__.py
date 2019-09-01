@@ -18,18 +18,8 @@ from greynoise.util import load_config
     context_settings={"help_option_names": ("-h", "--help")},
 )
 @click.option("-k", "--api-key", help="Key to include in API requests")
-@click.option(
-    "-f",
-    "--format",
-    "output_format",
-    type=click.Choice(["json", "txt", "xml"]),
-    default="txt",
-    help="Output format",
-)
-@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.pass_context
-def main(context, api_key, output_format, input_file, verbose):
+def main(context, api_key):
     """GreyNoise CLI."""
     if api_key is None and context.invoked_subcommand != "setup":
         config = load_config()
@@ -48,12 +38,7 @@ def main(context, api_key, output_format, input_file, verbose):
             context.exit(-1)
         api_key = config["api_key"]
 
-    context.obj = {
-        "api_client": GreyNoise(api_key),
-        "input_file": input_file,
-        "output_format": output_format,
-        "verbose": verbose,
-    }
+    context.obj = {"api_client": GreyNoise(api_key)}
 
 
 SUBCOMMAND_FUNCTIONS = [

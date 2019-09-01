@@ -118,12 +118,7 @@ class TestIP(object):
 
         api_client = Mock()
         api_client.ip.return_value = expected_response
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
         result = runner.invoke(subcommand.ip, [ip_address], obj=obj)
         assert result.exit_code == 0
