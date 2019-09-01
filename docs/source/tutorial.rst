@@ -57,7 +57,7 @@ this::
 
 Detailed context information for any given IP address is also available::
 
-    >>> api_client.get_context('58.220.219.247')
+    >>> api_client.ip('58.220.219.247')
     {
       "ip": "58.220.219.247",
       "seen": true,
@@ -439,7 +439,7 @@ this::
 
 Detailed context information for any given IP address is also available::
 
-   $ greynoise ip context 58.220.219.247
+   $ greynoise ip 58.220.219.247
  ┌───────────────────────────┐
  │       result 1 of 1       │
  └───────────────────────────┘

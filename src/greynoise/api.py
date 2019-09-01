@@ -178,7 +178,7 @@ class GreyNoise(object):
             )
         return results
 
-    def get_context(self, ip_address):
+    def ip(self, ip_address):
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.

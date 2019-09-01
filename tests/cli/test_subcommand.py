@@ -117,7 +117,7 @@ class TestIP(object):
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = expected_response
+        api_client.ip.return_value = expected_response
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -130,7 +130,7 @@ class TestIP(object):
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
         )
-        api_client.get_context.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address)
 
     @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
     def test_input_file(self, ip_address, expected_response):
@@ -139,7 +139,7 @@ class TestIP(object):
         expected_response = {}
 
         api_client = Mock()
-        api_client.get_context.return_value = expected_response
+        api_client.ip.return_value = expected_response
         obj = {
             "api_client": api_client,
             "input_file": StringIO(ip_address),
@@ -152,14 +152,14 @@ class TestIP(object):
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
         )
-        api_client.get_context.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address)
 
     def test_missing_ip_address(self):
         """IP subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
+        api_client.ip.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -170,14 +170,14 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, obj=obj)
         assert result.exit_code == 0
         assert result.output == "[]\n"
-        api_client.get_context.assert_not_called()
+        api_client.ip.assert_not_called()
 
     def test_invalid_ip_address(self):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.return_value = {}
+        api_client.ip.return_value = {}
         obj = {
             "api_client": api_client,
             "input_file": None,
@@ -189,14 +189,14 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["not-an-ip"], obj=obj)
         assert result.exit_code == 2
         assert expected in result.output
-        api_client.get_context.assert_not_called()
+        api_client.ip.assert_not_called()
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.get_context.side_effect = RequestFailure(
+        api_client.ip.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {

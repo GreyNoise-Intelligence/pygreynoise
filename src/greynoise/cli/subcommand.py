@@ -126,12 +126,12 @@ def ip(obj, ip_address):
     results = []
     if input_file is not None:
         results.extend(
-            api_client.get_context(ip_address=line.strip())
+            api_client.ip(ip_address=line.strip())
             for line in input_file
             if validate_ip(line, strict=False)
         )
     if ip_address:
-        results.append(api_client.get_context(ip_address=ip_address))
+        results.append(api_client.ip(ip_address=ip_address))
     return results
 
 

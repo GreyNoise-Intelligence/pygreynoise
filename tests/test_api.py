@@ -73,53 +73,53 @@ class TestRequest(object):
         assert response == expected_response
 
 
-class TestGetContext(object):
+class TestIP(object):
     """GreyNoise client IP context test cases."""
 
-    def test_get_context(self, client):
+    def test_ip(self, client):
         """Get IP address information."""
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        response = client.get_context(ip_address)
+        response = client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
         assert response == expected_response
 
-    def test_get_context_with_cache(self, client):
+    def test_ip_with_cache(self, client):
         """Get IP address information with cache."""
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_not_called()
 
-    def test_get_context_without_cache(self, client_without_cache):
+    def test_ip_without_cache(self, client_without_cache):
         """Get IP address information without cache."""
         client = client_without_cache
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
-    def test_get_context_invalid_ip(self, client):
+    def test_invalid_ip(self, client):
         """Get invalid IP address information."""
         invalid_ip = "not an ip address"
         client._request = Mock()
 
         with pytest.raises(ValueError) as exception:
-            client.get_context(invalid_ip)
+            client.ip(invalid_ip)
         assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
