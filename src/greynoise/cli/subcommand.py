@@ -34,8 +34,8 @@ def echo_result(function):
     """
 
     @functools.wraps(function)
-    def wrapper(obj, *args, **kwargs):
-        result = function(obj, *args, **kwargs)
+    def wrapper(*args, **kwargs):
+        result = function(*args, **kwargs)
         context = click.get_current_context()
         params = context.params
         output_format = params["output_format"]
@@ -61,13 +61,32 @@ def handle_exceptions(function):
     """
 
     @functools.wraps(function)
-    def wrapper(obj, *args, **kwargs):
+    def wrapper(*args, **kwargs):
         try:
-            return function(obj, *args, **kwargs)
+            return function(*args, **kwargs)
         except RequestFailure as exception:
             body = exception.args[1]
             click.echo("API error: {}".format(body["error"]))
             click.get_current_context().exit(-1)
+
+    return wrapper
+
+
+def pass_api_client(function):
+    """Create API client form API key and pass it to subcommand.
+
+    :param function: Subcommand that returns a result from the API.
+    :type function: callable
+    :returns: Wrapped function that prints subcommand results
+    :rtype: callable
+
+    """
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        context = click.get_current_context()
+        api_client = context.obj["api_client"]
+        return function(api_client, *args, **kwargs)
 
     return wrapper
 
@@ -127,13 +146,11 @@ def interesting():
     help="Output format",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-@click.pass_obj
+@pass_api_client
 @echo_result
 @handle_exceptions
-def ip(obj, input_file, output_format, verbose, ip_address):
+def ip(api_client, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
-    api_client = obj["api_client"]
-
     results = []
     if input_file is not None:
         results.extend(
@@ -164,13 +181,11 @@ def pcap():
     help="Output format",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-@click.pass_obj
+@pass_api_client
 @echo_result
 @handle_exceptions
-def query(obj, input_file, output_format, verbose, query):
+def query(api_client, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
-    api_client = obj["api_client"]
-
     results = []
     if input_file is not None:
         results.extend(api_client.query(query=line.strip()) for line in input_file)
@@ -190,13 +205,11 @@ def query(obj, input_file, output_format, verbose, query):
     default="txt",
     help="Output format",
 )
-@click.pass_obj
+@pass_api_client
 @echo_result
 @handle_exceptions
-def quick(obj, input_file, output_format, ip_address):
+def quick(api_client, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
-    api_client = obj["api_client"]
-
     if input_file is not None:
         ip_addresses = [
             line.strip() for line in input_file if validate_ip(line, strict=False)
@@ -237,13 +250,11 @@ def signature():
     default="txt",
     help="Output format",
 )
-@click.pass_obj
+@pass_api_client
 @echo_result
 @handle_exceptions
-def stats(obj, input_file, output_format, query):
+def stats(api_client, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
-    api_client = obj["api_client"]
-
     results = []
     if input_file is not None:
         results.extend(api_client.stats(query=line.strip()) for line in input_file)
