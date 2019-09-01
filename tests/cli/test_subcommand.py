@@ -120,7 +120,7 @@ class TestIP(object):
         api_client.ip.return_value = expected_response
         obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.ip, [ip_address], obj=obj)
+        result = runner.invoke(subcommand.ip, ["-f", "json", ip_address], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
@@ -131,18 +131,14 @@ class TestIP(object):
     def test_input_file(self, ip_address, expected_response):
         """Get IP address information from input file."""
         runner = CliRunner()
-        expected_response = {}
 
         api_client = Mock()
         api_client.ip.return_value = expected_response
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(ip_address),
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.ip, obj=obj)
+        result = runner.invoke(
+            subcommand.ip, ["-f", "json", "-i", StringIO(ip_address)], obj=obj
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
@@ -155,16 +151,11 @@ class TestIP(object):
 
         api_client = Mock()
         api_client.ip.return_value = {}
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.ip, obj=obj)
+        result = runner.invoke(subcommand.ip, ["-f", "json"], obj=obj)
         assert result.exit_code == 0
-        assert result.output == "[]\n"
+        assert result.output.strip("\n") == json.dumps([], indent=4, sort_keys=True)
         api_client.ip.assert_not_called()
 
     def test_invalid_ip_address(self):
@@ -173,12 +164,7 @@ class TestIP(object):
 
         api_client = Mock()
         api_client.ip.return_value = {}
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = 'Error: Invalid value for "[IP_ADDRESS]": not-an-ip\n'
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"], obj=obj)
@@ -194,12 +180,7 @@ class TestIP(object):
         api_client.ip.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.ip, ["0.0.0.0"], obj=obj)
@@ -230,15 +211,10 @@ class TestQuery(object):
         query = "<query>"
         api_client = Mock()
         api_client.query.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(),
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = json.dumps([[]], indent=4, sort_keys=True)
 
-        result = runner.invoke(subcommand.query, [query], obj=obj)
+        result = runner.invoke(subcommand.query, ["-f", "json", query], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.query.assert_called_with(query=query)
@@ -251,12 +227,7 @@ class TestQuery(object):
         api_client.query.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.query, ["<query>"], obj=obj)
@@ -302,14 +273,11 @@ class TestQuick(object):
         api_client.quick.return_value = [
             OrderedDict((("ip", ip_address), ("noise", True)))
         ]
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": output_format,
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.quick, [ip_address], obj=obj)
+        result = runner.invoke(
+            subcommand.quick, ["-f", output_format, ip_address], obj=obj
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=[ip_address])
@@ -340,14 +308,13 @@ class TestQuick(object):
 
         api_client = Mock()
         api_client.quick.return_value = mock_response
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO("\n".join(ip_addresses)),
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.quick, obj=obj)
+        result = runner.invoke(
+            subcommand.quick,
+            ["-f", "json", "-i", StringIO("\n".join(ip_addresses))],
+            obj=obj,
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
@@ -358,14 +325,9 @@ class TestQuick(object):
 
         api_client = Mock()
         api_client.quick.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
 
-        result = runner.invoke(subcommand.quick, [], obj=obj)
+        result = runner.invoke(subcommand.quick, ["-f", "json"], obj=obj)
         assert result.exit_code == 0
         assert result.output == "[]\n"
         api_client.quick.assert_not_called()
@@ -376,12 +338,7 @@ class TestQuick(object):
 
         api_client = Mock()
         api_client.quick.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"], obj=obj)
@@ -397,12 +354,7 @@ class TestQuick(object):
         api_client.quick.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.quick, ["0.0.0.0"], obj=obj)
@@ -460,15 +412,12 @@ class TestStats(object):
         query = "<query>"
         api_client = Mock()
         api_client.stats.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(),
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = json.dumps([[]], indent=4, sort_keys=True)
 
-        result = runner.invoke(subcommand.stats, [query], obj=obj)
+        result = runner.invoke(
+            subcommand.stats, ["-f", "json", "-i", StringIO(), query], obj=obj
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.stats.assert_called_with(query=query)
@@ -481,12 +430,7 @@ class TestStats(object):
         api_client.stats.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
+        obj = {"api_client": api_client}
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.stats, ["<query>"], obj=obj)
