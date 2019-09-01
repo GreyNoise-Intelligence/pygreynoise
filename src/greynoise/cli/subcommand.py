@@ -36,13 +36,15 @@ def echo_result(function):
     @functools.wraps(function)
     def wrapper(obj, *args, **kwargs):
         result = function(obj, *args, **kwargs)
-        output_format = obj["output_format"]
+        context = click.get_current_context()
+        params = context.params
+        output_format = params["output_format"]
         formatter = FORMATTERS[output_format]
         if isinstance(formatter, dict):
             # For the text formatter, there's a separate formatter for each subcommand
-            formatter = formatter[obj["subcommand"]]
+            formatter = formatter[context.info_name]
 
-        output = formatter(result, obj.get("verbose", False)).strip("\n")
+        output = formatter(result, params.get("verbose", False)).strip("\n")
         click.echo(output)
 
     return wrapper
@@ -131,12 +133,7 @@ def interesting():
 def ip(obj, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
     api_client = obj["api_client"]
-    obj.update(
-        subcommand="ip.context",
-        input_file=input_file,
-        output_format=output_format,
-        verbose=verbose,
-    )
+
     results = []
     if input_file is not None:
         results.extend(
@@ -173,12 +170,7 @@ def pcap():
 def query(obj, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
     api_client = obj["api_client"]
-    obj.update(
-        subcommand="gnql.query",
-        input_file=input_file,
-        output_format=output_format,
-        verbose=verbose,
-    )
+
     results = []
     if input_file is not None:
         results.extend(api_client.query(query=line.strip()) for line in input_file)
@@ -204,9 +196,6 @@ def query(obj, input_file, output_format, verbose, query):
 def quick(obj, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
     api_client = obj["api_client"]
-    obj.update(
-        subcommand="ip.quick_check", input_file=input_file, output_format=output_format
-    )
 
     if input_file is not None:
         ip_addresses = [
@@ -254,9 +243,6 @@ def signature():
 def stats(obj, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
     api_client = obj["api_client"]
-    obj.update(
-        subcommand="gnql.stats", input_file=input_file, output_format=output_format
-    )
 
     results = []
     if input_file is not None:
