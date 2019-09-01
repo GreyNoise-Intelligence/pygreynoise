@@ -464,7 +464,7 @@ class TestStats(object):
 
         query = "<query>"
         api_client = Mock()
-        api_client.run_stats_query.return_value = []
+        api_client.stats.return_value = []
         obj = {
             "api_client": api_client,
             "input_file": StringIO(),
@@ -476,14 +476,14 @@ class TestStats(object):
         result = runner.invoke(subcommand.stats, [query], obj=obj)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.run_stats_query.assert_called_with(query=query)
+        api_client.stats.assert_called_with(query=query)
 
     def test_request_failure(self):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client = Mock()
-        api_client.run_stats_query.side_effect = RequestFailure(
+        api_client.stats.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
         obj = {

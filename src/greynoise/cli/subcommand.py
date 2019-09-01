@@ -214,11 +214,9 @@ def stats(obj, query):
     input_file = obj["input_file"]
     results = []
     if input_file is not None:
-        results.extend(
-            api_client.run_stats_query(query=line.strip()) for line in input_file
-        )
+        results.extend(api_client.stats(query=line.strip()) for line in input_file)
     if query:
-        results.append(api_client.run_stats_query(query=query))
+        results.append(api_client.stats(query=query))
     return results
 
 

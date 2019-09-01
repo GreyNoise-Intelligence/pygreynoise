@@ -389,16 +389,16 @@ class TestQuery(object):
         assert response == expected_response
 
 
-class TestRunStatsQuery(object):
+class TestStats(object):
     """GreyNoise client run GNQL stats query test cases."""
 
-    def test_run_query(self, client):
+    def test_stats(self, client):
         """Run GNQL stats query."""
         query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_stats_query(query)
+        response = client.stats(query)
         client._request.assert_called_with(
             "experimental/gnql/stats", params={"query": query}
         )

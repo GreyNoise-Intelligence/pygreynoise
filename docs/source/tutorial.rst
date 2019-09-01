@@ -211,7 +211,7 @@ It's also possible to get statistics related to a GNQL query to better understan
 results are distributed in terms of different information such as organization, country,
 operating system, etc.::
 
-    >>> api_client.run_stats_query('classification:malicious tags:"Bluekeep Exploit"')
+    >>> api_client.stats('classification:malicious tags:"Bluekeep Exploit"')
     {
       "query": "classification:malicious tags:'Bluekeep Exploit'",
       "count": 24,
@@ -519,7 +519,7 @@ It's also possible to get statistics related to a GNQL query to better understan
 results are distributed in terms of different information such as organization, country,
 operating system, etc.::
 
-    $ greynoise gnql stats 'classification:malicious tags:"Bluekeep Exploit"'
+    $ greynoise stats 'classification:malicious tags:"Bluekeep Exploit"'
     ASNs:
     - AS14061: 7
     - AS16276: 6
