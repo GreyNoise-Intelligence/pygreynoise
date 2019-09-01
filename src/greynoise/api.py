@@ -103,35 +103,6 @@ class GreyNoise(object):
 
         return body
 
-    def get_noise_status(self, ip_address):
-        """Get activity associated with an IP address.
-
-        :param ip_address: IP address to use in the look-up.
-        :type recurse: str
-        :return: Activity metadata for the IP address.
-        :rtype: dict
-
-        """
-        LOGGER.debug("Getting noise status for %s...", ip_address)
-        validate_ip(ip_address)
-
-        endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
-        if self.use_cache:
-            cache = self.IP_QUICK_CHECK_CACHE
-            response = (
-                cache[ip_address]
-                if ip_address in cache
-                else cache.setdefault(ip_address, self._request(endpoint))
-            )
-        else:
-            response = self._request(endpoint)
-
-        code = response["code"]
-        response["code_message"] = self.CODE_MESSAGES.get(
-            code, self.UNKNOWN_CODE_MESSAGE.format(code)
-        )
-        return response
-
     def quick(self, ip_addresses):
         """Get activity associated with one or more IP addresses.
 
