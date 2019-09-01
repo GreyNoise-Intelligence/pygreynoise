@@ -434,13 +434,13 @@ Once the command line tool has been created, it's possible to check if a given I
 considered internet noise or has been observed scanning or attacking devices across the
 Internet as follows::
 
-   $ greynoise ip quick 58.220.219.247
+   $ greynoise quick 58.220.219.247
    58.220.219.247 is classified as NOISE.
 
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-   $ greynoise ip quick 8.8.8.8 58.220.219.247
+   $ greynoise quick 8.8.8.8 58.220.219.247
    8.8.8.8 is classified as NOT NOISE.
    58.220.219.247 is classified as NOISE.
 
