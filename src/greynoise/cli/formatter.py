@@ -114,13 +114,6 @@ def gnql_stats_formatter(results, verbose):
     return template.render(results=results, verbose=verbose)
 
 
-@colored_output
-def actors_formatter(actors, verbose):
-    """Convert actors result into human-readable text."""
-    template = JINJA2_ENV.get_template("actors.txt.j2")
-    return template.render(actors=actors, verbose=verbose)
-
-
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -129,6 +122,5 @@ FORMATTERS = {
         "ip.quick_check": ip_quick_check_formatter,
         "gnql.query": gnql_query_formatter,
         "gnql.stats": gnql_stats_formatter,
-        "actors": actors_formatter,
     },
 }
