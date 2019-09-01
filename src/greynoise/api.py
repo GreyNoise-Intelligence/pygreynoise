@@ -206,7 +206,7 @@ class GreyNoise(object):
 
         return response
 
-    def run_query(self, query):
+    def query(self, query):
         """Run GNQL query."""
         LOGGER.debug("Running GNQL query: %s...", query)
         response = self._request(self.EP_GNQL, params={"query": query})

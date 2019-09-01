@@ -375,16 +375,16 @@ class TestGetNoiseStatusBulk(object):
         assert str(exception.value) == "`ip_addresses` must be a list"
 
 
-class TestRunQuery(object):
+class TestQuery(object):
     """GreyNoise client run GNQL query test cases."""
 
-    def test_run_query(self, client):
+    def test_query(self, client):
         """Run GNQL query."""
         query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_query(query)
+        response = client.query(query)
         client._request.assert_called_with("experimental/gnql", params={"query": query})
         assert response == expected_response
 

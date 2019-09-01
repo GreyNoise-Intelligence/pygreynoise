@@ -114,7 +114,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-    >>> api_client.run_query('classification:malicious tags:"Bluekeep Exploit"')
+    >>> api_client.query('classification:malicious tags:"Bluekeep Exploit"')
     {
       "complete": true,
       "count": 2,
@@ -478,7 +478,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-   $ greynoise gnql query 'classification:malicious tags:"Bluekeep Exploit"'
+   $ greynoise query 'classification:malicious tags:"Bluekeep Exploit"'
  ┌───────────────────────────┐
  │       result 1 of 24      │
  └───────────────────────────┘
@@ -509,7 +509,7 @@ as malicious and tagged as a Bluekeep Exploit::
 .. note::
 
    This is the default command, that is, you can save some typing by just
-   writing **greynoise <query>** instead of **greynose gnql query <query>**.
+   writing **greynoise <query>** instead of **greynose query <query>**.
 
 
 Get statistics
