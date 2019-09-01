@@ -126,12 +126,12 @@ def ip(obj, ip_address):
     results = []
     if input_file is not None:
         results.extend(
-            api_client.get_context(ip_address=line.strip())
+            api_client.ip(ip_address=line.strip())
             for line in input_file
             if validate_ip(line, strict=False)
         )
     if ip_address:
-        results.append(api_client.get_context(ip_address=ip_address))
+        results.append(api_client.ip(ip_address=ip_address))
     return results
 
 
@@ -153,9 +153,9 @@ def query(obj, query):
     input_file = obj["input_file"]
     results = []
     if input_file is not None:
-        results.extend(api_client.run_query(query=line.strip()) for line in input_file)
+        results.extend(api_client.query(query=line.strip()) for line in input_file)
     if query:
-        results.append(api_client.run_query(query=query))
+        results.append(api_client.query(query=query))
     return results
 
 
@@ -180,10 +180,7 @@ def quick(obj, ip_address):
 
     results = []
     if ip_addresses:
-        if len(ip_addresses) == 1:
-            results.append(api_client.get_noise_status(ip_address=ip_addresses[0]))
-        else:
-            results.extend(api_client.get_noise_status_bulk(ip_addresses=ip_addresses))
+        results.extend(api_client.quick(ip_addresses=ip_addresses))
     return results
 
 
@@ -214,11 +211,9 @@ def stats(obj, query):
     input_file = obj["input_file"]
     results = []
     if input_file is not None:
-        results.extend(
-            api_client.run_stats_query(query=line.strip()) for line in input_file
-        )
+        results.extend(api_client.stats(query=line.strip()) for line in input_file)
     if query:
-        results.append(api_client.run_stats_query(query=query))
+        results.append(api_client.stats(query=query))
     return results
 
 

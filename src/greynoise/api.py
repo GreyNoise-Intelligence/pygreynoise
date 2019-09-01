@@ -103,47 +103,18 @@ class GreyNoise(object):
 
         return body
 
-    def get_noise_status(self, ip_address):
-        """Get activity associated with an IP address.
+    def quick(self, ip_addresses):
+        """Get activity associated with one or more IP addresses.
 
-        :param ip_address: IP address to use in the look-up.
-        :type recurse: str
-        :return: Activity metadata for the IP address.
-        :rtype: dict
-
-        """
-        LOGGER.debug("Getting noise status for %s...", ip_address)
-        validate_ip(ip_address)
-
-        endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_address)
-        if self.use_cache:
-            cache = self.IP_QUICK_CHECK_CACHE
-            response = (
-                cache[ip_address]
-                if ip_address in cache
-                else cache.setdefault(ip_address, self._request(endpoint))
-            )
-        else:
-            response = self._request(endpoint)
-
-        code = response["code"]
-        response["code_message"] = self.CODE_MESSAGES.get(
-            code, self.UNKNOWN_CODE_MESSAGE.format(code)
-        )
-        return response
-
-    def get_noise_status_bulk(self, ip_addresses):
-        """Get activity associated with multiple IP addresses.
-
-        :param ip_addresses: IP addresses to use in the look-up.
-        :type ip_addresses: list
+        :param ip_addresses: One or more IP addresses to use in the look-up.
+        :type ip_addresses: str | list
         :return: Bulk status information for IP addresses.
         :rtype: dict
 
         """
         LOGGER.debug("Getting noise status for %s...", ip_addresses)
-        if not isinstance(ip_addresses, list):
-            raise ValueError("`ip_addresses` must be a list")
+        if isinstance(ip_addresses, str):
+            ip_addresses = [ip_addresses]
 
         ip_addresses = [
             ip_address
@@ -154,22 +125,37 @@ class GreyNoise(object):
         if self.use_cache:
             cache = self.IP_QUICK_CHECK_CACHE
             # Keep the same ordering as in the input
-            results = OrderedDict(
+            ordered_results = OrderedDict(
                 (ip_address, cache.get(ip_address)) for ip_address in ip_addresses
             )
             api_ip_addresses = [
-                ip_address for ip_address, result in results.items() if result is None
+                ip_address
+                for ip_address, result in ordered_results.items()
+                if result is None
             ]
             if api_ip_addresses:
-                api_results = self._request(
-                    self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
-                )
+                if len(api_ip_addresses) == 1:
+                    endpoint = self.EP_NOISE_QUICK.format(
+                        ip_address=api_ip_addresses[0]
+                    )
+                    api_results = [self._request(endpoint)]
+                else:
+                    api_results = self._request(
+                        self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
+                    )
+
                 for api_result in api_results:
                     ip_address = api_result["ip"]
-                    results[ip_address] = cache.setdefault(ip_address, api_result)
-            results = list(results.values())
+                    ordered_results[ip_address] = cache.setdefault(
+                        ip_address, api_result
+                    )
+            results = list(ordered_results.values())
         else:
-            results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
+            if len(ip_addresses) == 1:
+                endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
+                results = [self._request(endpoint)]
+            else:
+                results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
 
         for result in results:
             code = result["code"]
@@ -178,7 +164,7 @@ class GreyNoise(object):
             )
         return results
 
-    def get_context(self, ip_address):
+    def ip(self, ip_address):
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
@@ -206,13 +192,13 @@ class GreyNoise(object):
 
         return response
 
-    def run_query(self, query):
+    def query(self, query):
         """Run GNQL query."""
         LOGGER.debug("Running GNQL query: %s...", query)
         response = self._request(self.EP_GNQL, params={"query": query})
         return response
 
-    def run_stats_query(self, query):
+    def stats(self, query):
         """Run GNQL stats query."""
         LOGGER.debug("Running GNQL stats query: %s...", query)
         response = self._request(self.EP_GNQL_STATS, params={"query": query})

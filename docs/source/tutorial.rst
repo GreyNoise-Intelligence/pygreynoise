@@ -28,7 +28,7 @@ Once the client object has been created, it's possible to check if a given IP is
 considered internet noise or has been observed scanning or attacking devices across the
 Internet as follows::
 
-    >>> api_client.get_noise_status('8.8.8.8')
+    >>> api_client.quick('8.8.8.8')
     {
       "ip": "8.8.8.8",
       "noise": false,
@@ -39,7 +39,7 @@ Internet as follows::
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-    >>> client.get_noise_status_bulk(['8.8.8.8', '58.220.219.247'])
+    >>> client.quick(['8.8.8.8', '58.220.219.247'])
     [
       {
         "ip": "8.8.8.8",
@@ -57,7 +57,7 @@ this::
 
 Detailed context information for any given IP address is also available::
 
-    >>> api_client.get_context('58.220.219.247')
+    >>> api_client.ip('58.220.219.247')
     {
       "ip": "58.220.219.247",
       "seen": true,
@@ -114,7 +114,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-    >>> api_client.run_query('classification:malicious tags:"Bluekeep Exploit"')
+    >>> api_client.query('classification:malicious tags:"Bluekeep Exploit"')
     {
       "complete": true,
       "count": 2,
@@ -211,7 +211,7 @@ It's also possible to get statistics related to a GNQL query to better understan
 results are distributed in terms of different information such as organization, country,
 operating system, etc.::
 
-    >>> api_client.run_stats_query('classification:malicious tags:"Bluekeep Exploit"')
+    >>> api_client.stats('classification:malicious tags:"Bluekeep Exploit"')
     {
       "query": "classification:malicious tags:'Bluekeep Exploit'",
       "count": 24,
@@ -427,19 +427,19 @@ Once the command line tool has been created, it's possible to check if a given I
 considered internet noise or has been observed scanning or attacking devices across the
 Internet as follows::
 
-   $ greynoise ip quick-check 58.220.219.247
+   $ greynoise ip quick 58.220.219.247
    58.220.219.247 is classified as NOISE.
 
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-   $ greynoise ip multi-quick-check 8.8.8.8 58.220.219.247
+   $ greynoise ip quick 8.8.8.8 58.220.219.247
    8.8.8.8 is classified as NOT NOISE.
    58.220.219.247 is classified as NOISE.
 
 Detailed context information for any given IP address is also available::
 
-   $ greynoise ip context 58.220.219.247
+   $ greynoise ip 58.220.219.247
  ┌───────────────────────────┐
  │       result 1 of 1       │
  └───────────────────────────┘
@@ -478,7 +478,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-   $ greynoise gnql query 'classification:malicious tags:"Bluekeep Exploit"'
+   $ greynoise query 'classification:malicious tags:"Bluekeep Exploit"'
  ┌───────────────────────────┐
  │       result 1 of 24      │
  └───────────────────────────┘
@@ -509,7 +509,7 @@ as malicious and tagged as a Bluekeep Exploit::
 .. note::
 
    This is the default command, that is, you can save some typing by just
-   writing **greynoise <query>** instead of **greynose gnql query <query>**.
+   writing **greynoise <query>** instead of **greynose query <query>**.
 
 
 Get statistics
@@ -519,7 +519,7 @@ It's also possible to get statistics related to a GNQL query to better understan
 results are distributed in terms of different information such as organization, country,
 operating system, etc.::
 
-    $ greynoise gnql stats 'classification:malicious tags:"Bluekeep Exploit"'
+    $ greynoise stats 'classification:malicious tags:"Bluekeep Exploit"'
     ASNs:
     - AS14061: 7
     - AS16276: 6

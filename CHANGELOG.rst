@@ -6,7 +6,11 @@ Version `0.3.0`_
 ================
 **Date**: unreleased
 
-* API client: use LRU cache for IP context and quick check calls.
+* API client:
+
+  * rename API client methods to match CLI command names.
+  * use LRU cache for IP context and quick check calls.
+
 * CLI: add help subcommand.
 
 

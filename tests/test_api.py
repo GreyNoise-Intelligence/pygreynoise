@@ -1,7 +1,7 @@
 """GreyNoise API client test cases."""
 
 import pytest
-from mock import Mock, patch
+from mock import Mock, call, patch
 
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -73,179 +73,70 @@ class TestRequest(object):
         assert response == expected_response
 
 
-class TestGetContext(object):
+class TestIP(object):
     """GreyNoise client IP context test cases."""
 
-    def test_get_context(self, client):
+    def test_ip(self, client):
         """Get IP address information."""
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        response = client.get_context(ip_address)
+        response = client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
         assert response == expected_response
 
-    def test_get_context_with_cache(self, client):
+    def test_ip_with_cache(self, client):
         """Get IP address information with cache."""
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_not_called()
 
-    def test_get_context_without_cache(self, client_without_cache):
+    def test_ip_without_cache(self, client_without_cache):
         """Get IP address information without cache."""
         client = client_without_cache
         ip_address = "0.0.0.0"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
-        client.get_context(ip_address)
+        client.ip(ip_address)
         client._request.assert_called_with("noise/context/{}".format(ip_address))
 
-    def test_get_context_invalid_ip(self, client):
+    def test_invalid_ip(self, client):
         """Get invalid IP address information."""
         invalid_ip = "not an ip address"
         client._request = Mock()
 
         with pytest.raises(ValueError) as exception:
-            client.get_context(invalid_ip)
+            client.ip(invalid_ip)
         assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
 
 
-class TestGetNoiseStatus(object):
+class TestQuick(object):
     """GreyNoise client IP quick check test cases."""
 
     @pytest.mark.parametrize(
-        "ip_address, mock_response, expected_results",
-        (
-            (
-                "0.0.0.0",
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                {
-                    "code": "0x00",
-                    "code_message": "IP has never been observed scanning the Internet",
-                    "ip": "0.0.0.0",
-                    "noise": False,
-                },
-            ),
-            (
-                "127.0.0.1",
-                {"code": "0x01", "ip": "127.0.0.1", "noise": False},
-                {
-                    "code": "0x01",
-                    "code_message": (
-                        "IP has been observed by the GreyNoise sensor network"
-                    ),
-                    "ip": "127.0.0.1",
-                    "noise": False,
-                },
-            ),
-            (
-                "10.0.0.0",
-                {"code": "0x99", "ip": "10.0.0.0", "noise": True},
-                {
-                    "code": "0x99",
-                    "code_message": "Code message unknown: 0x99",
-                    "ip": "10.0.0.0",
-                    "noise": True,
-                },
-            ),
-        ),
-    )
-    def test_get_noise_status(
-        self, client, ip_address, mock_response, expected_results
-    ):
-        """Get IP address noise status."""
-        client._request = Mock(return_value=mock_response)
-        response = client.get_noise_status(ip_address)
-        client._request.assert_called_with("noise/quick/{}".format(ip_address))
-        assert response == expected_results
-
-    @pytest.mark.parametrize(
-        "ip_address, mock_response",
-        (
-            (
-                "0.0.0.0",
-                {
-                    "code": "0x00",
-                    "code_message": "IP has never been observed scanning the Internet",
-                    "ip": "0.0.0.0",
-                    "noise": False,
-                },
-            ),
-        ),
-    )
-    def test_get_noise_status_with_cache(self, client, ip_address, mock_response):
-        """Get IP address noise status with cache."""
-        client._request = Mock(return_value=mock_response)
-        client.get_noise_status(ip_address)
-        client._request.assert_called_with("noise/quick/{}".format(ip_address))
-
-        client._request.reset_mock()
-        client.get_noise_status(ip_address)
-        client._request.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "ip_address, mock_response",
-        (
-            (
-                "0.0.0.0",
-                {
-                    "code": "0x00",
-                    "code_message": "IP has never been observed scanning the Internet",
-                    "ip": "0.0.0.0",
-                    "noise": False,
-                },
-            ),
-        ),
-    )
-    def test_get_noise_status_without_cache(
-        self, client_without_cache, ip_address, mock_response
-    ):
-        """Get IP address noise status without cache."""
-        client = client_without_cache
-        client._request = Mock(return_value=mock_response)
-        client.get_noise_status(ip_address)
-        client._request.assert_called_with("noise/quick/{}".format(ip_address))
-
-        client._request.reset_mock()
-        client.get_noise_status(ip_address)
-        client._request.assert_called_with("noise/quick/{}".format(ip_address))
-
-    def test_get_noise_status_invalid_ip(self, client):
-        """Get invalid IP address noise status."""
-        invalid_ip = "not an ip address"
-        client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.get_noise_status(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
-        client._request.assert_not_called()
-
-
-class TestGetNoiseStatusBulk(object):
-    """GreyNoise client IP multi quick check test cases."""
-
-    @pytest.mark.parametrize(
-        "ip_addresses, filtered_ip_addresses, mock_response, expected_results",
+        "ip_addresses, expected_request, mock_response, expected_results",
         (
             (
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                call(
+                    "noise/multi/quick",
+                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                ),
                 [
                     {"code": "0x00", "ip": "0.0.0.0", "noise": False},
                     {"code": "0x01", "ip": "127.0.0.1", "noise": False},
@@ -277,9 +168,48 @@ class TestGetNoiseStatusBulk(object):
                 ],
             ),
             (
+                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
+                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                [
+                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                ],
+                [
+                    {
+                        "code": "0x00",
+                        "code_message": (
+                            "IP has never been observed scanning the Internet"
+                        ),
+                        "ip": "0.0.0.0",
+                        "noise": False,
+                    },
+                    {
+                        "code": "0x99",
+                        "code_message": "Code message unknown: 0x99",
+                        "ip": "10.0.0.0",
+                        "noise": False,
+                    },
+                ],
+            ),
+            (
+                "0.0.0.0",
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                [
+                    {
+                        "code": "0x00",
+                        "code_message": (
+                            "IP has never been observed scanning the Internet"
+                        ),
+                        "ip": "0.0.0.0",
+                        "noise": False,
+                    }
+                ],
+            ),
+            (
                 ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
-                ["0.0.0.0"],
-                [{"code": "0x00", "ip": "0.0.0.0", "noise": False}],
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
                 [
                     {
                         "code": "0x00",
@@ -293,112 +223,143 @@ class TestGetNoiseStatusBulk(object):
             ),
         ),
     )
-    def test_get_noise_status_bulk(
-        self,
-        client,
-        ip_addresses,
-        filtered_ip_addresses,
-        mock_response,
-        expected_results,
+    def test_quick(
+        self, client, ip_addresses, expected_request, mock_response, expected_results
     ):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
-        results = client.get_noise_status_bulk(ip_addresses)
-        client._request.assert_called_with(
-            "noise/multi/quick", json={"ips": filtered_ip_addresses}
-        )
+        results = client.quick(ip_addresses)
+        client._request.assert_has_calls([expected_request])
         assert results == expected_results
 
+    @pytest.mark.parametrize("ip_addresses", ([], ["not-an-ip"], "not-an-ip"))
+    def test_empty_request(self, client, ip_addresses):
+        """IP addresses is empty or only contains invalid IP addresses."""
+        client._request = Mock()
+        results = client.quick(ip_addresses)
+        client._request.assert_not_called()
+        assert results == []
+
     @pytest.mark.parametrize(
-        "ip_addresses, filtered_ip_addresses, mock_response",
+        "ip_addresses, expected_request, mock_response",
         (
             (
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                call(
+                    "noise/multi/quick",
+                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                ),
                 [
                     {"code": "0x00", "ip": "0.0.0.0", "noise": False},
                     {"code": "0x01", "ip": "127.0.0.1", "noise": False},
                     {"code": "0x99", "ip": "10.0.0.0", "noise": False},
                 ],
             ),
+            (
+                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
+                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                [
+                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                ],
+            ),
+            (
+                "0.0.0.0",
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+            ),
+            (
+                ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+            ),
         ),
     )
-    def test_get_noise_status_bulk_with_cache(
-        self, client, ip_addresses, filtered_ip_addresses, mock_response
+    def test_quick_with_cache(
+        self, client, ip_addresses, expected_request, mock_response
     ):
         """Get IP addresses noise status with cache."""
         client._request = Mock(return_value=mock_response)
-        client.get_noise_status_bulk(ip_addresses)
-        client._request.assert_called_with(
-            "noise/multi/quick", json={"ips": filtered_ip_addresses}
-        )
+        client.quick(ip_addresses)
+        client._request.assert_has_calls([expected_request])
 
         client._request.reset_mock()
-        client.get_noise_status_bulk(ip_addresses)
+        client.quick(ip_addresses)
         client._request.assert_not_called()
 
     @pytest.mark.parametrize(
-        "ip_addresses, filtered_ip_addresses, mock_response",
+        "ip_addresses, expected_request, mock_response",
         (
             (
                 ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                call(
+                    "noise/multi/quick",
+                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                ),
                 [
                     {"code": "0x00", "ip": "0.0.0.0", "noise": False},
                     {"code": "0x01", "ip": "127.0.0.1", "noise": False},
                     {"code": "0x99", "ip": "10.0.0.0", "noise": False},
                 ],
             ),
+            (
+                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
+                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                [
+                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                ],
+            ),
+            (
+                "0.0.0.0",
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+            ),
+            (
+                ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
+                call("noise/quick/0.0.0.0"),
+                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+            ),
         ),
     )
-    def test_get_noise_status_bulk_without_cache(
-        self, client_without_cache, ip_addresses, filtered_ip_addresses, mock_response
+    def test_quick_without_cache(
+        self, client_without_cache, ip_addresses, expected_request, mock_response
     ):
         """Get IP addresses noise status with cache."""
         client = client_without_cache
         client._request = Mock(return_value=mock_response)
-        client.get_noise_status_bulk(ip_addresses)
-        client._request.assert_called_with(
-            "noise/multi/quick", json={"ips": filtered_ip_addresses}
-        )
+        client.quick(ip_addresses)
+        client._request.assert_has_calls([expected_request])
 
         client._request.reset_mock()
-        client.get_noise_status_bulk(ip_addresses)
-        client._request.assert_called_with(
-            "noise/multi/quick", json={"ips": filtered_ip_addresses}
-        )
-
-    def test_get_noise_status_bulk_not_a_list(self, client):
-        """ValueError raised when argument is not a list."""
-        with pytest.raises(ValueError) as exception:
-            client.get_noise_status_bulk("not a list")
-        assert str(exception.value) == "`ip_addresses` must be a list"
+        client.quick(ip_addresses)
+        client._request.assert_has_calls([expected_request])
 
 
-class TestRunQuery(object):
+class TestQuery(object):
     """GreyNoise client run GNQL query test cases."""
 
-    def test_run_query(self, client):
+    def test_query(self, client):
         """Run GNQL query."""
         query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_query(query)
+        response = client.query(query)
         client._request.assert_called_with("experimental/gnql", params={"query": query})
         assert response == expected_response
 
 
-class TestRunStatsQuery(object):
+class TestStats(object):
     """GreyNoise client run GNQL stats query test cases."""
 
-    def test_run_query(self, client):
+    def test_stats(self, client):
         """Run GNQL stats query."""
         query = "<query>"
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.run_stats_query(query)
+        response = client.stats(query)
         client._request.assert_called_with(
             "experimental/gnql/stats", params={"query": query}
         )
