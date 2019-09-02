@@ -4,11 +4,15 @@ Decorators used to add common functionality to subcommands.
 
 """
 import functools
+import os
+import sys
 
 import click
 
+from greynoise.api import GreyNoise
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.exceptions import RequestFailure
+from greynoise.util import load_config
 
 
 def echo_result(function):
@@ -73,7 +77,26 @@ def pass_api_client(function):
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
-        api_client = context.obj["api_client"]
+        api_key = context.params["api_key"]
+
+        if api_key is None:
+            config = load_config()
+            if not config["api_key"]:
+                prog = os.path.basename(sys.argv[0])
+                click.echo(
+                    "\nError: API key not found.\n\n"
+                    "To fix this problem, please use any of the following methods "
+                    "(in order of precedence):\n"
+                    "- Pass it using the -k/--api-key option.\n"
+                    "- Set it in the GREYNOISE_API_KEY environment variable.\n"
+                    "- Run {!r} to save it to the configuration file.\n".format(
+                        "{} setup".format(prog)
+                    )
+                )
+                context.exit(-1)
+            api_key = config["api_key"]
+
+        api_client = GreyNoise(api_key)
         return function(api_client, *args, **kwargs)
 
     return wrapper
