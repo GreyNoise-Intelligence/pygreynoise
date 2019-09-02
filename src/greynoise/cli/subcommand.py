@@ -65,6 +65,7 @@ def interesting():
 
 @click.command()
 @click.argument("ip_address", callback=ip_address_parameter, required=False)
+@click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option(
     "-f",
@@ -78,7 +79,7 @@ def interesting():
 @pass_api_client
 @echo_result
 @handle_exceptions
-def ip(api_client, input_file, output_format, verbose, ip_address):
+def ip(api_client, api_key, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
     results = []
     if input_file is not None:
@@ -100,6 +101,7 @@ def pcap():
 
 @click.command()
 @click.argument("query", required=False)
+@click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option(
     "-f",
@@ -113,7 +115,7 @@ def pcap():
 @pass_api_client
 @echo_result
 @handle_exceptions
-def query(api_client, input_file, output_format, verbose, query):
+def query(api_client, api_key, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
     results = []
     if input_file is not None:
@@ -125,6 +127,7 @@ def query(api_client, input_file, output_format, verbose, query):
 
 @click.command()
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
+@click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option(
     "-f",
@@ -137,7 +140,7 @@ def query(api_client, input_file, output_format, verbose, query):
 @pass_api_client
 @echo_result
 @handle_exceptions
-def quick(api_client, input_file, output_format, ip_address):
+def quick(api_client, api_key, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
     if input_file is not None:
         ip_addresses = [
@@ -170,6 +173,7 @@ def signature():
 
 @click.command()
 @click.argument("query", required=False)
+@click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option(
     "-f",
@@ -182,7 +186,7 @@ def signature():
 @pass_api_client
 @echo_result
 @handle_exceptions
-def stats(api_client, input_file, output_format, query):
+def stats(api_client, api_key, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
     results = []
     if input_file is not None:
