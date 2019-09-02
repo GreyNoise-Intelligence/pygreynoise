@@ -4,8 +4,6 @@ Decorators used to add common functionality to subcommands.
 
 """
 import functools
-import os
-import sys
 
 import click
 
@@ -82,7 +80,7 @@ def pass_api_client(function):
         if api_key is None:
             config = load_config()
             if not config["api_key"]:
-                prog = os.path.basename(sys.argv[0])
+                prog_name = context.parent.info_name
                 click.echo(
                     "\nError: API key not found.\n\n"
                     "To fix this problem, please use any of the following methods "
@@ -90,7 +88,7 @@ def pass_api_client(function):
                     "- Pass it using the -k/--api-key option.\n"
                     "- Set it in the GREYNOISE_API_KEY environment variable.\n"
                     "- Run {!r} to save it to the configuration file.\n".format(
-                        "{} setup".format(prog)
+                        "{} setup".format(prog_name)
                     )
                 )
                 context.exit(-1)

@@ -188,6 +188,18 @@ class TestIP(object):
         assert result.exit_code == -1
         assert expected in result.output
 
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.ip, ["0.0.0.0"], parent=Context(main, info_name="greynoise")
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
 
 class TestPCAP(object):
     """PCAP subcommand test cases."""
@@ -230,6 +242,20 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["<query>"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.query,
+                ["<query>"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestQuick(object):
@@ -344,6 +370,20 @@ class TestQuick(object):
         assert result.exit_code == -1
         assert expected in result.output
 
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.quick,
+                ["0.0.0.0"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
 
 class TestSignature(object):
     """Signature subcommand test cases."""
@@ -415,6 +455,18 @@ class TestStats(object):
         result = runner.invoke(subcommand.stats, ["<query>"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.stats, ["query"], parent=Context(main, info_name="greynoise")
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestVersion(object):
