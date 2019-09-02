@@ -230,6 +230,19 @@ class TestQuery(object):
         assert result.output.strip("\n") == expected
         api_client.query.assert_called_with(query=query)
 
+    def test_input_file(self, api_client):
+        """Run query from input file."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.query.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.query, ["-f", "json", "-i", StringIO(query)])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.query.assert_called_with(query=query)
+
     def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
         runner = CliRunner()
@@ -436,9 +449,20 @@ class TestStats(object):
         api_client.stats.return_value = []
         expected = json.dumps([[]], indent=4, sort_keys=True)
 
-        result = runner.invoke(
-            subcommand.stats, ["-f", "json", "-i", StringIO(), query]
-        )
+        result = runner.invoke(subcommand.stats, ["-f", "json", query])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.stats.assert_called_with(query=query)
+
+    def test_input_file(self, api_client):
+        """Run stats query from input file."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.stats.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.stats, ["-f", "json", "-i", StringIO(query)])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.stats.assert_called_with(query=query)
