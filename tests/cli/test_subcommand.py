@@ -15,6 +15,17 @@ from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
 
 
+@pytest.fixture
+def api_client():
+    load_config_patcher = patch("greynoise.cli.decorator.load_config")
+    api_client_cls_patcher = patch("greynoise.cli.decorator.GreyNoise")
+    with load_config_patcher as load_config:
+        load_config.return_value = {"api_key": "<api_key>"}
+        with api_client_cls_patcher as api_client_cls:
+            api_client = api_client_cls()
+            yield api_client
+
+
 class TestAccount(object):
     """Account subcommand test cases."""
 
