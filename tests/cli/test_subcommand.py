@@ -152,13 +152,29 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_stdin_input(self, api_client, ip_address, expected_response):
+        """Get IP address information from stdin."""
+        runner = CliRunner()
+
+        api_client.ip.return_value = expected_response
+
+        result = runner.invoke(subcommand.ip, ["-f", "json"], input=ip_address)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected_response], indent=4, sort_keys=True
+        )
+        api_client.ip.assert_called_with(ip_address=ip_address)
+
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        result = runner.invoke(
-            subcommand.ip, parent=Context(main, info_name="greynoise")
-        )
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.ip, parent=Context(main, info_name="greynoise")
+            )
         assert result.exit_code == -1
         assert "Usage: greynoise ip" in result.output
         api_client.ip.assert_not_called()
@@ -261,13 +277,28 @@ class TestQuery(object):
         assert result.output.strip("\n") == expected
         api_client.query.assert_called_with(query=query)
 
+    def test_stdin_input(self, api_client):
+        """Run query from stdin."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.query.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.query, ["-f", "json"], input=query)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.query.assert_called_with(query=query)
+
     def test_no_query_passed(self, api_client):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        result = runner.invoke(
-            subcommand.query, parent=Context(main, info_name="greynoise")
-        )
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.query, parent=Context(main, info_name="greynoise")
+            )
         assert result.exit_code == -1
         assert "Usage: greynoise query" in result.output
         api_client.query.assert_not_called()
@@ -395,13 +426,48 @@ class TestQuick(object):
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
 
+    @pytest.mark.parametrize(
+        "ip_addresses, mock_response, expected",
+        (
+            (
+                ["0.0.0.0", "0.0.0.1"],
+                [
+                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
+                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                ],
+                json.dumps(
+                    [
+                        {"ip": "0.0.0.0", "noise": True},
+                        {"ip": "0.0.0.1", "noise": False},
+                    ],
+                    indent=4,
+                    sort_keys=True,
+                ),
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_addresses, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.quick.return_value = mock_response
+
+        result = runner.invoke(
+            subcommand.quick, ["-f", "json"], input="\n".join(ip_addresses)
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.quick.assert_called_with(ip_addresses=ip_addresses)
+
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        result = runner.invoke(
-            subcommand.quick, parent=Context(main, info_name="greynoise")
-        )
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.quick, parent=Context(main, info_name="greynoise")
+            )
         assert result.exit_code == -1
         assert "Usage: greynoise quick" in result.output
         api_client.quick.assert_not_called()
@@ -533,13 +599,28 @@ class TestStats(object):
         assert result.output.strip("\n") == expected
         api_client.stats.assert_called_with(query=query)
 
+    def test_stdin_input(self, api_client):
+        """Run stats query from input file."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.stats.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.stats, ["-f", "json"], input=query)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.stats.assert_called_with(query=query)
+
     def test_no_query_passed(self, api_client):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        result = runner.invoke(
-            subcommand.stats, parent=Context(main, info_name="greynoise")
-        )
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.stats, parent=Context(main, info_name="greynoise")
+            )
         assert result.exit_code == -1
         assert "Usage: greynoise stats" in result.output
         api_client.stats.assert_not_called()

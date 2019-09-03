@@ -1,5 +1,7 @@
 """CLI subcommands."""
 
+import sys
+
 import click
 
 from greynoise.cli.decorator import echo_result, handle_exceptions, pass_api_client
@@ -82,6 +84,9 @@ def interesting():
 @handle_exceptions
 def ip(context, api_client, api_key, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
+    if input_file is None and not sys.stdin.isatty():
+        input_file = click.open_file("-")
+
     if input_file is None and not ip_address:
         click.echo(context.get_help())
         context.exit(-1)
@@ -133,6 +138,9 @@ def pcap():
 @handle_exceptions
 def query(context, api_client, api_key, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
+    if input_file is None and not sys.stdin.isatty():
+        input_file = sys.stdin
+
     if input_file is None and not query:
         click.echo(context.get_help())
         context.exit(-1)
@@ -176,6 +184,9 @@ def query(context, api_client, api_key, input_file, output_format, verbose, quer
 @handle_exceptions
 def quick(context, api_client, api_key, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
+    if input_file is None and not sys.stdin.isatty():
+        input_file = sys.stdin
+
     if input_file is None and not ip_address:
         click.echo(context.get_help())
         context.exit(-1)
@@ -237,6 +248,9 @@ def signature():
 @handle_exceptions
 def stats(context, api_client, api_key, input_file, output_format, verbose, query):
     """Get aggregate stats from a given GNQL query."""
+    if input_file is None and not sys.stdin.isatty():
+        input_file = sys.stdin
+
     if input_file is None and not query:
         click.echo(context.get_help())
         context.exit(-1)
