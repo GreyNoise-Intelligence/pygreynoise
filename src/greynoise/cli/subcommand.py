@@ -230,11 +230,12 @@ def signature():
     default="txt",
     help="Output format",
 )
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @pass_api_client
 @click.pass_context
 @echo_result
 @handle_exceptions
-def stats(context, api_client, api_key, input_file, output_format, query):
+def stats(context, api_client, api_key, input_file, output_format, verbose, query):
     """Get aggregate stats from a given GNQL query."""
     if input_file is None and not query:
         click.echo(context.get_help())
