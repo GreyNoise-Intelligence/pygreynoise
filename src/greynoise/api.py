@@ -103,6 +103,40 @@ class GreyNoise(object):
 
         return body
 
+    def ip(self, ip_address):
+        """Get context associated with an IP address.
+
+        :param ip_address: IP address to use in the look-up.
+        :type recurse: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+        """
+        LOGGER.debug("Getting context for %s...", ip_address)
+        validate_ip(ip_address)
+
+        endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
+        if self.use_cache:
+            cache = self.IP_CONTEXT_CACHE
+            response = (
+                cache[ip_address]
+                if ip_address in self.IP_CONTEXT_CACHE
+                else cache.setdefault(ip_address, self._request(endpoint))
+            )
+        else:
+            response = self._request(endpoint)
+
+        if "ip" not in response:
+            response["ip"] = ip_address
+
+        return response
+
+    def query(self, query):
+        """Run GNQL query."""
+        LOGGER.debug("Running GNQL query: %s...", query)
+        response = self._request(self.EP_GNQL, params={"query": query})
+        return response
+
     def quick(self, ip_addresses):
         """Get activity associated with one or more IP addresses.
 
@@ -163,40 +197,6 @@ class GreyNoise(object):
                 code, self.UNKNOWN_CODE_MESSAGE.format(code)
             )
         return results
-
-    def ip(self, ip_address):
-        """Get context associated with an IP address.
-
-        :param ip_address: IP address to use in the look-up.
-        :type recurse: str
-        :return: Context for the IP address.
-        :rtype: dict
-
-        """
-        LOGGER.debug("Getting context for %s...", ip_address)
-        validate_ip(ip_address)
-
-        endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
-        if self.use_cache:
-            cache = self.IP_CONTEXT_CACHE
-            response = (
-                cache[ip_address]
-                if ip_address in self.IP_CONTEXT_CACHE
-                else cache.setdefault(ip_address, self._request(endpoint))
-            )
-        else:
-            response = self._request(endpoint)
-
-        if "ip" not in response:
-            response["ip"] = ip_address
-
-        return response
-
-    def query(self, query):
-        """Run GNQL query."""
-        LOGGER.debug("Running GNQL query: %s...", query)
-        response = self._request(self.EP_GNQL, params={"query": query})
-        return response
 
     def stats(self, query):
         """Run GNQL stats query."""
