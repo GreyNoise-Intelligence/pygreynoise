@@ -5,42 +5,42 @@ Query: {{ result.query }}
 {% if result.count > 0 %}
 {%- if result.stats.actors %}
 <header>Actors<header>:
-{{- macros.column_list(result.stats.actors, "actor") }}
+{{- macros.column_verbose_list(result.stats.actors, "actor", verbose) }}
 {%- endif %}
 
 {%- if result.stats.asns %}
 <header>ASNs</header>:
-{{- macros.column_list(result.stats.asns, "asn") }}
+{{- macros.column_verbose_list(result.stats.asns, "asn", verbose) }}
 {%- endif %}
 
 {%- if result.stats.categories %}
 <header>Categories</header>:
-{{- macros.column_list(result.stats.categories, "category") }}
+{{- macros.column_verbose_list(result.stats.categories, "category", verbose) }}
 {%- endif %}
 
 {%- if result.stats.classifications %}
 <header>Classifications</header>:
-{{- macros.column_list(result.stats.classifications, "classification") }}
+{{- macros.column_verbose_list(result.stats.classifications, "classification", verbose) }}
 {%- endif %}
 
 {%- if result.stats.countries %}
 <header>Countries</header>:
-{{- macros.column_list(result.stats.countries, "country") }}
+{{- macros.column_verbose_list(result.stats.countries, "country", verbose) }}
 {%- endif %}
 
 {%- if result.stats.operating_systems %}
 <header>Operating systems</header>:
-{{- macros.column_list(result.stats.operating_systems, "operating_system") }}
+{{- macros.column_verbose_list(result.stats.operating_systems, "operating_system", verbose) }}
 {%- endif %}
 
 {%- if result.stats.organizations %}
 <header>Organizations</header>:
-{{- macros.column_list(result.stats.organizations, "organization") }}
+{{- macros.column_verbose_list(result.stats.organizations, "organization", verbose) }}
 {%- endif %}
 
 {%- if result.stats.tags %}
 <header>Tags</header>:
-{{- macros.column_list(result.stats.tags, "tag") }}
+{{- macros.column_verbose_list(result.stats.tags, "tag", verbose) }}
 {%- endif %}
 {%- else %}
 No results found for this query.
