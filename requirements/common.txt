@@ -5,5 +5,6 @@ cachetools==3.1.1
 click-default-group==1.2.1
 dicttoxml==1.7.4
 jinja2==2.10.1
+more-itertools==7.2.0
 requests==2.22.0
 six==1.12.0
