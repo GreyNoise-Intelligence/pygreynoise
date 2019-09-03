@@ -386,25 +386,32 @@ The same operations available through the API client are also available through
 the command line using the *greynoise* tool. To get a list of all the available
 subcommands, use the *--help* option::
 
-   $ greynoise --help
-   Usage: greynoise [OPTIONS] COMMAND [ARGS]...
+    $ greynoise -h
+    Usage: greynoise [OPTIONS] COMMAND [ARGS]...
 
-   Entry point for the greynoise CLI.
+    GreyNoise CLI.
 
-   :param argv: Command line arguments :type: list
+    Options:
+    -k, --api-key TEXT  Key to include in API requests
+    -h, --help          Show this message and exit.
 
-   Options:
-   -k, --api-key TEXT           Key to include in API requests
-   -f, --format [json|txt|xml]  Output format
-   -v, --verbose                Verbose output
-   --help                       Show this message and exit.
-
-   Commands:
-   gnql*   GNQL queries.
-   actors  Run actors query.
-   ip      IP lookup.
-   setup   Configure API key.
-
+    Commands:
+    query*       Run a GNQL (GreyNoise Query Language) query.
+    account      View information about your GreyNoise account.
+    alerts       List, create, delete, and manage your GreyNoise alerts.
+    analyze      Analyze the IP addresses in a log file, stdin, etc.
+    feedback     Send feedback directly to the GreyNoise team.
+    filter       "Filter the noise from a log file, stdin, etc.
+    help         Show this message and exit.
+    interesting  Report an IP as "interesting".
+    ip           Query GreyNoise for all information on a given IP.
+    pcap         Get PCAP for a given IP address.
+    quick        Quickly check whether or not one or many IPs are "noise".
+    setup        Configure API key.
+    signature    Submit an IDS signature to GreyNoise to be deployed to all...
+    stats        Get aggregate stats from a given GNQL query.
+    version      Get version and OS information for your GreyNoise
+                commandline...
 
 Setup
 -----
@@ -427,13 +434,13 @@ Once the command line tool has been created, it's possible to check if a given I
 considered internet noise or has been observed scanning or attacking devices across the
 Internet as follows::
 
-   $ greynoise ip quick 58.220.219.247
+   $ greynoise quick 58.220.219.247
    58.220.219.247 is classified as NOISE.
 
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-   $ greynoise ip quick 8.8.8.8 58.220.219.247
+   $ greynoise quick 8.8.8.8 58.220.219.247
    8.8.8.8 is classified as NOT NOISE.
    58.220.219.247 is classified as NOISE.
 

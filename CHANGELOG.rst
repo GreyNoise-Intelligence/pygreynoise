@@ -11,7 +11,10 @@ Version `0.3.0`_
   * rename API client methods to match CLI command names.
   * use LRU cache for IP context and quick check calls.
 
-* CLI: add help subcommand.
+* CLI:
+
+  * add help subcommand.
+  * global options moved to those subcommands where they apply.
 
 
 Version `0.2.2`_

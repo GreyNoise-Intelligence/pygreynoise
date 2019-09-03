@@ -1,12 +1,9 @@
 """CLI subcommands."""
 
-import functools
-
 import click
 
-from greynoise.cli.formatter import FORMATTERS
+from greynoise.cli.decorator import echo_result, handle_exceptions, pass_api_client
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
-from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, save_config, validate_ip
 
 
@@ -21,53 +18,6 @@ class SubcommandNotImplemented(click.ClickException):
     def __init__(self, subcommand_name):
         message = "{!r} subcommand is not implemented yet.".format(subcommand_name)
         super(SubcommandNotImplemented, self).__init__(message)
-
-
-def echo_result(function):
-    """Decorator that prints subcommand results correctly formatted.
-
-    :param function: Subcommand that returns a result from the API.
-    :type function: callable
-    :returns: Wrapped function that prints subcommand results
-    :rtype: callable
-
-    """
-
-    @functools.wraps(function)
-    def wrapper(obj, *args, **kwargs):
-        result = function(obj, *args, **kwargs)
-        output_format = obj["output_format"]
-        formatter = FORMATTERS[output_format]
-        if isinstance(formatter, dict):
-            # For the text formatter, there's a separate formatter for each subcommand
-            formatter = formatter[obj["subcommand"]]
-
-        output = formatter(result, obj["verbose"]).strip("\n")
-        click.echo(output)
-
-    return wrapper
-
-
-def handle_exceptions(function):
-    """Print error and exit on API client exception.
-
-    :param function: Subcommand that returns a result from the API.
-    :type function: callable
-    :returns: Wrapped function that prints subcommand results
-    :rtype: callable
-
-    """
-
-    @functools.wraps(function)
-    def wrapper(obj, *args, **kwargs):
-        try:
-            return function(obj, *args, **kwargs)
-        except RequestFailure as exception:
-            body = exception.args[1]
-            click.echo("API error: {}".format(body["error"]))
-            click.get_current_context().exit(-1)
-
-    return wrapper
 
 
 @click.command()
@@ -115,14 +65,22 @@ def interesting():
 
 @click.command()
 @click.argument("ip_address", callback=ip_address_parameter, required=False)
-@click.pass_obj
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@pass_api_client
 @echo_result
 @handle_exceptions
-def ip(obj, ip_address):
+def ip(api_client, api_key, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
-    obj["subcommand"] = "ip.context"
-    api_client = obj["api_client"]
-    input_file = obj["input_file"]
     results = []
     if input_file is not None:
         results.extend(
@@ -143,14 +101,22 @@ def pcap():
 
 @click.command()
 @click.argument("query", required=False)
-@click.pass_obj
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@pass_api_client
 @echo_result
 @handle_exceptions
-def query(obj, query):
+def query(api_client, api_key, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
-    obj["subcommand"] = "gnql.query"
-    api_client = obj["api_client"]
-    input_file = obj["input_file"]
     results = []
     if input_file is not None:
         results.extend(api_client.query(query=line.strip()) for line in input_file)
@@ -161,15 +127,21 @@ def query(obj, query):
 
 @click.command()
 @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
-@click.pass_obj
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@pass_api_client
 @echo_result
 @handle_exceptions
-def quick(obj, ip_address):
+def quick(api_client, api_key, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
-    obj["subcommand"] = "ip.quick_check"
-    api_client = obj["api_client"]
-    input_file = obj["input_file"]
-
     if input_file is not None:
         ip_addresses = [
             line.strip() for line in input_file if validate_ip(line, strict=False)
@@ -201,14 +173,21 @@ def signature():
 
 @click.command()
 @click.argument("query", required=False)
-@click.pass_obj
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@pass_api_client
 @echo_result
 @handle_exceptions
-def stats(obj, query):
+def stats(api_client, api_key, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
-    obj["subcommand"] = "gnql.stats"
-    api_client = obj["api_client"]
-    input_file = obj["input_file"]
     results = []
     if input_file is not None:
         results.extend(api_client.stats(query=line.strip()) for line in input_file)

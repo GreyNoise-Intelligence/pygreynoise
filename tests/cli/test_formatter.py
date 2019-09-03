@@ -7,7 +7,6 @@ import pytest
 
 from greynoise.cli.formatter import (
     ANSI_MARKUP,
-    actors_formatter,
     gnql_query_formatter,
     gnql_stats_formatter,
     ip_context_formatter,
@@ -333,45 +332,3 @@ class TestGNQLStatsFormatter(object):
     def test_format_gnql_stats(self, result, expected):
         """Format GNQL stats."""
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
-
-
-class TestActorsFormatter(object):
-    """Actors formatter tests."""
-
-    @pytest.mark.parametrize(
-        "result, expected",
-        (
-            (
-                [
-                    {"name": "<name#1>", "ips": ["<ip#1>", "<ip#2>"]},
-                    {"name": "<name#2>", "ips": ["<ip#3>", "<ip#4>"]},
-                ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        u"""\
-                        ┌───────────────────────────┐
-                        │       Result 1 of 2       │
-                        └───────────────────────────┘
-
-                        <key>Name</key>: <value><name#1></value>
-                        <key>IPs</key>:
-                        - <value><ip#1></value>
-                        - <value><ip#2></value>
-
-
-                        ┌───────────────────────────┐
-                        │       Result 2 of 2       │
-                        └───────────────────────────┘
-
-                        <key>Name</key>: <value><name#2></value>
-                        <key>IPs</key>:
-                        - <value><ip#3></value>
-                        - <value><ip#4></value>"""
-                    )
-                ),
-            ),
-        ),
-    )
-    def test_actors(self, result, expected):
-        """Format actors."""
-        assert actors_formatter(result, verbose=False).strip("\n") == expected

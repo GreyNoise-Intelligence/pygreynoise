@@ -7,12 +7,23 @@ from collections import OrderedDict
 import pytest
 from click import Context
 from click.testing import CliRunner
-from mock import Mock, patch
+from mock import patch
 from six import StringIO
 
 from greynoise.cli import main, subcommand
 from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE
+
+
+@pytest.fixture
+def api_client():
+    load_config_patcher = patch("greynoise.cli.decorator.load_config")
+    api_client_cls_patcher = patch("greynoise.cli.decorator.GreyNoise")
+    with load_config_patcher as load_config:
+        load_config.return_value = {"api_key": "<api_key>"}
+        with api_client_cls_patcher as api_client_cls:
+            api_client = api_client_cls()
+            yield api_client
 
 
 class TestAccount(object):
@@ -112,20 +123,13 @@ class TestIP(object):
     """IP subcommand tests."""
 
     @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
-    def test_ip(self, ip_address, expected_response):
+    def test_ip(self, api_client, ip_address, expected_response):
         """Get IP address information."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.ip.return_value = expected_response
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.ip, [ip_address], obj=obj)
+        result = runner.invoke(subcommand.ip, ["-f", "json", ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
@@ -133,83 +137,68 @@ class TestIP(object):
         api_client.ip.assert_called_with(ip_address=ip_address)
 
     @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
-    def test_input_file(self, ip_address, expected_response):
+    def test_input_file(self, api_client, ip_address, expected_response):
         """Get IP address information from input file."""
         runner = CliRunner()
-        expected_response = {}
 
-        api_client = Mock()
         api_client.ip.return_value = expected_response
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(ip_address),
-            "output_format": "json",
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.ip, obj=obj)
+        result = runner.invoke(
+            subcommand.ip, ["-f", "json", "-i", StringIO(ip_address)]
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps(
             [expected_response], indent=4, sort_keys=True
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    def test_missing_ip_address(self):
+    def test_missing_ip_address(self, api_client):
         """IP subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.ip.return_value = {}
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.ip, obj=obj)
+        result = runner.invoke(subcommand.ip, ["-f", "json"])
         assert result.exit_code == 0
-        assert result.output == "[]\n"
+        assert result.output.strip("\n") == json.dumps([], indent=4, sort_keys=True)
         api_client.ip.assert_not_called()
 
-    def test_invalid_ip_address(self):
+    def test_invalid_ip_address(self, api_client):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.ip.return_value = {}
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = 'Error: Invalid value for "[IP_ADDRESS]": not-an-ip\n'
 
-        result = runner.invoke(subcommand.ip, ["not-an-ip"], obj=obj)
+        result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
         assert expected in result.output
         api_client.ip.assert_not_called()
 
-    def test_request_failure(self):
+    def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.ip.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.ip, ["0.0.0.0"], obj=obj)
+        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.ip, ["0.0.0.0"], parent=Context(main, info_name="greynoise")
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestPCAP(object):
@@ -228,45 +217,58 @@ class TestPCAP(object):
 class TestQuery(object):
     """"Query subcommand tests."""
 
-    def test_query(self):
+    def test_query(self, api_client):
         """Run query."""
         runner = CliRunner()
 
         query = "<query>"
-        api_client = Mock()
         api_client.query.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(),
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = json.dumps([[]], indent=4, sort_keys=True)
 
-        result = runner.invoke(subcommand.query, [query], obj=obj)
+        result = runner.invoke(subcommand.query, ["-f", "json", query])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.query.assert_called_with(query=query)
 
-    def test_request_failure(self):
+    def test_input_file(self, api_client):
+        """Run query from input file."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.query.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.query, ["-f", "json", "-i", StringIO(query)])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.query.assert_called_with(query=query)
+
+    def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.query.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.query, ["<query>"], obj=obj)
+        result = runner.invoke(subcommand.query, ["<query>"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.query,
+                ["<query>"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestQuick(object):
@@ -299,22 +301,15 @@ class TestQuick(object):
             ("0.0.0.0", "txt", "0.0.0.0 is classified as NOISE."),
         ),
     )
-    def test_quick(self, ip_address, output_format, expected):
+    def test_quick(self, api_client, ip_address, output_format, expected):
         """Quickly check IP address."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.quick.return_value = [
             OrderedDict((("ip", ip_address), ("noise", True)))
         ]
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": output_format,
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.quick, [ip_address], obj=obj)
+        result = runner.invoke(subcommand.quick, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=[ip_address])
@@ -339,80 +334,68 @@ class TestQuick(object):
             ),
         ),
     )
-    def test_input_file(self, ip_addresses, mock_response, expected):
+    def test_input_file(self, api_client, ip_addresses, mock_response, expected):
         """Quickly check IP address from input file."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.quick.return_value = mock_response
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO("\n".join(ip_addresses)),
-            "output_format": "json",
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.quick, obj=obj)
+        result = runner.invoke(
+            subcommand.quick, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))]
+        )
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
 
-    def test_missing_ip_address(self):
+    def test_missing_ip_address(self, api_client):
         """Quick subcommand succeeds even if no ip_address is passed."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.quick.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
 
-        result = runner.invoke(subcommand.quick, [], obj=obj)
+        result = runner.invoke(subcommand.quick, ["-f", "json"])
         assert result.exit_code == 0
         assert result.output == "[]\n"
         api_client.quick.assert_not_called()
 
-    def test_invalid_ip_address(self):
+    def test_invalid_ip_address(self, api_client):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.quick.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
-        result = runner.invoke(subcommand.quick, ["not-an-ip"], obj=obj)
+        result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
         assert expected in result.output
         api_client.quick.assert_not_called()
 
-    def test_request_failure(self):
+    def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.quick.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.quick, ["0.0.0.0"], obj=obj)
+        result = runner.invoke(subcommand.quick, ["0.0.0.0"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.quick,
+                ["0.0.0.0"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestSignature(object):
@@ -458,45 +441,56 @@ class TestSetup(object):
 class TestStats(object):
     """"Stats subcommand tests."""
 
-    def test_stats(self):
+    def test_stats(self, api_client):
         """Run stats query."""
         runner = CliRunner()
 
         query = "<query>"
-        api_client = Mock()
         api_client.stats.return_value = []
-        obj = {
-            "api_client": api_client,
-            "input_file": StringIO(),
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = json.dumps([[]], indent=4, sort_keys=True)
 
-        result = runner.invoke(subcommand.stats, [query], obj=obj)
+        result = runner.invoke(subcommand.stats, ["-f", "json", query])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.stats.assert_called_with(query=query)
 
-    def test_request_failure(self):
+    def test_input_file(self, api_client):
+        """Run stats query from input file."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.stats.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(subcommand.stats, ["-f", "json", "-i", StringIO(query)])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.stats.assert_called_with(query=query)
+
+    def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client = Mock()
         api_client.stats.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        obj = {
-            "api_client": api_client,
-            "input_file": None,
-            "output_format": "json",
-            "verbose": False,
-        }
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.stats, ["<query>"], obj=obj)
+        result = runner.invoke(subcommand.stats, ["<query>"])
         assert result.exit_code == -1
         assert expected in result.output
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.stats, ["query"], parent=Context(main, info_name="greynoise")
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestVersion(object):
