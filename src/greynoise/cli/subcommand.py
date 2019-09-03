@@ -77,19 +77,34 @@ def interesting():
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @pass_api_client
+@click.pass_context
 @echo_result
 @handle_exceptions
-def ip(api_client, api_key, input_file, output_format, verbose, ip_address):
+def ip(context, api_client, api_key, input_file, output_format, verbose, ip_address):
     """Query GreyNoise for all information on a given IP."""
-    results = []
+    if input_file is None and not ip_address:
+        click.echo(context.get_help())
+        context.exit(-1)
+
+    ip_addresses = []
     if input_file is not None:
-        results.extend(
-            api_client.ip(ip_address=line.strip())
-            for line in input_file
-            if validate_ip(line, strict=False)
-        )
+        lines = [line.strip() for line in input_file]
+        ip_addresses.extend([line for line in lines if validate_ip(line, strict=False)])
     if ip_address:
-        results.append(api_client.ip(ip_address=ip_address))
+        ip_addresses.append(ip_address)
+
+    if not ip_addresses:
+        output = [
+            context.command.get_usage(context),
+            (
+                "Error: at least one valid IP address must be passed either as an "
+                "argument (IP_ADDRESS) or through the -i/--input_file option."
+            ),
+        ]
+        click.echo("\n\n".join(output))
+        context.exit(-1)
+
+    results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
     return results
 
 
@@ -113,15 +128,33 @@ def pcap():
 )
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @pass_api_client
+@click.pass_context
 @echo_result
 @handle_exceptions
-def query(api_client, api_key, input_file, output_format, verbose, query):
+def query(context, api_client, api_key, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
-    results = []
+    if input_file is None and not query:
+        click.echo(context.get_help())
+        context.exit(-1)
+
+    queries = []
     if input_file is not None:
-        results.extend(api_client.query(query=line.strip()) for line in input_file)
+        queries.extend([line.strip() for line in input_file])
     if query:
-        results.append(api_client.query(query=query))
+        queries.append(query)
+
+    if not queries:
+        output = [
+            context.command.get_usage(context),
+            (
+                "Error: at least one query must be passed either as an argument "
+                "(QUERY) or through the -i/--input_file option."
+            ),
+        ]
+        click.echo("\n\n".join(output))
+        context.exit(-1)
+
+    results = [api_client.query(query=query) for query in queries]
     return results
 
 
@@ -138,17 +171,31 @@ def query(api_client, api_key, input_file, output_format, verbose, query):
     help="Output format",
 )
 @pass_api_client
+@click.pass_context
 @echo_result
 @handle_exceptions
-def quick(api_client, api_key, input_file, output_format, ip_address):
+def quick(context, api_client, api_key, input_file, output_format, ip_address):
     """Quickly check whether or not one or many IPs are "noise"."""
+    if input_file is None and not ip_address:
+        click.echo(context.get_help())
+        context.exit(-1)
+
+    ip_addresses = []
     if input_file is not None:
-        ip_addresses = [
-            line.strip() for line in input_file if validate_ip(line, strict=False)
-        ]
-    else:
-        ip_addresses = []
+        lines = [line.strip() for line in input_file]
+        ip_addresses.extend([line for line in lines if validate_ip(line, strict=False)])
     ip_addresses.extend(list(ip_address))
+
+    if not ip_addresses:
+        output = [
+            context.command.get_usage(context),
+            (
+                "Error: at least one valid IP address must be passed either as an "
+                "argument (IP_ADDRESS) or through the -i/--input_file option."
+            ),
+        ]
+        click.echo("\n\n".join(output))
+        context.exit(-1)
 
     results = []
     if ip_addresses:
@@ -184,15 +231,33 @@ def signature():
     help="Output format",
 )
 @pass_api_client
+@click.pass_context
 @echo_result
 @handle_exceptions
-def stats(api_client, api_key, input_file, output_format, query):
+def stats(context, api_client, api_key, input_file, output_format, query):
     """Get aggregate stats from a given GNQL query."""
-    results = []
+    if input_file is None and not query:
+        click.echo(context.get_help())
+        context.exit(-1)
+
+    queries = []
     if input_file is not None:
-        results.extend(api_client.stats(query=line.strip()) for line in input_file)
+        queries.extend([line.strip() for line in input_file])
     if query:
-        results.append(api_client.stats(query=query))
+        queries.append(query)
+
+    if not queries:
+        output = [
+            context.command.get_usage(context),
+            (
+                "Error: at least one query must be passed either as an argument "
+                "(QUERY) or through the -i/--input_file option."
+            ),
+        ]
+        click.echo("\n\n".join(output))
+        context.exit(-1)
+
+    results = [api_client.stats(query=query) for query in queries]
     return results
 
 

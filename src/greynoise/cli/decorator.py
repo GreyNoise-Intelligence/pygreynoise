@@ -32,7 +32,7 @@ def echo_result(function):
         formatter = FORMATTERS[output_format]
         if isinstance(formatter, dict):
             # For the text formatter, there's a separate formatter for each subcommand
-            formatter = formatter[context.info_name]
+            formatter = formatter[context.command.name]
 
         output = formatter(result, params.get("verbose", False)).strip("\n")
         click.echo(output)
