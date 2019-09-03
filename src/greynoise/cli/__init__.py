@@ -9,7 +9,7 @@ from greynoise.cli import subcommand
 @click.group(
     cls=DefaultGroup,
     default="query",
-    default_if_no_args=True,
+    default_if_no_args=False,
     context_settings={"help_option_names": ("-h", "--help")},
 )
 def main():
