@@ -4,6 +4,7 @@ import logging
 from collections import OrderedDict
 
 import cachetools
+import more_itertools
 import requests
 
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -168,15 +169,17 @@ class GreyNoise(object):
                 if result is None
             ]
             if api_ip_addresses:
+                api_results = []
                 if len(api_ip_addresses) == 1:
                     endpoint = self.EP_NOISE_QUICK.format(
                         ip_address=api_ip_addresses[0]
                     )
-                    api_results = [self._request(endpoint)]
+                    api_results.append(self._request(endpoint))
                 else:
-                    api_results = self._request(
-                        self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
-                    )
+                    for chunk in more_itertools.chunked(api_ip_addresses, 1000):
+                        api_results.extend(
+                            self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                        )
 
                 for api_result in api_results:
                     ip_address = api_result["ip"]
@@ -185,11 +188,15 @@ class GreyNoise(object):
                     )
             results = list(ordered_results.values())
         else:
+            results = []
             if len(ip_addresses) == 1:
                 endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
-                results = [self._request(endpoint)]
+                results.append(self._request(endpoint))
             else:
-                results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
+                for chunk in more_itertools.chunked(ip_addresses, 1000):
+                    results.extend(
+                        self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                    )
 
         for result in results:
             code = result["code"]
