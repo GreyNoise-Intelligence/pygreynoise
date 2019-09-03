@@ -1,4 +1,6 @@
 # Minimal requirements needed to run the application
+-r common-py2.txt
+-r common-py3.txt
 Click==7.0
 ansimarkup==1.4.0
 cachetools==3.1.1

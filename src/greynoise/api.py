@@ -4,6 +4,7 @@ import logging
 from collections import OrderedDict
 
 import cachetools
+import more_itertools
 import requests
 
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -57,10 +58,12 @@ class GreyNoise(object):
         ),
     }
 
-    MAX_SIZE = 1000
-    TTL = 3600
-    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
-    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
+    CACHE_MAX_SIZE = 1000
+    CACHE_TTL = 3600
+    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+
+    IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
     def __init__(self, api_key=None, timeout=7, use_cache=True):
         if api_key is None:
@@ -103,67 +106,6 @@ class GreyNoise(object):
 
         return body
 
-    def quick(self, ip_addresses):
-        """Get activity associated with one or more IP addresses.
-
-        :param ip_addresses: One or more IP addresses to use in the look-up.
-        :type ip_addresses: str | list
-        :return: Bulk status information for IP addresses.
-        :rtype: dict
-
-        """
-        LOGGER.debug("Getting noise status for %s...", ip_addresses)
-        if isinstance(ip_addresses, str):
-            ip_addresses = [ip_addresses]
-
-        ip_addresses = [
-            ip_address
-            for ip_address in ip_addresses
-            if validate_ip(ip_address, strict=False)
-        ]
-
-        if self.use_cache:
-            cache = self.IP_QUICK_CHECK_CACHE
-            # Keep the same ordering as in the input
-            ordered_results = OrderedDict(
-                (ip_address, cache.get(ip_address)) for ip_address in ip_addresses
-            )
-            api_ip_addresses = [
-                ip_address
-                for ip_address, result in ordered_results.items()
-                if result is None
-            ]
-            if api_ip_addresses:
-                if len(api_ip_addresses) == 1:
-                    endpoint = self.EP_NOISE_QUICK.format(
-                        ip_address=api_ip_addresses[0]
-                    )
-                    api_results = [self._request(endpoint)]
-                else:
-                    api_results = self._request(
-                        self.EP_NOISE_MULTI, json={"ips": api_ip_addresses}
-                    )
-
-                for api_result in api_results:
-                    ip_address = api_result["ip"]
-                    ordered_results[ip_address] = cache.setdefault(
-                        ip_address, api_result
-                    )
-            results = list(ordered_results.values())
-        else:
-            if len(ip_addresses) == 1:
-                endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
-                results = [self._request(endpoint)]
-            else:
-                results = self._request(self.EP_NOISE_MULTI, json={"ips": ip_addresses})
-
-        for result in results:
-            code = result["code"]
-            result["code_message"] = self.CODE_MESSAGES.get(
-                code, self.UNKNOWN_CODE_MESSAGE.format(code)
-            )
-        return results
-
     def ip(self, ip_address):
         """Get context associated with an IP address.
 
@@ -197,6 +139,77 @@ class GreyNoise(object):
         LOGGER.debug("Running GNQL query: %s...", query)
         response = self._request(self.EP_GNQL, params={"query": query})
         return response
+
+    def quick(self, ip_addresses):
+        """Get activity associated with one or more IP addresses.
+
+        :param ip_addresses: One or more IP addresses to use in the look-up.
+        :type ip_addresses: str | list
+        :return: Bulk status information for IP addresses.
+        :rtype: dict
+
+        """
+        LOGGER.debug("Getting noise status for %s...", ip_addresses)
+        if isinstance(ip_addresses, str):
+            ip_addresses = [ip_addresses]
+
+        ip_addresses = [
+            ip_address
+            for ip_address in ip_addresses
+            if validate_ip(ip_address, strict=False)
+        ]
+
+        if self.use_cache:
+            cache = self.IP_QUICK_CHECK_CACHE
+            # Keep the same ordering as in the input
+            ordered_results = OrderedDict(
+                (ip_address, cache.get(ip_address)) for ip_address in ip_addresses
+            )
+            api_ip_addresses = [
+                ip_address
+                for ip_address, result in ordered_results.items()
+                if result is None
+            ]
+            if api_ip_addresses:
+                api_results = []
+                if len(api_ip_addresses) == 1:
+                    endpoint = self.EP_NOISE_QUICK.format(
+                        ip_address=api_ip_addresses[0]
+                    )
+                    api_results.append(self._request(endpoint))
+                else:
+                    for chunk in more_itertools.chunked(
+                        api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                    ):
+                        api_results.extend(
+                            self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                        )
+
+                for api_result in api_results:
+                    ip_address = api_result["ip"]
+                    ordered_results[ip_address] = cache.setdefault(
+                        ip_address, api_result
+                    )
+            results = list(ordered_results.values())
+        else:
+            results = []
+            if len(ip_addresses) == 1:
+                endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
+                results.append(self._request(endpoint))
+            else:
+                for chunk in more_itertools.chunked(
+                    ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                ):
+                    results.extend(
+                        self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                    )
+
+        for result in results:
+            code = result["code"]
+            result["code_message"] = self.CODE_MESSAGES.get(
+                code, self.UNKNOWN_CODE_MESSAGE.format(code)
+            )
+        return results
 
     def stats(self, query):
         """Run GNQL stats query."""

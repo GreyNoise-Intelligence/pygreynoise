@@ -18,6 +18,7 @@ INSTALL_REQUIRES = [
     "click",
     "dicttoxml",
     "jinja2",
+    "more-itertools",
     "requests",
     "six",
 ]
