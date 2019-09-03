@@ -152,22 +152,40 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    def test_missing_ip_address(self, api_client):
-        """IP subcommand succeeds even if no ip_address is passed."""
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        api_client.ip.return_value = {}
-
-        result = runner.invoke(subcommand.ip, ["-f", "json"])
-        assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps([], indent=4, sort_keys=True)
+        result = runner.invoke(
+            subcommand.ip, parent=Context(main, info_name="greynoise")
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise ip" in result.output
         api_client.ip.assert_not_called()
 
-    def test_invalid_ip_address(self, api_client):
+    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.ip,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise ip" in result.output
+        assert expected in result.output
+        api_client.ip.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        api_client.ip.return_value = {}
         expected = 'Error: Invalid value for "[IP_ADDRESS]": not-an-ip\n'
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
@@ -242,6 +260,36 @@ class TestQuery(object):
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.query.assert_called_with(query=query)
+
+    def test_no_query_passed(self, api_client):
+        """Usage is returned if no query or input file is passed."""
+        runner = CliRunner()
+
+        result = runner.invoke(
+            subcommand.query, parent=Context(main, info_name="greynoise")
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise query" in result.output
+        api_client.query.assert_not_called()
+
+    def test_empty_input_file(self, api_client):
+        """Error is returned if empty input fle is passed."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one query must be passed either as an argument "
+            "(QUERY) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.query,
+            ["-i", StringIO()],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise query" in result.output
+        assert expected in result.output
+        api_client.query.assert_not_called()
 
     def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
@@ -347,22 +395,40 @@ class TestQuick(object):
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
 
-    def test_missing_ip_address(self, api_client):
-        """Quick subcommand succeeds even if no ip_address is passed."""
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        api_client.quick.return_value = []
-
-        result = runner.invoke(subcommand.quick, ["-f", "json"])
-        assert result.exit_code == 0
-        assert result.output == "[]\n"
+        result = runner.invoke(
+            subcommand.quick, parent=Context(main, info_name="greynoise")
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise quick" in result.output
         api_client.quick.assert_not_called()
 
-    def test_invalid_ip_address(self, api_client):
+    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.quick,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise quick" in result.output
+        assert expected in result.output
+        api_client.quick.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        api_client.quick.return_value = []
         expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
@@ -466,6 +532,36 @@ class TestStats(object):
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.stats.assert_called_with(query=query)
+
+    def test_no_query_passed(self, api_client):
+        """Usage is returned if no query or input file is passed."""
+        runner = CliRunner()
+
+        result = runner.invoke(
+            subcommand.stats, parent=Context(main, info_name="greynoise")
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise stats" in result.output
+        api_client.stats.assert_not_called()
+
+    def test_empty_input_file(self, api_client):
+        """Error is returned if empty input fle is passed."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one query must be passed either as an argument "
+            "(QUERY) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.stats,
+            ["-i", StringIO()],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise stats" in result.output
+        assert expected in result.output
+        api_client.query.assert_not_called()
 
     def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""
