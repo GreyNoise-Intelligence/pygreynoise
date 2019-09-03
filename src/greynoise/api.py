@@ -58,10 +58,12 @@ class GreyNoise(object):
         ),
     }
 
-    MAX_SIZE = 1000
-    TTL = 3600
-    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
-    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=MAX_SIZE, ttl=TTL)
+    CACHE_MAX_SIZE = 1000
+    CACHE_TTL = 3600
+    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+
+    IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
     def __init__(self, api_key=None, timeout=7, use_cache=True):
         if api_key is None:
@@ -176,7 +178,9 @@ class GreyNoise(object):
                     )
                     api_results.append(self._request(endpoint))
                 else:
-                    for chunk in more_itertools.chunked(api_ip_addresses, 1000):
+                    for chunk in more_itertools.chunked(
+                        api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                    ):
                         api_results.extend(
                             self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
                         )
@@ -193,7 +197,9 @@ class GreyNoise(object):
                 endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
                 results.append(self._request(endpoint))
             else:
-                for chunk in more_itertools.chunked(ip_addresses, 1000):
+                for chunk in more_itertools.chunked(
+                    ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                ):
                     results.extend(
                         self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
                     )
