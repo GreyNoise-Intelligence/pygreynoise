@@ -72,6 +72,8 @@ def validate_ip(ip_address, strict=True):
         socket.inet_aton(ip_address)
         return True
     except socket.error:
+        error_message = "Invalid IP address: {!r}".format(ip_address)
+        LOGGER.warning(error_message)
         if strict:
-            raise ValueError("Invalid IP address: {!r}".format(ip_address))
+            raise ValueError(error_message)
         return False
