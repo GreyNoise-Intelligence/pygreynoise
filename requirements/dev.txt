@@ -3,4 +3,4 @@
 bumpversion==0.5.3
 ipython==7.8.0;python_version>='3'
 pre-commit==1.18.3
-tox==3.13.2
+tox==3.14.0
