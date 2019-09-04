@@ -4,7 +4,13 @@ import sys
 
 import click
 
-from greynoise.cli.decorator import echo_result, handle_exceptions, pass_api_client
+from greynoise.cli.decorator import (
+    echo_result,
+    gnql,
+    handle_exceptions,
+    pass_api_client,
+)
+from greynoise.cli.helper import get_queries
 from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, save_config, validate_ip
 
@@ -119,49 +125,10 @@ def pcap():
     raise SubcommandNotImplemented("pcap")
 
 
-@click.command()
-@click.argument("query", required=False)
-@click.option("-k", "--api-key", help="Key to include in API requests")
-@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@click.option(
-    "-f",
-    "--format",
-    "output_format",
-    type=click.Choice(["json", "txt", "xml"]),
-    default="txt",
-    help="Output format",
-)
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-@pass_api_client
-@click.pass_context
-@echo_result
-@handle_exceptions
+@gnql
 def query(context, api_client, api_key, input_file, output_format, verbose, query):
     """Run a GNQL (GreyNoise Query Language) query."""
-    if input_file is None and not sys.stdin.isatty():
-        input_file = sys.stdin
-
-    if input_file is None and not query:
-        click.echo(context.get_help())
-        context.exit(-1)
-
-    queries = []
-    if input_file is not None:
-        queries.extend([line.strip() for line in input_file])
-    if query:
-        queries.append(query)
-
-    if not queries:
-        output = [
-            context.command.get_usage(context),
-            (
-                "Error: at least one query must be passed either as an argument "
-                "(QUERY) or through the -i/--input_file option."
-            ),
-        ]
-        click.echo("\n\n".join(output))
-        context.exit(-1)
-
+    queries = get_queries(context, input_file, query)
     results = [api_client.query(query=query) for query in queries]
     return results
 
@@ -229,49 +196,10 @@ def signature():
     raise SubcommandNotImplemented("signature")
 
 
-@click.command()
-@click.argument("query", required=False)
-@click.option("-k", "--api-key", help="Key to include in API requests")
-@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@click.option(
-    "-f",
-    "--format",
-    "output_format",
-    type=click.Choice(["json", "txt", "xml"]),
-    default="txt",
-    help="Output format",
-)
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-@pass_api_client
-@click.pass_context
-@echo_result
-@handle_exceptions
+@gnql
 def stats(context, api_client, api_key, input_file, output_format, verbose, query):
     """Get aggregate stats from a given GNQL query."""
-    if input_file is None and not sys.stdin.isatty():
-        input_file = sys.stdin
-
-    if input_file is None and not query:
-        click.echo(context.get_help())
-        context.exit(-1)
-
-    queries = []
-    if input_file is not None:
-        queries.extend([line.strip() for line in input_file])
-    if query:
-        queries.append(query)
-
-    if not queries:
-        output = [
-            context.command.get_usage(context),
-            (
-                "Error: at least one query must be passed either as an argument "
-                "(QUERY) or through the -i/--input_file option."
-            ),
-        ]
-        click.echo("\n\n".join(output))
-        context.exit(-1)
-
+    queries = get_queries(context, input_file, query)
     results = [api_client.stats(query=query) for query in queries]
     return results
 

@@ -294,7 +294,7 @@ class TestQuery(object):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.query, parent=Context(main, info_name="greynoise")
@@ -616,7 +616,7 @@ class TestStats(object):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.stats, parent=Context(main, info_name="greynoise")

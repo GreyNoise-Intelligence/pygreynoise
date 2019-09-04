@@ -98,3 +98,30 @@ def pass_api_client(function):
         return function(api_client, *args, **kwargs)
 
     return wrapper
+
+
+def gnql(function):
+    """Decorator that groups decorators common to gnql query and stats subcommands."""
+
+    @click.command()
+    @click.argument("query", required=False)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
+
+    return wrapper
