@@ -16,6 +16,7 @@ INSTALL_REQUIRES = [
     "ansimarkup",
     "cachetools",
     "click-default-group",
+    "click-repl",
     "dicttoxml",
     "jinja2",
     "more-itertools",
