@@ -20,22 +20,3 @@ def ip_addresses_parameter(_context, _parameter, values):
             raise click.BadParameter(value)
 
     return values
-
-
-def ip_address_parameter(_context, _parameter, value):
-    """IPv4 address passed from the command line.
-
-    :param value: IPv4 address value
-    :type value: str
-    :raises click.BadParameter: when IP address value is invalid
-
-    """
-    if value is None:
-        return value
-
-    try:
-        validate_ip(value)
-    except ValueError:
-        raise click.BadParameter(value)
-
-    return value
