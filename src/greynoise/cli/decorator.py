@@ -9,6 +9,7 @@ import click
 
 from greynoise.api import GreyNoise
 from greynoise.cli.formatter import FORMATTERS
+from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
 from greynoise.util import load_config
 
@@ -96,5 +97,58 @@ def pass_api_client(function):
 
         api_client = GreyNoise(api_key)
         return function(api_client, *args, **kwargs)
+
+    return wrapper
+
+
+def gnql_command(function):
+    """Decorator that groups decorators common to gnql query and stats subcommands."""
+
+    @click.command()
+    @click.argument("query", required=False)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def ip_lookup_command(function):
+    """Decorator that groups decorators common to ip and quick subcommand."""
+
+    @click.command()
+    @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
 
     return wrapper

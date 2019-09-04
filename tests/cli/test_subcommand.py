@@ -86,7 +86,7 @@ class TestFilter(object):
         runner = CliRunner()
         expected_output = "Error: 'filter' subcommand is not implemented yet.\n"
 
-        result = runner.invoke(subcommand.filter)
+        result = runner.invoke(subcommand.filter_)
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -100,7 +100,7 @@ class TestHelp(object):
         expected_output = "Usage: greynoise [OPTIONS] COMMAND [ARGS]..."
 
         result = runner.invoke(
-            subcommand.help, parent=Context(main, info_name="greynoise")
+            subcommand.help_, parent=Context(main, info_name="greynoise")
         )
         assert result.exit_code == 0
         assert expected_output in result.output
@@ -170,7 +170,7 @@ class TestIP(object):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.ip, parent=Context(main, info_name="greynoise")
@@ -202,7 +202,7 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]": not-an-ip\n'
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
@@ -294,7 +294,7 @@ class TestQuery(object):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.query, parent=Context(main, info_name="greynoise")
@@ -463,7 +463,7 @@ class TestQuick(object):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.quick, parent=Context(main, info_name="greynoise")
@@ -616,7 +616,7 @@ class TestStats(object):
         """Usage is returned if no query or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.stats, parent=Context(main, info_name="greynoise")
