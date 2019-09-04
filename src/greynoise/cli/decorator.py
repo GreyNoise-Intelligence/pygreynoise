@@ -36,7 +36,9 @@ def echo_result(function):
             formatter = formatter[context.command.name]
 
         output = formatter(result, params.get("verbose", False)).strip("\n")
-        click.echo(output)
+        click.echo(
+            output, file=params.get("output_file", click.open_file("-", mode="w"))
+        )
 
     return wrapper
 
@@ -109,6 +111,9 @@ def gnql_command(function):
     @click.option("-k", "--api-key", help="Key to include in API requests")
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
     @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
+    @click.option(
         "-f",
         "--format",
         "output_format",
@@ -135,6 +140,9 @@ def ip_lookup_command(function):
     @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
     @click.option("-k", "--api-key", help="Key to include in API requests")
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
     @click.option(
         "-f",
         "--format",
