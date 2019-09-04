@@ -12,10 +12,10 @@ def read(fname):
 
 
 INSTALL_REQUIRES = [
+    "Click>=7.0",
     "ansimarkup",
     "cachetools",
-    "click-default-group",  # must be before click, otherwise "setup.py install" fails
-    "click",
+    "click-default-group",
     "dicttoxml",
     "jinja2",
     "more-itertools",
