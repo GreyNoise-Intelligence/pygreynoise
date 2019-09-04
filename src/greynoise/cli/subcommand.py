@@ -65,7 +65,16 @@ def interesting():
 
 @ip_lookup_command
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
-def ip(context, api_client, api_key, input_file, output_format, verbose, ip_address):
+def ip(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    ip_address,
+):
     """Query GreyNoise for all information on a given IP."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
@@ -79,7 +88,9 @@ def pcap():
 
 
 @gnql_command
-def query(context, api_client, api_key, input_file, output_format, verbose, query):
+def query(
+    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
     results = [api_client.query(query=query) for query in queries]
@@ -87,7 +98,9 @@ def query(context, api_client, api_key, input_file, output_format, verbose, quer
 
 
 @ip_lookup_command
-def quick(context, api_client, api_key, input_file, output_format, ip_address):
+def quick(
+    context, api_client, api_key, input_file, output_file, output_format, ip_address
+):
     """Quickly check whether or not one or many IPs are "noise"."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = []
@@ -112,7 +125,9 @@ def signature():
 
 
 @gnql_command
-def stats(context, api_client, api_key, input_file, output_format, verbose, query):
+def stats(
+    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+):
     """Get aggregate stats from a given GNQL query."""
     queries = get_queries(context, input_file, query)
     results = [api_client.stats(query=query) for query in queries]

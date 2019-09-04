@@ -19,7 +19,7 @@ def get_ip_addresses(context, input_file, ip_address):
 
     """
     if input_file is None and not sys.stdin.isatty():
-        input_file = sys.stdin
+        input_file = click.open_file("-")
 
     if input_file is None and not ip_address:
         click.echo(context.get_help())
@@ -57,7 +57,7 @@ def get_queries(context, input_file, query):
 
     """
     if input_file is None and not sys.stdin.isatty():
-        input_file = sys.stdin
+        input_file = click.open_file("-")
 
     if input_file is None and not query:
         click.echo(context.get_help())
