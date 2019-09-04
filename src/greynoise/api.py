@@ -178,9 +178,10 @@ class GreyNoise(object):
                     )
                     api_results.append(self._request(endpoint))
                 else:
-                    for chunk in more_itertools.chunked(
+                    chunks = more_itertools.chunked(
                         api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
-                    ):
+                    )
+                    for chunk in chunks:
                         api_results.extend(
                             self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
                         )
@@ -197,9 +198,10 @@ class GreyNoise(object):
                 endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
                 results.append(self._request(endpoint))
             else:
-                for chunk in more_itertools.chunked(
+                chunks = more_itertools.chunked(
                     ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
-                ):
+                )
+                for chunk in chunks:
                     results.extend(
                         self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
                     )
