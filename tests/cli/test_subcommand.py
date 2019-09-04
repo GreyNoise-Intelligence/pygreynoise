@@ -170,7 +170,7 @@ class TestIP(object):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.ip, parent=Context(main, info_name="greynoise")
@@ -463,7 +463,7 @@ class TestQuick(object):
         """Usage is returned if no IP address or input file is passed."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.subcommand.sys") as sys:
+        with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(
                 subcommand.quick, parent=Context(main, info_name="greynoise")
