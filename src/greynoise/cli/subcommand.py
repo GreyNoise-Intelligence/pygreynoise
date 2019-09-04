@@ -46,15 +46,15 @@ def feedback():
     raise SubcommandNotImplemented("feedback")
 
 
-@click.command()
-def filter():
+@click.command(name="filter")
+def filter_():
     """"Filter the noise from a log file, stdin, etc."""
     raise SubcommandNotImplemented("filter")
 
 
-@click.command()
+@click.command(name="help")
 @click.pass_context
-def help(context):
+def help_(context):
     """Show this message and exit."""
     click.echo(context.parent.get_help())
 

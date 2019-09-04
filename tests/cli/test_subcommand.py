@@ -86,7 +86,7 @@ class TestFilter(object):
         runner = CliRunner()
         expected_output = "Error: 'filter' subcommand is not implemented yet.\n"
 
-        result = runner.invoke(subcommand.filter)
+        result = runner.invoke(subcommand.filter_)
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -100,7 +100,7 @@ class TestHelp(object):
         expected_output = "Usage: greynoise [OPTIONS] COMMAND [ARGS]..."
 
         result = runner.invoke(
-            subcommand.help, parent=Context(main, info_name="greynoise")
+            subcommand.help_, parent=Context(main, info_name="greynoise")
         )
         assert result.exit_code == 0
         assert expected_output in result.output
