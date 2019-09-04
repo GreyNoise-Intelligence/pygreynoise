@@ -202,7 +202,7 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]": not-an-ip\n'
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2

@@ -11,7 +11,7 @@ from greynoise.cli.decorator import (
     pass_api_client,
 )
 from greynoise.cli.helper import get_queries
-from greynoise.cli.parameter import ip_address_parameter, ip_addresses_parameter
+from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, save_config, validate_ip
 
 
@@ -72,7 +72,7 @@ def interesting():
 
 
 @click.command()
-@click.argument("ip_address", callback=ip_address_parameter, required=False)
+@click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
 @click.option(
@@ -101,8 +101,7 @@ def ip(context, api_client, api_key, input_file, output_format, verbose, ip_addr
     if input_file is not None:
         lines = [line.strip() for line in input_file]
         ip_addresses.extend([line for line in lines if validate_ip(line, strict=False)])
-    if ip_address:
-        ip_addresses.append(ip_address)
+    ip_addresses.extend(list(ip_address))
 
     if not ip_addresses:
         output = [
