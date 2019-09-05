@@ -111,7 +111,7 @@ def quick(
 
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
-@click.option("-t", "--timeout", help="API client request timeout")
+@click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 def setup(api_key, timeout):
     """Configure API key."""
     config = {"api_key": api_key}

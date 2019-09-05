@@ -20,7 +20,9 @@ def load_config():
     :rtype: dict
 
     """
-    config_parser = ConfigParser(DEFAULT_CONFIG)
+    config_parser = ConfigParser(
+        {key: str(value) for key, value in DEFAULT_CONFIG.items()}
+    )
     config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
