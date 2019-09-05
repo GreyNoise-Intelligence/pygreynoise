@@ -4,7 +4,7 @@ import click
 
 from greynoise.cli.decorator import gnql_command, ip_lookup_command
 from greynoise.cli.helper import get_ip_addresses, get_queries
-from greynoise.util import CONFIG_FILE, save_config
+from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 
 
 class SubcommandNotImplemented(click.ClickException):
@@ -111,9 +111,14 @@ def quick(
 
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
-def setup(api_key):
+@click.option("-t", "--timeout", help="API client request timeout")
+def setup(api_key, timeout):
     """Configure API key."""
     config = {"api_key": api_key}
+    if timeout is None:
+        config["timeout"] = DEFAULT_CONFIG["timeout"]
+    else:
+        config["timeout"] = timeout
     save_config(config)
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
