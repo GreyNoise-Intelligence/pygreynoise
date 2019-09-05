@@ -9,6 +9,8 @@ from six.moves.configparser import ConfigParser
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = logging.getLogger(__name__)
 
+DEFAULT_CONFIG = {"api_key": "", "timeout": 60}
+
 
 def load_config():
     """Load configuration.
@@ -18,8 +20,7 @@ def load_config():
     :rtype: dict
 
     """
-    defaults = {"api_key": ""}
-    config_parser = ConfigParser(defaults)
+    config_parser = ConfigParser(DEFAULT_CONFIG)
     config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
@@ -32,11 +33,28 @@ def load_config():
     if "GREYNOISE_API_KEY" in os.environ:
         api_key = os.environ["GREYNOISE_API_KEY"]
         LOGGER.debug("API key found in environment variable: %s", api_key)
-
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_key", api_key)
 
-    return {"api_key": config_parser.get("greynoise", "api_key")}
+    if "GREYNOISE_TIMEOUT" in os.environ:
+        timeout = os.environ["GREYNOISE_TIMEOUT"]
+        try:
+            int(timeout)
+        except ValueError:
+            LOGGER.error(
+                "GREYNOISE_TIMEOUT environment variable "
+                "cannot be converted to an integer: %r",
+                timeout,
+            )
+        else:
+            LOGGER.debug("Timeout found in environment variable: %s", timeout)
+            # Environment variable takes precedence over configuration file content
+            config_parser.set("greynoise", "timeout", timeout)
+
+    return {
+        "api_key": config_parser.get("greynoise", "api_key"),
+        "timeout": config_parser.getint("greynoise", "timeout"),
+    }
 
 
 def save_config(config):
