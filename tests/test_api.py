@@ -28,19 +28,21 @@ class TestInit(object):
 
     def test_with_api_key(self):
         """API parameter is passed."""
-        expected = "<api_key>"
+        config = {"api_key": "<api_key>", "timeout": "<timeout>"}
         with patch("greynoise.api.load_config") as load_config:
-            client = GreyNoise(api_key=expected)
-            assert client.api_key == expected
+            client = GreyNoise(**config)
+            assert client.api_key == config["api_key"]
+            assert client.timeout == config["timeout"]
             load_config.assert_not_called()
 
     def test_without_api_key(self):
         """API parameter is not passed."""
-        expected = "<api_key>"
+        config = {"api_key": "<api_key>", "timeout": "<timeout>"}
         with patch("greynoise.api.load_config") as load_config:
-            load_config.return_value = {"api_key": expected}
+            load_config.return_value = config
             client = GreyNoise()
-            assert client.api_key == expected
+            assert client.api_key == config["api_key"]
+            assert client.timeout == config["timeout"]
             load_config.assert_called()
 
 
