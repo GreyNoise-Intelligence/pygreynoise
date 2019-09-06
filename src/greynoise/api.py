@@ -102,7 +102,11 @@ class GreyNoise(object):
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
 
-        body = response.json()
+        if "application/json" in response.headers.get("Content-Type", ""):
+            body = response.json()
+        else:
+            body = response.text
+
         if response.status_code == 429:
             raise RateLimitError()
         if not 200 <= response.status_code < 300:
