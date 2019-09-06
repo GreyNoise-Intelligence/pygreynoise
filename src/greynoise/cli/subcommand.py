@@ -2,6 +2,7 @@
 
 import click
 
+from greynoise.__version__ import __version__
 from greynoise.cli.decorator import gnql_command, ip_lookup_command
 from greynoise.cli.helper import get_ip_addresses, get_queries
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
@@ -142,4 +143,4 @@ def stats(
 @click.command()
 def version():
     """Get version and OS information for your GreyNoise commandline installation."""
-    raise SubcommandNotImplemented("version")
+    click.echo("greynoise {}".format(__version__))
