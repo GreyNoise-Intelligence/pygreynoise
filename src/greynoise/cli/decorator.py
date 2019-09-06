@@ -82,7 +82,7 @@ def pass_api_client(function):
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
-        api_key = context.params["api_key"]
+        api_key = context.params.get("api_key")
         config = load_config()
 
         if api_key is None:
