@@ -392,8 +392,7 @@ subcommands, use the *--help* option::
     GreyNoise CLI.
 
     Options:
-    -k, --api-key TEXT  Key to include in API requests
-    -h, --help          Show this message and exit.
+    -h, --help  Show this message and exit.
 
     Commands:
     query*       Run a GNQL (GreyNoise Query Language) query.
@@ -407,6 +406,7 @@ subcommands, use the *--help* option::
     ip           Query GreyNoise for all information on a given IP.
     pcap         Get PCAP for a given IP address.
     quick        Quickly check whether or not one or many IPs are "noise".
+    repl         Start an interactive shell.
     setup        Configure API key.
     signature    Submit an IDS signature to GreyNoise to be deployed to all...
     stats        Get aggregate stats from a given GNQL query.
