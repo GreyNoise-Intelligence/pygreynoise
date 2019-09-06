@@ -4,7 +4,7 @@ Changelog
 
 Version `0.3.0`_
 ================
-**Date**: unreleased
+**Date**: September 06, 2019
 
 * API client:
 
