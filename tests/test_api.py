@@ -53,14 +53,18 @@ class TestRequest(object):
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
         client.session = Mock()
-        client.session.get().status_code = status_code
+        response = client.session.get()
+        response.status_code = status_code
+        response.headers.get.return_value = "application/json"
         with pytest.raises(RequestFailure):
             client._request("endpoint")
 
     def test_rate_limit_error(self, client):
         """Exception is raised on rate limit response."""
         client.session = Mock()
-        client.session.get().status_code = 429
+        response = client.session.get()
+        response.headers.get.return_value = "application/json"
+        response.status_code = 429
         with pytest.raises(RateLimitError):
             client._request("endpoint")
 
@@ -68,8 +72,10 @@ class TestRequest(object):
         """Response's json payload is returned."""
         expected_response = {"expected": "response"}
         client.session = Mock()
-        client.session.get().status_code = 200
-        client.session.get().json.return_value = expected_response
+        response = client.session.get()
+        response.status_code = 200
+        response.headers.get.return_value = "application/json"
+        response.json.return_value = expected_response
 
         response = client._request("endpoint")
         assert response == expected_response
