@@ -65,9 +65,13 @@ class GreyNoise(object):
 
     IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
-    def __init__(self, api_key=None, timeout=60, use_cache=True):
-        if api_key is None:
-            api_key = load_config()["api_key"]
+    def __init__(self, api_key=None, timeout=None, use_cache=True):
+        if api_key is None or timeout is None:
+            config = load_config()
+            if api_key is None:
+                api_key = config["api_key"]
+            if timeout is None:
+                timeout = config["timeout"]
         self.api_key = api_key
         self.timeout = timeout
         self.use_cache = use_cache

@@ -15,6 +15,7 @@ Version `0.3.0`_
 
   * add help subcommand.
   * global options moved to those subcommands where they apply.
+  * make request timeout configurable.
 
 
 Version `0.2.2`_

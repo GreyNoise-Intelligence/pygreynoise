@@ -6,6 +6,7 @@ Decorators used to add common functionality to subcommands.
 import functools
 
 import click
+from requests.exceptions import RequestException
 
 from greynoise.api import GreyNoise
 from greynoise.cli.formatter import FORMATTERS
@@ -61,6 +62,9 @@ def handle_exceptions(function):
             body = exception.args[1]
             click.echo("API error: {}".format(body["error"]))
             click.get_current_context().exit(-1)
+        except RequestException as exception:
+            click.echo("API error: {}".format(exception))
+            click.get_current_context().exit(-1)
 
     return wrapper
 
@@ -79,9 +83,9 @@ def pass_api_client(function):
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
         api_key = context.params["api_key"]
+        config = load_config()
 
         if api_key is None:
-            config = load_config()
             if not config["api_key"]:
                 prog_name = context.parent.info_name
                 click.echo(
@@ -97,7 +101,7 @@ def pass_api_client(function):
                 context.exit(-1)
             api_key = config["api_key"]
 
-        api_client = GreyNoise(api_key)
+        api_client = GreyNoise(api_key=api_key, timeout=config["timeout"])
         return function(api_client, *args, **kwargs)
 
     return wrapper

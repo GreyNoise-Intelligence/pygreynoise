@@ -8,11 +8,12 @@ import pytest
 from click import Context
 from click.testing import CliRunner
 from mock import patch
+from requests.exceptions import RequestException
 from six import StringIO
 
 from greynoise.cli import main, subcommand
 from greynoise.exceptions import RequestFailure
-from greynoise.util import CONFIG_FILE
+from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG
 
 
 @pytest.fixture
@@ -20,7 +21,10 @@ def api_client():
     load_config_patcher = patch("greynoise.cli.decorator.load_config")
     api_client_cls_patcher = patch("greynoise.cli.decorator.GreyNoise")
     with load_config_patcher as load_config:
-        load_config.return_value = {"api_key": "<api_key>"}
+        load_config.return_value = {
+            "api_key": "<api_key>",
+            "timeout": DEFAULT_CONFIG["timeout"],
+        }
         with api_client_cls_patcher as api_client_cls:
             api_client = api_client_cls()
             yield api_client
@@ -216,11 +220,21 @@ class TestIP(object):
         api_client.ip.side_effect = RequestFailure(
             401, {"error": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden"
+        expected = "API error: forbidden\n"
 
         result = runner.invoke(subcommand.ip, ["0.0.0.0"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert result.output == expected
+
+    def test_requests_exception(self, api_client):
+        """Error is displayed on requests library exception."""
+        runner = CliRunner()
+        expected = "API error: <error message>\n"
+
+        api_client.ip.side_effect = RequestException("<error message>")
+        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
+        assert result.exit_code == -1
+        assert result.output == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -547,15 +561,33 @@ class TestSetup(object):
     """Setup subcommand test cases."""
 
     @pytest.mark.parametrize("key_option", ["-k", "--api-key"])
-    def test_save_config(self, key_option):
-        """Save configuration file."""
+    def test_save_api_key(self, key_option):
+        """Save API key to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
-        expected_config = {"api_key": api_key}
+        expected_config = {"api_key": api_key, "timeout": DEFAULT_CONFIG["timeout"]}
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
         with patch("greynoise.cli.subcommand.save_config") as save_config:
             result = runner.invoke(subcommand.setup, [key_option, api_key])
+        assert result.exit_code == 0
+        assert result.output == expected_output
+        save_config.assert_called_with(expected_config)
+
+    @pytest.mark.parametrize("key_option", ["-k", "--api-key"])
+    @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
+    def test_save_api_key_and_timeout(self, key_option, timeout_option):
+        """Save API key and timeout to configuration file."""
+        runner = CliRunner()
+        api_key = "<api_key>"
+        timeout = 123456
+        expected_config = {"api_key": api_key, "timeout": timeout}
+        expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
+
+        with patch("greynoise.cli.subcommand.save_config") as save_config:
+            result = runner.invoke(
+                subcommand.setup, [key_option, api_key, timeout_option, timeout]
+            )
         assert result.exit_code == 0
         assert result.output == expected_output
         save_config.assert_called_with(expected_config)
