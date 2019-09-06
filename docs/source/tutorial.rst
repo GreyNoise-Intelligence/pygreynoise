@@ -21,7 +21,7 @@ where:
 .. note::
 
    Both *api_key* and *timeout* are optional parameters and might not be required if a
-   configuration file has been created using the **greynoise setup** CLI command.
+   configuration file has been created using the ``greynoise setup`` CLI command.
 
 
 Check specific IPs
@@ -42,7 +42,7 @@ Internet as follows::
 When there's a list of IP addresses to verify, they can be checked all at once like
 this::
 
-    >>> client.quick(['8.8.8.8', '58.220.219.247'])
+    >>> api_client.quick(['8.8.8.8', '58.220.219.247'])
     [
       {
         "ip": "8.8.8.8",
@@ -105,6 +105,13 @@ Detailed context information for any given IP address is also available::
         "ja3": []
       }
     }
+
+.. note::
+
+    The ``ip`` and ``quick`` methods use an LRU cache with a timeout of one hour to
+    return faster responses in case the same addresses are queried multiple times. It
+    can be disabled to get live responses from the API by passing ``use_cache=False``
+    when the ``GreyNoise`` class is instantiated.
 
 
 GNQL
@@ -528,7 +535,7 @@ as malicious and tagged as a Bluekeep Exploit::
 .. note::
 
    This is the default command, that is, you can save some typing by just
-   writing **greynoise <query>** instead of **greynose query <query>**.
+   writing ``greynoise <query>`` instead of ``greynose query <query>``.
 
 
 Get statistics
