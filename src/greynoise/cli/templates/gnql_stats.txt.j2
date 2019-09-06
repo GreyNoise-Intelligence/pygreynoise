@@ -1,46 +1,46 @@
-{% import "macros.txt.j2" as macros %}
+{% import "macros.txt.j2" as macros with context %}
 {% for result in results -%}
 {% call macros.header(loop) %}Query{% endcall -%}
 Query: {{ result.query }}
 {% if result.count > 0 %}
 {%- if result.stats.actors %}
 <header>Actors<header>:
-{{- macros.column_verbose_list(result.stats.actors, "actor", verbose) }}
+{{- macros.column_verbose_list(result.stats.actors, "actor") }}
 {%- endif %}
 
 {%- if result.stats.asns %}
 <header>ASNs</header>:
-{{- macros.column_verbose_list(result.stats.asns, "asn", verbose) }}
+{{- macros.column_verbose_list(result.stats.asns, "asn") }}
 {%- endif %}
 
 {%- if result.stats.categories %}
 <header>Categories</header>:
-{{- macros.column_verbose_list(result.stats.categories, "category", verbose) }}
+{{- macros.column_verbose_list(result.stats.categories, "category") }}
 {%- endif %}
 
 {%- if result.stats.classifications %}
 <header>Classifications</header>:
-{{- macros.column_verbose_list(result.stats.classifications, "classification", verbose) }}
+{{- macros.column_verbose_list(result.stats.classifications, "classification") }}
 {%- endif %}
 
 {%- if result.stats.countries %}
 <header>Countries</header>:
-{{- macros.column_verbose_list(result.stats.countries, "country", verbose) }}
+{{- macros.column_verbose_list(result.stats.countries, "country") }}
 {%- endif %}
 
 {%- if result.stats.operating_systems %}
 <header>Operating systems</header>:
-{{- macros.column_verbose_list(result.stats.operating_systems, "operating_system", verbose) }}
+{{- macros.column_verbose_list(result.stats.operating_systems, "operating_system") }}
 {%- endif %}
 
 {%- if result.stats.organizations %}
 <header>Organizations</header>:
-{{- macros.column_verbose_list(result.stats.organizations, "organization", verbose) }}
+{{- macros.column_verbose_list(result.stats.organizations, "organization") }}
 {%- endif %}
 
 {%- if result.stats.tags %}
 <header>Tags</header>:
-{{- macros.column_verbose_list(result.stats.tags, "tag", verbose) }}
+{{- macros.column_verbose_list(result.stats.tags, "tag") }}
 {%- endif %}
 {%- else %}
 No results found for this query.

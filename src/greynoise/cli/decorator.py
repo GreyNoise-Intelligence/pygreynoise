@@ -125,7 +125,7 @@ def gnql_command(function):
         default="txt",
         help="Output format",
     )
-    @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+    @click.option("-v", "--verbose", count=True, help="Verbose output")
     @pass_api_client
     @click.pass_context
     @echo_result

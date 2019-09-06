@@ -67,7 +67,7 @@ def interesting():
 
 
 @ip_lookup_command
-@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.option("-v", "--verbose", count=True, help="Verbose output")
 def ip(
     context,
     api_client,
