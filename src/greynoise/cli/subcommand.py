@@ -1,5 +1,7 @@
 """CLI subcommands."""
 
+import platform
+
 import click
 
 from greynoise.__version__ import __version__
@@ -143,4 +145,8 @@ def stats(
 @click.command()
 def version():
     """Get version and OS information for your GreyNoise commandline installation."""
-    click.echo("greynoise {}".format(__version__))
+    click.echo(
+        "greynoise {}\n"
+        "  Python {}\n"
+        "  {}\n".format(__version__, platform.python_version(), platform.platform())
+    )

@@ -709,8 +709,8 @@ class TestVersion(object):
     def test_version(self):
         """Version returned."""
         runner = CliRunner()
-        expected_output = "greynoise {}\n".format(__version__)
+        expected_output = "greynoise {}".format(__version__)
 
         result = runner.invoke(subcommand.version)
         assert result.exit_code == 0
-        assert result.output == expected_output
+        assert result.output.startswith(expected_output)
