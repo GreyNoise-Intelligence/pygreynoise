@@ -109,7 +109,7 @@ class GreyNoise(object):
 
         if response.status_code == 429:
             raise RateLimitError()
-        if not 200 <= response.status_code < 300:
+        if response.status_code >= 400:
             raise RequestFailure(response.status_code, body)
 
         return body

@@ -49,7 +49,7 @@ class TestInit(object):
 class TestRequest(object):
     """GreyNoise client _request method test cases."""
 
-    @pytest.mark.parametrize("status_code", (100, 300, 400, 500))
+    @pytest.mark.parametrize("status_code", (400, 500))
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
         client.session = Mock()
