@@ -5,39 +5,38 @@ import platform
 import click
 
 from greynoise.__version__ import __version__
-from greynoise.cli.decorator import gnql_command, ip_lookup_command
+from greynoise.cli.decorator import (
+    gnql_command,
+    ip_lookup_command,
+    not_implemented_command,
+)
 from greynoise.cli.helper import get_ip_addresses, get_queries
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 
 
-@click.command()
+@not_implemented_command
 def account():
     """View information about your GreyNoise account."""
-    raise SubcommandNotImplemented("account")
 
 
-@click.command()
+@not_implemented_command
 def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""
-    raise SubcommandNotImplemented("alerts")
 
 
-@click.command()
+@not_implemented_command
 def analyze():
     """Analyze the IP addresses in a log file, stdin, etc."""
-    raise SubcommandNotImplemented("analyze")
 
 
-@click.command()
+@not_implemented_command
 def feedback():
     """Send feedback directly to the GreyNoise team."""
-    raise SubcommandNotImplemented("feedback")
 
 
-@click.command(name="filter")
-def filter_():
+@not_implemented_command
+def filter():
     """"Filter the noise from a log file, stdin, etc."""
-    raise SubcommandNotImplemented("filter")
 
 
 @click.command(name="help")
@@ -47,10 +46,9 @@ def help_(context):
     click.echo(context.parent.get_help())
 
 
-@click.command()
+@not_implemented_command
 def interesting():
     """Report an IP as "interesting"."""
-    raise SubcommandNotImplemented("interesting")
 
 
 @ip_lookup_command
@@ -71,10 +69,9 @@ def ip(
     return results
 
 
-@click.command()
+@not_implemented_command
 def pcap():
     """Get PCAP for a given IP address."""
-    raise SubcommandNotImplemented("pcap")
 
 
 @gnql_command
@@ -113,10 +110,9 @@ def setup(api_key, timeout):
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
 
-@click.command()
+@not_implemented_command
 def signature():
     """Submit an IDS signature to GreyNoise to be deployed to all GreyNoise nodes."""
-    raise SubcommandNotImplemented("signature")
 
 
 @gnql_command
