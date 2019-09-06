@@ -14,7 +14,7 @@
 
 # Render all elements of a list when verbose=True
 # Otherwise, render first 20 elements and a message to remind user about verbose flag
-{% macro verbose_list(elements, verbose) %}
+{% macro verbose_list(elements) %}
 {%- set max_elements = 20 %}
 {%- set elements_slice = elements[:max_elements if verbose < 1 else None] %}
 {% for element in elements_slice -%}
@@ -28,7 +28,7 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 # Render tuples of element names and counts properly aligned
 # Width is based on the longest element in the list for each column
 # Also render follow same rules as "verbose_list" to render long lists
-{% macro column_verbose_list(elements, field_name, verbose) %}
+{% macro column_verbose_list(elements, field_name) %}
 {%- set max_elements = 20 %}
 {%- set elements_slice = elements[:max_elements if verbose < 1 else None] %}
 {%- set left_width = elements_slice | map(attribute=field_name) | map('length') | max %}

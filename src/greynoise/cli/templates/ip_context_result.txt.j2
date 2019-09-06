@@ -1,4 +1,4 @@
-{% import "macros.txt.j2" as macros %}
+{% import "macros.txt.j2" as macros with context %}
 {%- if ip_context.seen %}
           <header>OVERVIEW</header>
 ----------------------------
@@ -8,7 +8,7 @@
 <key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
 <key>Tags</key>:
-{%- call(tag) macros.verbose_list(ip_context.tags, verbose) -%}
+{%- call(tag) macros.verbose_list(ip_context.tags) -%}
 - <value>{{ tag }}</value>
 {% endcall %}
           <header>METADATA</header>
@@ -25,21 +25,21 @@
 ----------------------------
 {%- if ip_context.raw_data.scan %}
 [Scan]
-{%- call(scan) macros.verbose_list(ip_context.raw_data.scan, verbose) -%}
+{%- call(scan) macros.verbose_list(ip_context.raw_data.scan) -%}
 - <key>Port/Proto</key>: <value>{{ scan.port }}/{{ scan.protocol }}</value>
 {% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.web.paths %}
 [Paths]
-{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths, verbose) -%}
+{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths) -%}
 - <value>{{ path }}</value>
 {% endcall -%}
 {% endif %}
 
 {%- if ip_context.raw_data.ja3 %}
 [JA3]
-{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3, verbose) -%}
+{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3) -%}
 - <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
 {% endcall -%}
 {% endif %}
