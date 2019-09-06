@@ -8,10 +8,10 @@ import json
 from xml.dom.minidom import parseString
 
 import ansimarkup
+import click
 import colorama
-from jinja2 import Environment, PackageLoader
-
 from dicttoxml import dicttoxml
+from jinja2 import Environment, PackageLoader
 
 JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
 
@@ -111,7 +111,8 @@ def gnql_query_formatter(results, verbose):
 def gnql_stats_formatter(results, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    return template.render(results=results, verbose=verbose)
+    max_width, _ = click.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
 FORMATTERS = {

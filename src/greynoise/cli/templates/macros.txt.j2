@@ -31,10 +31,11 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 {% macro column_verbose_list(elements, field_name) %}
 {%- set max_elements = 20 %}
 {%- set elements_slice = elements[:max_elements if verbose < 1 else None] %}
-{%- set left_width = elements_slice | map(attribute=field_name) | map('length') | max %}
 {%- set right_width = elements_slice | map(attribute='count') | map('string') | map('length') | max %}
+{%- set left_width_verbose = elements_slice | map(attribute=field_name) | map('length') | max %}
+{%- set left_width = left_width_verbose if verbose > 1 else [left_width_verbose, max_width - 3 - right_width] | min %}
 {%- for element in elements_slice %}
-- <key>{{ "%-*s" | format(left_width, element[field_name]) }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
+- <key>{{ "%-*s" | format(left_width, element[field_name] | truncate(left_width, True, "...", 0)) }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
 {%- endfor %}
 {% if elements | length > max_elements and verbose < 1 -%}
 Showing results 1 - {{ max_elements }}. Run again with -v for full output.
