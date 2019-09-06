@@ -13,7 +13,7 @@ Version `0.3.0`_
 
 * CLI:
 
-  * add help subcommand.
+  * add help, repl and version subcommands.
   * global options moved to those subcommands where they apply.
   * make request timeout configurable.
 

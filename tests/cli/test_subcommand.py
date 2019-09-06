@@ -11,6 +11,7 @@ from mock import patch
 from requests.exceptions import RequestException
 from six import StringIO
 
+from greynoise.__version__ import __version__
 from greynoise.cli import main, subcommand
 from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG
@@ -705,11 +706,11 @@ class TestStats(object):
 class TestVersion(object):
     """Version subcommand test cases."""
 
-    def test_not_implemented(self):
-        """Not implemented error message returned."""
+    def test_version(self):
+        """Version returned."""
         runner = CliRunner()
-        expected_output = "Error: 'version' subcommand is not implemented yet.\n"
+        expected_output = "greynoise {}".format(__version__)
 
         result = runner.invoke(subcommand.version)
-        assert result.exit_code == 1
-        assert result.output == expected_output
+        assert result.exit_code == 0
+        assert result.output.startswith(expected_output)

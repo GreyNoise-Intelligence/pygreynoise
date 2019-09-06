@@ -7,6 +7,7 @@ import cachetools
 import more_itertools
 import requests
 
+from greynoise.__version__ import __version__
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config, validate_ip
 
@@ -26,7 +27,6 @@ class GreyNoise(object):
 
     NAME = "GreyNoise"
     BASE_URL = "https://enterprise.api.greynoise.io"
-    CLIENT_VERSION = "0.2.2"
     API_VERSION = "v2"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
@@ -94,7 +94,7 @@ class GreyNoise(object):
         if params is None:
             params = {}
         headers = {
-            "User-Agent": "greyNoise/{}".format(self.CLIENT_VERSION),
+            "User-Agent": "GreyNoise/{}".format(__version__),
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
