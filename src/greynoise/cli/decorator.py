@@ -82,7 +82,7 @@ def pass_api_client(function):
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
-        api_key = context.params["api_key"]
+        api_key = context.params.get("api_key")
         config = load_config()
 
         if api_key is None:
@@ -162,5 +162,34 @@ def ip_lookup_command(function):
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
         return function(*args, **kwargs)
+
+    return wrapper
+
+
+class SubcommandNotImplemented(click.ClickException):
+    """Exception used temporarily for subcommands that have not been implemented.
+
+    :param subcommand_name: Name of the subcommand to display in the error message.
+    :type subcommand_function: str
+
+    """
+
+    def __init__(self, subcommand_name):
+        message = "{!r} subcommand is not implemented yet.".format(subcommand_name)
+        super(SubcommandNotImplemented, self).__init__(message)
+
+
+def not_implemented_command(function):
+    """Decorator that sends requests for not implemented commands."""
+
+    @click.command()
+    @pass_api_client
+    @functools.wraps(function)
+    def wrapper(api_client, *args, **kwargs):
+        command_name = function.__name__
+        try:
+            api_client.not_implemented(command_name)
+        except RequestFailure:
+            raise SubcommandNotImplemented(command_name)
 
     return wrapper

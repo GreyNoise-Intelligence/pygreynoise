@@ -34,12 +34,14 @@ def api_client():
 class TestAccount(object):
     """Account subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'account' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.account)
+        api_client.not_implemented.assert_called_with("account")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -47,12 +49,14 @@ class TestAccount(object):
 class TestAlerts(object):
     """Alerts subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'alerts' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.alerts)
+        api_client.not_implemented.assert_called_with("alerts")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -60,12 +64,14 @@ class TestAlerts(object):
 class TestAnalyze(object):
     """Analyze subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'analyze' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.analyze)
+        api_client.not_implemented.assert_called_with("analyze")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -73,12 +79,14 @@ class TestAnalyze(object):
 class TestFeedback(object):
     """Feedback subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'feedback' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.feedback)
+        api_client.not_implemented.assert_called_with("feedback")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -86,12 +94,14 @@ class TestFeedback(object):
 class TestFilter(object):
     """Filter subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'filter' subcommand is not implemented yet.\n"
 
-        result = runner.invoke(subcommand.filter_)
+        api_client.not_implemented.side_effect = RequestFailure(501)
+        result = runner.invoke(subcommand.filter)
+        api_client.not_implemented.assert_called_with("filter")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -114,12 +124,14 @@ class TestHelp(object):
 class TestInteresting(object):
     """Interesting subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'interesting' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.interesting)
+        api_client.not_implemented.assert_called_with("interesting")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -253,12 +265,14 @@ class TestIP(object):
 class TestPCAP(object):
     """PCAP subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'pcap' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.pcap)
+        api_client.not_implemented.assert_called_with("pcap")
         assert result.exit_code == 1
         assert result.output == expected_output
 
@@ -548,12 +562,14 @@ class TestQuick(object):
 class TestSignature(object):
     """Signature subcommand test cases."""
 
-    def test_not_implemented(self):
+    def test_not_implemented(self, api_client):
         """Not implemented error message returned."""
         runner = CliRunner()
         expected_output = "Error: 'signature' subcommand is not implemented yet.\n"
 
+        api_client.not_implemented.side_effect = RequestFailure(501)
         result = runner.invoke(subcommand.signature)
+        api_client.not_implemented.assert_called_with("signature")
         assert result.exit_code == 1
         assert result.output == expected_output
 

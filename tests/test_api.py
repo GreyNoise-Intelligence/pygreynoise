@@ -49,18 +49,22 @@ class TestInit(object):
 class TestRequest(object):
     """GreyNoise client _request method test cases."""
 
-    @pytest.mark.parametrize("status_code", (100, 300, 400, 500))
+    @pytest.mark.parametrize("status_code", (400, 500))
     def test_status_code_failure(self, client, status_code):
         """Exception is raised on response status code failure."""
         client.session = Mock()
-        client.session.get().status_code = status_code
+        response = client.session.get()
+        response.status_code = status_code
+        response.headers.get.return_value = "application/json"
         with pytest.raises(RequestFailure):
             client._request("endpoint")
 
     def test_rate_limit_error(self, client):
         """Exception is raised on rate limit response."""
         client.session = Mock()
-        client.session.get().status_code = 429
+        response = client.session.get()
+        response.headers.get.return_value = "application/json"
+        response.status_code = 429
         with pytest.raises(RateLimitError):
             client._request("endpoint")
 
@@ -68,11 +72,33 @@ class TestRequest(object):
         """Response's json payload is returned."""
         expected_response = {"expected": "response"}
         client.session = Mock()
-        client.session.get().status_code = 200
-        client.session.get().json.return_value = expected_response
+        response = client.session.get()
+        response.status_code = 200
+        response.headers.get.return_value = "application/json"
+        response.json.return_value = expected_response
 
         response = client._request("endpoint")
         assert response == expected_response
+
+    def test_text(self, client):
+        """Response's text payload is returned."""
+        expected_response = "<response>"
+        client.session = Mock()
+        response = client.session.get()
+        response.status_code = 200
+        response.headers.get.return_value = "text/plain"
+        response.text = expected_response
+
+        response = client._request("endpoint")
+        assert response == expected_response
+
+
+class TestNotImplemented(object):
+    """Greynoise client not implemented test cases."""
+
+    def test_not_implemented(self, client):
+        client._request = Mock()
+        client.not_implemented("<subcommand>")
 
 
 class TestIP(object):

@@ -33,6 +33,7 @@ class GreyNoise(object):
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
+    EP_NOT_IMPLEMENTED = "request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
         "0x00": "IP has never been observed scanning the Internet",
@@ -102,10 +103,14 @@ class GreyNoise(object):
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
 
-        body = response.json()
+        if "application/json" in response.headers.get("Content-Type", ""):
+            body = response.json()
+        else:
+            body = response.text
+
         if response.status_code == 429:
             raise RateLimitError()
-        if not 200 <= response.status_code < 300:
+        if response.status_code >= 400:
             raise RequestFailure(response.status_code, body)
 
         return body
@@ -136,6 +141,17 @@ class GreyNoise(object):
         if "ip" not in response:
             response["ip"] = ip_address
 
+        return response
+
+    def not_implemented(self, subcommand_name):
+        """Send request for a not implemented CLI subcommand.
+
+        :param subcommand_name: Name of the CLI subcommand
+        :type subcommand_name: str
+
+        """
+        endpoint = self.EP_NOT_IMPLEMENTED.format(subcommand=subcommand_name)
+        response = self._request(endpoint)
         return response
 
     def query(self, query):
