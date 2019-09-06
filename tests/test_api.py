@@ -80,6 +80,26 @@ class TestRequest(object):
         response = client._request("endpoint")
         assert response == expected_response
 
+    def test_text(self, client):
+        """Response's text payload is returned."""
+        expected_response = "<response>"
+        client.session = Mock()
+        response = client.session.get()
+        response.status_code = 200
+        response.headers.get.return_value = "text/plain"
+        response.text = expected_response
+
+        response = client._request("endpoint")
+        assert response == expected_response
+
+
+class TestNotImplemented(object):
+    """Greynoise client not implemented test cases."""
+
+    def test_not_implemented(self, client):
+        client._request = Mock()
+        client.not_implemented("<subcommand>")
+
 
 class TestIP(object):
     """GreyNoise client IP context test cases."""
