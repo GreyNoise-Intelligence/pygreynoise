@@ -466,32 +466,39 @@ this::
 Detailed context information for any given IP address is also available::
 
    $ greynoise ip 58.220.219.247
- ┌───────────────────────────┐
- │       result 1 of 1       │
- └───────────────────────────┘
+   ╔═══════════════════════════╗
+   ║      Context 1 of 1       ║
+   ╚═══════════════════════════╝
+   IP address: 58.220.219.247
 
-          OVERVIEW:
- ----------------------------
- IP: 58.220.219.247
- Classification: malicious
- First seen: 2019-07-04
- Last seen: 2019-08-21
- Actor: unknown
- Tags: ['RDP Scanner', 'MSSQL Scanner', 'MSSQL Bruteforcer']
+             OVERVIEW
+   ----------------------------
+   Actor: unknown
+   Classification: malicious
+   First seen: 2019-04-04
+   IP: 58.220.219.247
+   Last seen: 2019-09-06
+   Tags:
+   - MSSQL Bruteforcer
+   - MSSQL Scanner
+   - RDP Scanner
 
-          METADATA:
- ----------------------------
- Location: Kunshan, China (CN)
- Organization: CHINANET-BACKBONE
- ASN: AS4134
- OS: Windows 7/8
- Category: isp
+             METADATA
+   ----------------------------
+   ASN: AS4134
+   Category: isp
+   Location: Kunshan, China (CN)
+   Organization: CHINANET jiangsu province network
+   OS: Windows 7/8
+   rDNS:
+   Tor: False
 
-          RAW DATA:
- ----------------------------
- Port/Proto: 1433/TCP
- Port/Proto: 3389/TCP
- Port/Proto: 65529/TCP
+             RAW DATA
+   ----------------------------
+   [Scan]
+   - Port/Proto: 1433/TCP
+   - Port/Proto: 3389/TCP
+   - Port/Proto: 65529/TCP
 
 
 GNQL
@@ -505,32 +512,54 @@ dataset. For example, to get context information related to activity has been cl
 as malicious and tagged as a Bluekeep Exploit::
 
    $ greynoise query 'classification:malicious tags:"Bluekeep Exploit"'
- ┌───────────────────────────┐
- │       result 1 of 24      │
- └───────────────────────────┘
+   ╔═══════════════════════════╗
+   ║       Query 1 of 1        ║
+   ╚═══════════════════════════╝
+   Query: classification:malicious tags:"Bluekeep Exploit"
 
-          OVERVIEW:
- ----------------------------
- IP: 144.217.253.168
- Classification: malicious
- First seen: 2019-06-04
- Last seen: 2019-08-21
- Actor: unknown
- Tags: ['RDP Scanner', 'Bluekeep Exploit']
+   ┌───────────────────────────┐
+   │      Result 1 of 20       │
+   └───────────────────────────┘
 
-          METADATA:
- ----------------------------
- Location: Montréal, Canada (CA)
- Organization: OVH SAS
- rDNS: ns541387.ip-144-217-253.net
- ASN: AS16276
- OS: Linux 3.11+
- Category: hosting
+             OVERVIEW
+   ----------------------------
+   Actor: unknown
+   Classification: malicious
+   First seen: 2018-12-10
+   IP: 185.7.63.40
+   Last seen: 2019-09-06
+   Tags:
+   - Web Crawler
+   - Wordpress XML RPC Worm
+   - RDP Scanner
+   - Web Scanner
+   - Bluekeep Exploit
 
-          RAW DATA:
- ----------------------------
- Port/Proto: 3389/TCP
+             METADATA
+   ----------------------------
+   ASN: AS39783
+   Category: hosting
+   Location: Norway (NO)
+   Organization: Rent a Rack AS
+   OS: Windows XP
+   rDNS: cp.netthost.no
+   Tor: False
 
+             RAW DATA
+   ----------------------------
+   [Scan]
+   - Port/Proto: 80/TCP
+   - Port/Proto: 3389/TCP
+
+   [Paths]
+   - /zabbix/toptriggers.php
+   - /forum/xmlrpc.php
+   - /wordpress/xmlrpc.php
+   - /zabbix/jsrpc.php
+   - /user/register/
+   - /blog/xmlrpc.php
+   - /xmlrpc.php
+   - /wp/xmlrpc.php
 
 .. note::
 
@@ -546,91 +575,83 @@ results are distributed in terms of different information such as organization, 
 operating system, etc.::
 
     $ greynoise stats 'classification:malicious tags:"Bluekeep Exploit"'
+    ╔═══════════════════════════╗
+    ║       Query 1 of 1        ║
+    ╚═══════════════════════════╝
+    Query: classification:malicious tags:"Bluekeep Exploit"
+
     ASNs:
-    - AS14061: 7
-    - AS16276: 6
-    - AS17621: 3
-    - AS63949: 3
-    - AS12083: 1
-    - AS14618: 1
-    - AS202425: 1
-    - AS206264: 1
-    - AS4134: 1
+    - AS16276  6
+    - AS17621  3
+    - AS14618  2
+    - AS12083  1
+    - AS14061  1
+    - AS206264 1
+    - AS206485 1
+    - AS38895  1
+    - AS39783  1
+    - AS4134   1
+    - AS45090  1
+    - AS63949  1
 
     Categories:
-    - hosting: 17
-    - isp: 6
-    - business: 1
+    - hosting  12
+    - isp       5
+    - business  3
 
     Classifications:
-    - malicious: 24
+    - malicious 20
 
     Countries:
-    - Canada: 6
-    - United States: 6
-    - China: 4
-    - Germany: 3
-    - Netherlands: 3
-    - France: 1
-    - United Kingdom: 1
+    - Canada        5
+    - China         5
+    - United States 4
+    - France        1
+    - Germany       1
+    - Lithuania     1
+    - Netherlands   1
+    - Norway        1
+    - Singapore     1
 
     Operating systems:
-    - Linux 3.11+: 16
-    - Windows 7/8: 3
-    - Mac OS X: 2
-    - Linux 2.2-3.x: 1
+    - Linux 3.11+ 9
+    - Windows 7/8 3
+    - Mac OS X    2
+    - Windows XP  2
 
     Organizations:
-    - DigitalOcean, LLC: 7
-    - OVH SAS: 6
-    - China Unicom Shanghai network: 3
-    - Linode, LLC: 3
-    - Amarutu Technology Ltd: 1
-    - Amazon.com, Inc.: 1
-    - CHINANET-BACKBONE: 1
-    - INT-NETWORK: 1
-    - WideOpenWest Finance LLC: 1
+    - OVH SAS                                           6
+    - China Unicom Shanghai network                     3
+    - Amazon.com, Inc.                                  2
+    - Amarutu Technology Ltd                            1
+    - Amazon.com Tech Telecom                           1
+    - CHINANET-BACKBONE                                 1
+    - DigitalOcean, LLC                                 1
+    - Linode, LLC                                       1
+    - Rent a Rack AS                                    1
+    - Shenzhen Tencent Computer Systems Company Limited 1
+    - UGB Hosting OU                                    1
+    - WideOpenWest Finance LLC                          1
 
     Tags:
-    - Bluekeep Exploit: 24
-    - RDP Scanner: 24
-    - ZMap Client: 9
-    - DNS Scanner: 8
-    - Web Scanner: 7
-    - TLS/SSL Crawler: 6
-    - HTTP Alt Scanner: 4
-    - SSH Scanner: 4
-    - VNC Scanner: 3
-    - FTP Scanner: 2
-    - Ping Scanner: 2
-    - SMB Scanner: 2
-    - SSH Bruteforcer: 2
-    - Tor: 2
-    - Web Crawler: 2
-    - Bitcoin Node Scanner: 1
-    - Bluekeep Scanner: 1
-    - CPanel Scanner: 1
-    - Cassandra Scanner: 1
-    - CounterStrike Server Scanner: 1
-    - Dockerd Scanner: 1
-    - Elasticsearch Scanner: 1
-    - IPSec VPN Scanner: 1
-    - IRC Scanner: 1
-    - LDAP Scanner: 1
-    - MSSQL Scanner: 1
-    - Masscan Client: 1
-    - Minecraft Scanner: 1
-    - MongoDB Scanner: 1
-    - MySQL Scanner: 1
-    - POP3 Scanner: 1
-    - PPTP VPN Scanner: 1
-    - Postgres Scanner: 1
-    - Privoxy Proxy Scanner: 1
-    - Python Requests Client: 1
-    - RabbitMQ Scanner: 1
-    - Redis Scanner: 1
-    - SMTP Scanner: 1
-    - SOCKS Proxy Scanner: 1
-    - SSH Worm: 1
-    - Telnet Scanner: 1
-
+    - Bluekeep Exploit             20
+    - RDP Scanner                  19
+    - Web Scanner                  10
+    - HTTP Alt Scanner              5
+    - Ping Scanner                  5
+    - SSH Scanner                   5
+    - TLS/SSL Crawler               5
+    - VNC Scanner                   5
+    - DNS Scanner                   3
+    - FTP Scanner                   3
+    - IPSec VPN Scanner             3
+    - SMB Scanner                   3
+    - Web Crawler                   3
+    - ZMap Client                   3
+    - CPanel Scanner                2
+    - CounterStrike Server Scanner  2
+    - Elasticsearch Scanner         2
+    - Ethereum Node Scanner         2
+    - IMAP Scanner                  2
+    - IOT MQTT Scanner              2
+    Showing results 1 - 20. Run again with -v for full output.
