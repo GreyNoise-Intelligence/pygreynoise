@@ -10,19 +10,6 @@ from greynoise.cli.helper import get_ip_addresses, get_queries
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 
 
-class SubcommandNotImplemented(click.ClickException):
-    """Exception used temporarily for subcommands that have not been implemented.
-
-    :param subcommand_name: Name of the subcommand to display in the error message.
-    :type subcommand_function: str
-
-    """
-
-    def __init__(self, subcommand_name):
-        message = "{!r} subcommand is not implemented yet.".format(subcommand_name)
-        super(SubcommandNotImplemented, self).__init__(message)
-
-
 @click.command()
 def account():
     """View information about your GreyNoise account."""
