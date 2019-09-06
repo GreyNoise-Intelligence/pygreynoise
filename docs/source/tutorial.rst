@@ -426,6 +426,15 @@ To configure *greynoise* to use a given API key::
    This is the default configuration method. Alternatively, the API key can be passed to every command using the *-k/--api-key* option
    or through the *GREYNOISE_API_KEY* environment variable.
 
+if for some reason, requests are timing out, it's possible to set the request
+timeout for the API client with the setup command as well::
+
+   $ greynoise setup --api-key "<api_key>" --timeout <time_in_seconds>
+   Configuration saved to '/home/username/.config/greynoise/config'
+
+.. note::
+
+   The API client request timeout can also be configured for a particular command using the *GREYNOISE_TIMEOUT* environment variable.
 
 Check specific IPs
 ------------------
