@@ -2,13 +2,12 @@
 
 import os
 import socket
-import sys
 
 import structlog
 from six.moves.configparser import ConfigParser
 
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
-LOGGER = structlog.wrap_logger(structlog.PrintLogger(file=sys.stderr))
+LOGGER = structlog.get_logger()
 
 DEFAULT_CONFIG = {"api_key": "", "timeout": 60}
 

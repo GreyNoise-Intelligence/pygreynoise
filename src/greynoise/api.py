@@ -1,6 +1,5 @@
 """GreyNoise API client."""
 
-import sys
 from collections import OrderedDict
 
 import cachetools
@@ -12,7 +11,7 @@ from greynoise.__version__ import __version__
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config, validate_ip
 
-LOGGER = structlog.wrap_logger(structlog.PrintLogger(file=sys.stderr))
+LOGGER = structlog.get_logger()
 
 
 class GreyNoise(object):
