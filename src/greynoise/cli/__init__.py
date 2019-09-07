@@ -1,14 +1,10 @@
 """GreyNoise command line Interface."""
 
-import logging
-
 import click
 from click_default_group import DefaultGroup
 from click_repl import register_repl
 
 from greynoise.cli import subcommand
-
-logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
 @click.group(

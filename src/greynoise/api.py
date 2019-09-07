@@ -1,17 +1,17 @@
 """GreyNoise API client."""
 
-import logging
 from collections import OrderedDict
 
 import cachetools
 import more_itertools
 import requests
+import structlog
 
 from greynoise.__version__ import __version__
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config, validate_ip
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = structlog.get_logger()
 
 
 class GreyNoise(object):
@@ -99,6 +99,9 @@ class GreyNoise(object):
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
+        LOGGER.msg(
+            "Sending API request...", url=url, params=params, json=json, level="debug"
+        )
         response = self.session.get(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
@@ -124,7 +127,11 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.debug("Getting context for %s...", ip_address)
+        LOGGER.msg(
+            "Getting context for {}...".format(ip_address),
+            ip_address=ip_address,
+            level="debug",
+        )
         validate_ip(ip_address)
 
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
@@ -156,7 +163,9 @@ class GreyNoise(object):
 
     def query(self, query):
         """Run GNQL query."""
-        LOGGER.debug("Running GNQL query: %s...", query)
+        LOGGER.msg(
+            "Running GNQL query: {}...".format(query), query=query, level="debug"
+        )
         response = self._request(self.EP_GNQL, params={"query": query})
         return response
 
@@ -169,10 +178,14 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.debug("Getting noise status for %s...", ip_addresses)
         if isinstance(ip_addresses, str):
             ip_addresses = [ip_addresses]
 
+        LOGGER.msg(
+            "Getting noise status for {}...".format(ip_addresses),
+            ip_addresses=ip_addresses,
+            level="info",
+        )
         ip_addresses = [
             ip_address
             for ip_address in ip_addresses
@@ -235,6 +248,8 @@ class GreyNoise(object):
 
     def stats(self, query):
         """Run GNQL stats query."""
-        LOGGER.debug("Running GNQL stats query: %s...", query)
+        LOGGER.msg(
+            "Running GNQL stats query: {}...".format(query), query=query, level="debug"
+        )
         response = self._request(self.EP_GNQL_STATS, params={"query": query})
         return response
