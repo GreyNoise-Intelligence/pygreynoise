@@ -11,16 +11,10 @@ from click_repl import register_repl
 from greynoise.cli import subcommand
 
 
-@click.group(
-    cls=DefaultGroup,
-    default="query",
-    default_if_no_args=False,
-    context_settings={"help_option_names": ("-h", "--help")},
-)
-def main():
-    """GreyNoise CLI."""
+def configure_logging():
+    """Configure logging."""
     logging.basicConfig(stream=sys.stderr, format="%(message)s", level=logging.CRITICAL)
-    logging.getLogger("greynoise").setLevel(logging.DEBUG)
+    logging.getLogger("greynoise").setLevel(logging.WARNING)
     structlog.configure(
         processors=[
             structlog.stdlib.add_logger_name,
@@ -36,6 +30,17 @@ def main():
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
+
+
+@click.group(
+    cls=DefaultGroup,
+    default="query",
+    default_if_no_args=False,
+    context_settings={"help_option_names": ("-h", "--help")},
+)
+def main():
+    """GreyNoise CLI."""
+    configure_logging()
 
 
 SUBCOMMAND_FUNCTIONS = [
