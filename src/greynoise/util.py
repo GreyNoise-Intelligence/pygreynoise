@@ -26,24 +26,18 @@ def load_config():
     config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
-        LOGGER.msg(
-            "Parsing configuration file: {}...".format(CONFIG_FILE),
-            path=CONFIG_FILE,
-            level="debug",
-        )
+        LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE, path=CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
             config_parser.readfp(config_file)
     else:
-        LOGGER.msg(
-            "Configuration file not found: {}".format(CONFIG_FILE),
-            path=CONFIG_FILE,
-            level="warning",
+        LOGGER.warning(
+            "Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE
         )
 
     if "GREYNOISE_API_KEY" in os.environ:
         api_key = os.environ["GREYNOISE_API_KEY"]
-        LOGGER.msg(
-            "API key found in environment variable: {}".format(api_key), api_key=api_key
+        LOGGER.debug(
+            "API key found in environment variable: %s", api_key, api_key=api_key
         )
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_key", api_key)
@@ -53,17 +47,15 @@ def load_config():
         try:
             int(timeout)
         except ValueError:
-            LOGGER.msg(
+            LOGGER.error(
                 "GREYNOISE_TIMEOUT environment variable "
-                "cannot be converted to an integer: {!r}".format(timeout),
+                "cannot be converted to an integer: %r",
+                timeout,
                 timeout=timeout,
-                level="error",
             )
         else:
-            LOGGER.msg(
-                "Timeout found in environment variable: {}".format(timeout),
-                timeout=timeout,
-                level="debug",
+            LOGGER.debug(
+                "Timeout found in environment variable: %s", timeout, timeout=timeout
             )
             # Environment variable takes precedence over configuration file content
             config_parser.set("greynoise", "timeout", timeout)
@@ -109,7 +101,7 @@ def validate_ip(ip_address, strict=True):
         return True
     except socket.error:
         error_message = "Invalid IP address: {!r}".format(ip_address)
-        LOGGER.msg(error_message, ip_address=ip_address, level="warning")
+        LOGGER.warning(error_message, ip_address=ip_address)
         if strict:
             raise ValueError(error_message)
         return False

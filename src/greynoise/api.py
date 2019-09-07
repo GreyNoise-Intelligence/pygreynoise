@@ -99,9 +99,7 @@ class GreyNoise(object):
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
-        LOGGER.msg(
-            "Sending API request...", url=url, params=params, json=json, level="debug"
-        )
+        LOGGER.debug("Sending API request...", url=url, params=params, json=json)
         response = self.session.get(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
@@ -127,11 +125,7 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        LOGGER.msg(
-            "Getting context for {}...".format(ip_address),
-            ip_address=ip_address,
-            level="debug",
-        )
+        LOGGER.debug("Getting context for %s...", ip_address, ip_address=ip_address)
         validate_ip(ip_address)
 
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
@@ -163,9 +157,7 @@ class GreyNoise(object):
 
     def query(self, query):
         """Run GNQL query."""
-        LOGGER.msg(
-            "Running GNQL query: {}...".format(query), query=query, level="debug"
-        )
+        LOGGER.debug("Running GNQL query: %s...", query, query=query)
         response = self._request(self.EP_GNQL, params={"query": query})
         return response
 
@@ -181,10 +173,8 @@ class GreyNoise(object):
         if isinstance(ip_addresses, str):
             ip_addresses = [ip_addresses]
 
-        LOGGER.msg(
-            "Getting noise status for {}...".format(ip_addresses),
-            ip_addresses=ip_addresses,
-            level="info",
+        LOGGER.debug(
+            "Getting noise status for %s...", ip_addresses, ip_addresses=ip_addresses
         )
         ip_addresses = [
             ip_address
@@ -248,8 +238,6 @@ class GreyNoise(object):
 
     def stats(self, query):
         """Run GNQL stats query."""
-        LOGGER.msg(
-            "Running GNQL stats query: {}...".format(query), query=query, level="debug"
-        )
+        LOGGER.debug("Running GNQL stats query: %s...", query, query=query)
         response = self._request(self.EP_GNQL_STATS, params={"query": query})
         return response
