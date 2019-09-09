@@ -22,6 +22,7 @@ INSTALL_REQUIRES = [
     "more-itertools",
     "requests",
     "six",
+    "structlog",
 ]
 
 setup(

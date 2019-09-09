@@ -6,6 +6,7 @@ Decorators used to add common functionality to subcommands.
 import functools
 
 import click
+import structlog
 from requests.exceptions import RequestException
 
 from greynoise.api import GreyNoise
@@ -13,6 +14,8 @@ from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
 from greynoise.util import load_config
+
+LOGGER = structlog.get_logger()
 
 
 def echo_result(function):
@@ -60,10 +63,14 @@ def handle_exceptions(function):
             return function(*args, **kwargs)
         except RequestFailure as exception:
             body = exception.args[1]
-            click.echo("API error: {}".format(body["error"]))
+            error_message = "API error: {}".format(body["error"])
+            LOGGER.error(error_message)
+            click.echo(error_message)
             click.get_current_context().exit(-1)
         except RequestException as exception:
-            click.echo("API error: {}".format(exception))
+            error_message = "API error: {}".format(exception)
+            LOGGER.error(error_message)
+            click.echo(error_message)
             click.get_current_context().exit(-1)
 
     return wrapper

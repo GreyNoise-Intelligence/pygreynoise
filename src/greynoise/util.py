@@ -1,13 +1,13 @@
 """Utility functions."""
 
-import logging
 import os
 import socket
 
+import structlog
 from six.moves.configparser import ConfigParser
 
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
-LOGGER = logging.getLogger(__name__)
+LOGGER = structlog.get_logger()
 
 DEFAULT_CONFIG = {"api_key": "", "timeout": 60}
 
@@ -26,15 +26,19 @@ def load_config():
     config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
-        LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE)
+        LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE, path=CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
             config_parser.readfp(config_file)
     else:
-        LOGGER.debug("Configuration file not found: %s", CONFIG_FILE)
+        LOGGER.warning(
+            "Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE
+        )
 
     if "GREYNOISE_API_KEY" in os.environ:
         api_key = os.environ["GREYNOISE_API_KEY"]
-        LOGGER.debug("API key found in environment variable: %s", api_key)
+        LOGGER.debug(
+            "API key found in environment variable: %s", api_key, api_key=api_key
+        )
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_key", api_key)
 
@@ -47,9 +51,12 @@ def load_config():
                 "GREYNOISE_TIMEOUT environment variable "
                 "cannot be converted to an integer: %r",
                 timeout,
+                timeout=timeout,
             )
         else:
-            LOGGER.debug("Timeout found in environment variable: %s", timeout)
+            LOGGER.debug(
+                "Timeout found in environment variable: %s", timeout, timeout=timeout
+            )
             # Environment variable takes precedence over configuration file content
             config_parser.set("greynoise", "timeout", timeout)
 
@@ -94,7 +101,7 @@ def validate_ip(ip_address, strict=True):
         return True
     except socket.error:
         error_message = "Invalid IP address: {!r}".format(ip_address)
-        LOGGER.warning(error_message)
+        LOGGER.warning(error_message, ip_address=ip_address)
         if strict:
             raise ValueError(error_message)
         return False
