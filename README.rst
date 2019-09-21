@@ -42,7 +42,7 @@ Quick Start
 Usage
 =====
 
-```
+``
 Usage: greynoise [OPTIONS] COMMAND [ARGS]...
 
   GreyNoise CLI.
@@ -68,4 +68,4 @@ Commands:
   stats        Get aggregate stats from a given GNQL query.
   version      Get version and OS information for your GreyNoise
                commandline...
-```
+``
