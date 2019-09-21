@@ -38,3 +38,34 @@ Quick Start
 **Save your configuration**:
 
 ``greynoise setup --api-key <your-API-key>``
+
+Usage
+=====
+
+```
+Usage: greynoise [OPTIONS] COMMAND [ARGS]...
+
+  GreyNoise CLI.
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  query*       Run a GNQL (GreyNoise Query Language) query.
+  account      View information about your GreyNoise account.
+  alerts       List, create, delete, and manage your GreyNoise alerts.
+  analyze      Analyze the IP addresses in a log file, stdin, etc.
+  feedback     Send feedback directly to the GreyNoise team.
+  filter       "Filter the noise from a log file, stdin, etc.
+  help         Show this message and exit.
+  interesting  Report an IP as "interesting".
+  ip           Query GreyNoise for all information on a given IP.
+  pcap         Get PCAP for a given IP address.
+  quick        Quickly check whether or not one or many IPs are "noise".
+  repl         Start an interactive shell.
+  setup        Configure API key.
+  signature    Submit an IDS signature to GreyNoise to be deployed to all...
+  stats        Get aggregate stats from a given GNQL query.
+  version      Get version and OS information for your GreyNoise
+               commandline...
+```
