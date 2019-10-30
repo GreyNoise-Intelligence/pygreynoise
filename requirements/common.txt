@@ -10,4 +10,4 @@ dicttoxml==1.7.4
 jinja2==2.10.1
 requests==2.22.0
 six==1.12.0
-structlog==19.1.0
+structlog==19.2.0
