@@ -377,6 +377,18 @@ class TestQuery(object):
         client._request.assert_called_with("experimental/gnql", params={"query": query})
         assert response == expected_response
 
+    def test_query_with_size_and_scroll(self, client):
+        """Run GNQL query with size and scroll parameters."""
+        query = "<query>"
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.query(query, size=5, scroll="scroll")
+        client._request.assert_called_with(
+            "experimental/gnql", params={"query": query, "size": 5, "scroll": "scroll"}
+        )
+        assert response == expected_response
+
 
 class TestStats(object):
     """GreyNoise client run GNQL stats query test cases."""
