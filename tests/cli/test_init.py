@@ -23,7 +23,10 @@ class TestMain(object):
         """Logging is configured."""
         runner = CliRunner()
 
-        with patch("greynoise.cli.configure_logging") as configure_logging:
+        with patch("greynoise.cli.structlog") as structlog, patch(
+            "greynoise.cli.configure_logging"
+        ) as configure_logging:
+            structlog.is_configured.return_value = False
             query_command = Mock()
             with patch.dict(main.commands, query=query_command):
                 runner.invoke(main, ["<parameter>"])
