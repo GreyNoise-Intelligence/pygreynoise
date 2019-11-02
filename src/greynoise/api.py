@@ -157,10 +157,17 @@ class GreyNoise(object):
         response = self._request(endpoint)
         return response
 
-    def query(self, query):
+    def query(self, query, size=None, scroll=None):
         """Run GNQL query."""
-        LOGGER.debug("Running GNQL query: %s...", query, query=query)
-        response = self._request(self.EP_GNQL, params={"query": query})
+        LOGGER.debug(
+            "Running GNQL query: %s...", query, query=query, size=size, scroll=scroll
+        )
+        params = {"query": query}
+        if size is not None:
+            params["size"] = size
+        if scroll is not None:
+            params["scroll"] = scroll
+        response = self._request(self.EP_GNQL, params=params)
         return response
 
     def quick(self, ip_addresses):
