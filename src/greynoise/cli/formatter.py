@@ -11,9 +11,12 @@ import ansimarkup
 import click
 import colorama
 from dicttoxml import dicttoxml
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, select_autoescape
 
-JINJA2_ENV = Environment(loader=PackageLoader("greynoise.cli"))
+JINJA2_ENV = Environment(
+    loader=PackageLoader("greynoise.cli"),
+    autoescape=select_autoescape(disabled_extensions=["txt.j2"]),
+)
 
 colorama.init()
 ANSI_MARKUP = ansimarkup.AnsiMarkup(
