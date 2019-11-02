@@ -7,10 +7,12 @@
 <key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
 <key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
+{% if ip_context.tags -%}
 <key>Tags</key>:
 {%- call(tag) macros.verbose_list(ip_context.tags) -%}
 - <value>{{ tag }}</value>
-{% endcall %}
+{% endcall -%}
+{% endif %}
           <header>METADATA</header>
 ----------------------------
 <key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
