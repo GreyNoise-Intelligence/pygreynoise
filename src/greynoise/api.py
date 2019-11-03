@@ -1,5 +1,6 @@
 """GreyNoise API client."""
 
+import re
 from collections import OrderedDict
 
 import cachetools
@@ -68,6 +69,11 @@ class GreyNoise(object):
 
     IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
+    IPV4_REGEX = re.compile(
+        r"\b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}"
+        r"(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+    )
+
     def __init__(self, api_key=None, timeout=None, use_cache=True):
         if api_key is None or timeout is None:
             config = load_config()
@@ -129,6 +135,84 @@ class GreyNoise(object):
             raise RequestFailure(response.status_code, body)
 
         return body
+
+    def filter(self, text, noise_only=False):
+        """Filter lines that contain ip address from a given text.
+
+        :param text: Text input
+        :type text: str
+        :param noise_only:
+            If set, return only lines that contain IP addresses classified as noise,
+            otherwise, return lines that contain IP addresses not classified as noise.
+        :type noise_only: bool
+
+        """
+        text_ip_addresses = set()
+        input_lines = list(text)
+        for input_line in input_lines:
+            text_ip_addresses.update(self.IPV4_REGEX.findall(input_line))
+
+        noise_ip_addresses = {
+            result["ip"] for result in self.quick(text_ip_addresses) if result["noise"]
+        }
+
+        if noise_only:
+
+            def line_matches(line):
+                """Select lines with at least one noisy IP address.
+
+                :param line: Line being processed.
+                :type line: str
+                :return: Whether line matches selection criteria or not.
+                :rtype: bool
+
+                """
+                line_ip_addresses = self.IPV4_REGEX.findall(line)
+                return any(
+                    line_ip_address in noise_ip_addresses
+                    for line_ip_address in line_ip_addresses
+                )
+
+        else:
+
+            def line_matches(line):
+                """Select lines with at least one non-noisy IP address.
+
+                :param line: Line being processed.
+                :type line: str
+                :return: Whether line matches selection criteria or not.
+                :rtype: bool
+
+                """
+                line_ip_addresses = self.IPV4_REGEX.findall(line)
+                return any(
+                    line_ip_address not in noise_ip_addresses
+                    for line_ip_address in line_ip_addresses
+                )
+
+        def add_markup(match):
+            """Add markup to surrond IP address value with proper tag.
+
+            :param match: IP address match
+            :type match: re.Match
+            :return: IP address with markup
+            :rtype: str
+
+            """
+            ip_address = match.group(0)
+            if ip_address in noise_ip_addresses:
+                tag = "noise"
+            else:
+                tag = "not-noise"
+
+            return "<{tag}>{ip_address}</{tag}>".format(ip_address=ip_address, tag=tag)
+
+        filtered_lines = [
+            self.IPV4_REGEX.subn(add_markup, input_line)[0]
+            for input_line in input_lines
+            if line_matches(input_line)
+        ]
+        return "".join(filtered_lines)
 
     def interesting(self, ip_address):
         """Report an IP as "interesting".
