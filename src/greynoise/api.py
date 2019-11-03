@@ -141,6 +141,7 @@ class GreyNoise(object):
         LOGGER.debug(
             "Reporting interesting IP: %s...", ip_address, ip_address=ip_address
         )
+        validate_ip(ip_address)
 
         endpoint = self.EP_INTERESTING.format(ip_address=ip_address)
         response = self._request(endpoint, method="post")

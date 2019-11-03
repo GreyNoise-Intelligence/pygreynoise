@@ -115,6 +115,17 @@ class TestInteresting(object):
         )
         assert response == expected_response
 
+    def test_invalid_ip(self, client):
+        """Report an invalid IP as "interesting"."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.ip(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()
+
 
 class TestIP(object):
     """GreyNoise client IP context test cases."""
