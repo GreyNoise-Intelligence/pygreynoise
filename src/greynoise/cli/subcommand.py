@@ -7,10 +7,13 @@ import click
 from greynoise.__version__ import __version__
 from greynoise.cli.decorator import (
     gnql_command,
+    handle_exceptions,
     ip_lookup_command,
     not_implemented_command,
+    pass_api_client,
 )
 from greynoise.cli.helper import get_ip_addresses, get_queries
+from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 
 
@@ -46,9 +49,20 @@ def help_(context):
     click.echo(context.parent.get_help())
 
 
-@not_implemented_command
-def interesting():
-    """Report an IP as "interesting"."""
+@click.command()
+@click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@pass_api_client
+@click.pass_context
+@handle_exceptions
+def interesting(context, api_client, api_key, input_file, ip_address):
+    """Report one or more IP addresses as "interesting"."""
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = [
+        api_client.interesting(ip_address=ip_address) for ip_address in ip_addresses
+    ]
+    return results
 
 
 @ip_lookup_command

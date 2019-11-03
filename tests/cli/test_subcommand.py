@@ -124,16 +124,121 @@ class TestHelp(object):
 class TestInteresting(object):
     """Interesting subcommand test cases."""
 
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_interesting(self, api_client, ip_address, expected_response):
+        """Report IP address as "interesting"."""
         runner = CliRunner()
-        expected_output = "Error: 'interesting' subcommand is not implemented yet.\n"
 
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.interesting)
-        api_client.not_implemented.assert_called_with("interesting")
-        assert result.exit_code == 1
-        assert result.output == expected_output
+        api_client.interesting.return_value = expected_response
+
+        result = runner.invoke(subcommand.interesting, [ip_address])
+        assert result.exit_code == 0
+        assert result.output == ""
+        api_client.interesting.assert_called_with(ip_address=ip_address)
+
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_input_file(self, api_client, ip_address, expected_response):
+        """Report IP address as "interesting" from input file."""
+        runner = CliRunner()
+
+        api_client.interesting.return_value = expected_response
+
+        result = runner.invoke(subcommand.interesting, ["-i", StringIO(ip_address)])
+        assert result.exit_code == 0
+        assert result.output == ""
+        api_client.interesting.assert_called_with(ip_address=ip_address)
+
+    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    def test_stdin_input(self, api_client, ip_address, expected_response):
+        """Report IP address as "interesting" from stdin."""
+        runner = CliRunner()
+
+        api_client.interesting.return_value = expected_response
+
+        result = runner.invoke(subcommand.interesting, input=ip_address)
+        assert result.exit_code == 0
+        assert result.output == ""
+        api_client.interesting.assert_called_with(ip_address=ip_address)
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.interesting, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise interesting" in result.output
+        api_client.interesting.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.interesting,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise interesting" in result.output
+        assert expected in result.output
+        api_client.interesting.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Interesting subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+
+        result = runner.invoke(subcommand.interesting, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert expected in result.output
+        api_client.interesting.assert_not_called()
+
+    def test_request_failure(self, api_client):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.interesting.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden\n"
+
+        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        assert result.exit_code == -1
+        assert result.output == expected
+
+    def test_requests_exception(self, api_client):
+        """Error is displayed on requests library exception."""
+        runner = CliRunner()
+        expected = "API error: <error message>\n"
+
+        api_client.interesting.side_effect = RequestException("<error message>")
+        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        assert result.exit_code == -1
+        assert result.output == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.interesting,
+                ["0.0.0.0"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestIP(object):
