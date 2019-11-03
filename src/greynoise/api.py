@@ -33,7 +33,6 @@ class GreyNoise(object):
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
     EP_INTERESTING = "interesting/{ip_address}"
-    EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
     EP_NOT_IMPLEMENTED = "request/{subcommand}"
@@ -233,19 +232,15 @@ class GreyNoise(object):
             ]
             if api_ip_addresses:
                 api_results = []
-                if len(api_ip_addresses) == 1:
-                    endpoint = self.EP_NOISE_QUICK.format(
-                        ip_address=api_ip_addresses[0]
-                    )
-                    api_results.append(self._request(endpoint))
-                else:
-                    chunks = more_itertools.chunked(
-                        api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
-                    )
-                    for chunk in chunks:
-                        api_results.extend(
-                            self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
-                        )
+                chunks = more_itertools.chunked(
+                    api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                )
+                for chunk in chunks:
+                    api_result = self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                    if isinstance(api_result, list):
+                        api_results.extend(api_result)
+                    else:
+                        api_results.append(api_result)
 
                 for api_result in api_results:
                     ip_address = api_result["ip"]
@@ -255,17 +250,15 @@ class GreyNoise(object):
             results = list(ordered_results.values())
         else:
             results = []
-            if len(ip_addresses) == 1:
-                endpoint = self.EP_NOISE_QUICK.format(ip_address=ip_addresses[0])
-                results.append(self._request(endpoint))
-            else:
-                chunks = more_itertools.chunked(
-                    ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
-                )
-                for chunk in chunks:
-                    results.extend(
-                        self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
-                    )
+            chunks = more_itertools.chunked(
+                ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+            )
+            for chunk in chunks:
+                result = self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                if isinstance(result, list):
+                    results.extend(result)
+                else:
+                    results.append(result)
 
         for result in results:
             code = result["code"]
