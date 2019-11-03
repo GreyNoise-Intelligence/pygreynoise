@@ -7,8 +7,11 @@ Version `dev`_
 **Date**: unreleased
 
 * CLI:
+  * implement interesting subcommand.
 
-  * use structlog logging library
+* Both API client and CLI:
+  * implement interesting method.
+  * use structlog logging library.
 
 Version `0.3.0`_
 ================
