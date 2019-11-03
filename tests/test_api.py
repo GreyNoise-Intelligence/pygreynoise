@@ -101,6 +101,21 @@ class TestNotImplemented(object):
         client.not_implemented("<subcommand>")
 
 
+class TestInteresting(object):
+    """GreyNoise client "interesting" IP test cases."""
+
+    def test_interesting(self, client):
+        """Report an IP as "interesting"."""
+        ip_address = "0.0.0.0"
+        expected_response = {}
+        client._request = Mock(return_value=expected_response)
+        response = client.interesting(ip_address)
+        client._request.assert_called_with(
+            "interesting/{}".format(ip_address), method="post"
+        )
+        assert response == expected_response
+
+
 class TestIP(object):
     """GreyNoise client IP context test cases."""
 

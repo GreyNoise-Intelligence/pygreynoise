@@ -32,6 +32,7 @@ class GreyNoise(object):
     API_VERSION = "v2"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
+    EP_INTERESTING = "interesting/{ip_address}"
     EP_NOISE_QUICK = "noise/quick/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
@@ -80,15 +81,17 @@ class GreyNoise(object):
         self.use_cache = use_cache
         self.session = requests.Session()
 
-    def _request(self, endpoint, params=None, json=None):
+    def _request(self, endpoint, params=None, json=None, method="get"):
         """Handle the requesting of information from the API.
 
-        :param endpoint: Endpoint to send the request to.
+        :param endpoint: Endpoint to send the request to
         :type endpoint: str
-        :param params: Request parameters.
+        :param params: Request parameters
         :type param: dict
-        :param json: Request's JSON payload.
+        :param json: Request's JSON payload
         :type json: dict
+        :param method: Request method name
+        :type method: str
         :returns: Response's JSON payload
         :rtype: dict
         :raises RequestFailure: when HTTP status code is not 2xx
@@ -101,15 +104,25 @@ class GreyNoise(object):
             "key": self.api_key,
         }
         url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
-        LOGGER.debug("Sending API request...", url=url, params=params, json=json)
-        response = self.session.get(
+        LOGGER.debug(
+            "Sending API request...", url=url, method=method, params=params, json=json
+        )
+        request_method = getattr(self.session, method)
+        response = request_method(
             url, headers=headers, timeout=self.timeout, params=params, json=json
         )
-
-        if "application/json" in response.headers.get("Content-Type", ""):
+        content_type = response.headers.get("Content-Type", "")
+        if "application/json" in content_type:
             body = response.json()
         else:
             body = response.text
+
+        LOGGER.debug(
+            "API response received",
+            status_code=response.status_code,
+            content_type=content_type,
+            body=body,
+        )
 
         if response.status_code == 429:
             raise RateLimitError()
@@ -118,11 +131,26 @@ class GreyNoise(object):
 
         return body
 
+    def interesting(self, ip_address):
+        """Report an IP as "interesting".
+
+        :param ip_address: IP address to report as "interesting".
+        :type ip_address: str
+
+        """
+        LOGGER.debug(
+            "Reporting interesting IP: %s...", ip_address, ip_address=ip_address
+        )
+
+        endpoint = self.EP_INTERESTING.format(ip_address=ip_address)
+        response = self._request(endpoint, method="post")
+        return response
+
     def ip(self, ip_address):
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
-        :type recurse: str
+        :type ip_address: str
         :return: Context for the IP address.
         :rtype: dict
 
