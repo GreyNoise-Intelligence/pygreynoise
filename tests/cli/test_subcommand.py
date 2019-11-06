@@ -184,6 +184,43 @@ class TestFilter(object):
         assert api_client.filter.call_args[0][0].read() == text
         assert api_client.filter.call_args[1] == {"noise_only": False}
 
+    def test_request_failure(self, api_client):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.filter.side_effect = RequestFailure(
+            401, {"error": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden\n"
+
+        result = runner.invoke(subcommand.filter, input="some text")
+        assert result.exit_code == -1
+        assert result.output == expected
+
+    def test_requests_exception(self, api_client):
+        """Error is displayed on requests library exception."""
+        runner = CliRunner()
+        expected = "API error: <error message>\n"
+
+        api_client.filter.side_effect = RequestException("<error message>")
+        result = runner.invoke(subcommand.filter, input="some text")
+        assert result.exit_code == -1
+        assert result.output == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.filter,
+                input="some text",
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
 
 class TestHelp(object):
     """Help subcommand test cases."""

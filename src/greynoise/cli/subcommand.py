@@ -49,6 +49,7 @@ def feedback():
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
 @pass_api_client
+@handle_exceptions
 def filter(api_client, api_key, input_file, output_file, noise_only):
     """"Filter the noise from a log file, stdin, etc."""
     if input_file is None:
