@@ -2,6 +2,7 @@
 
 import pytest
 from mock import Mock, call, patch
+from six import StringIO
 
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -99,6 +100,57 @@ class TestNotImplemented(object):
     def test_not_implemented(self, client):
         client._request = Mock()
         client.not_implemented("<subcommand>")
+
+
+class TestFilter(object):
+    """GreyNose client filter test cases."""
+
+    @pytest.fixture
+    def client(self, client):
+        """API client fixture with quick method mocked."""
+        client.quick = Mock(
+            return_value=[
+                {"ip": "0.0.0.0", "noise": True},
+                {"ip": "255.255.255.255", "noise": False},
+            ]
+        )
+        yield client
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            (
+                "0.0.0.0\n255.255.255.255\nnot an ip address",
+                "<not-noise>255.255.255.255</not-noise>\nnot an ip address",
+            ),
+            (
+                "0.0.0.0 255.255.255.255\nnot an ip address",
+                (
+                    "<noise>0.0.0.0</noise> <not-noise>255.255.255.255</not-noise>\n"
+                    "not an ip address"
+                ),
+            ),
+        ],
+    )
+    def test_discard_noise(self, client, text, expected_output):
+        """Discard lines with noisy IP addresses."""
+        output = "".join(client.filter(StringIO(text)))
+        assert output == expected_output
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            (
+                "0.0.0.0\n255.255.255.255\nnot an ip address",
+                "<noise>0.0.0.0</noise>\n",
+            ),
+            ("0.0.0.0 255.255.255.255\nnot an ip address", "",),
+        ],
+    )
+    def test_select_noise(self, client, text, expected_output):
+        """Select lines with noisy IP addresses."""
+        output = "".join(client.filter(StringIO(text), noise_only=True))
+        assert output == expected_output
 
 
 class TestInteresting(object):
