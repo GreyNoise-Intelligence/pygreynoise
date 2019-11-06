@@ -1,6 +1,7 @@
 """CLI subcommands."""
 
 import platform
+import sys
 
 import click
 
@@ -12,6 +13,7 @@ from greynoise.cli.decorator import (
     not_implemented_command,
     pass_api_client,
 )
+from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
 from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
@@ -37,9 +39,29 @@ def feedback():
     """Send feedback directly to the GreyNoise team."""
 
 
-@not_implemented_command
-def filter():
+@click.command()
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+)
+@click.option(
+    "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
+)
+@pass_api_client
+@handle_exceptions
+def filter(api_client, api_key, input_file, output_file, noise_only):
     """"Filter the noise from a log file, stdin, etc."""
+    if input_file is None:
+        if sys.stdin.isatty():
+            input_file = ""
+        else:
+            input_file = click.open_file("-")
+    if output_file is None:
+        output_file = click.open_file("-", mode="w")
+
+    for chunk in api_client.filter(input_file, noise_only=noise_only):
+        output_file.write(ANSI_MARKUP(chunk))
 
 
 @click.command(name="help")

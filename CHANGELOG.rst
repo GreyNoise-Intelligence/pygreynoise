@@ -6,11 +6,16 @@ Version `dev`_
 ===============
 **Date**: unreleased
 
+* API client:
+  * add ``interesting`` method.
+  * add ``filter`` method.
+  * add ``scroll`` and ``size`` parameters to ``query`` method.
+
 * CLI:
-  * implement interesting subcommand.
+  * add ``interesting`` subcommand.
+  * add ``filter`` subcommand.
 
 * Both API client and CLI:
-  * implement interesting method.
   * use structlog logging library.
 
 Version `0.3.0`_
