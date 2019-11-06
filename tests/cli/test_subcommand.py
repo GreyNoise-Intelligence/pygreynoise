@@ -94,16 +94,95 @@ class TestFeedback(object):
 class TestFilter(object):
     """Filter subcommand test cases."""
 
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
+    @pytest.mark.parametrize("expected_output", [""])
+    def test_no_input_file(self, api_client, expected_output):
+        """No input text passed."""
         runner = CliRunner()
-        expected_output = "Error: 'filter' subcommand is not implemented yet.\n"
 
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.filter)
-        api_client.not_implemented.assert_called_with("filter")
-        assert result.exit_code == 1
+        api_client.filter.return_value = expected_output
+
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(subcommand.filter)
+        assert result.exit_code == 0
         assert result.output == expected_output
+        api_client.filter.assert_called_with("", noise_only=False)
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_input_file(self, api_client, text, expected_output):
+        """Filter text with IP addresses from file."""
+        runner = CliRunner()
+
+        input_text = StringIO(text)
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, ["-i", input_text])
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        api_client.filter.assert_called_with(input_text, noise_only=False)
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_stdin_input(self, api_client, text, expected_output):
+        """Filter text with IP addresses from stdin."""
+        runner = CliRunner()
+
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, input=text)
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        assert api_client.filter.call_args[0][0].read() == text
+        assert api_client.filter.call_args[1] == {"noise_only": False}
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_noise_only(self, api_client, text, expected_output):
+        """Filter text with IP addresses from stdin using noise only flag."""
+        runner = CliRunner()
+
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, ["--noise-only"], input=text)
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        assert api_client.filter.call_args[0][0].read() == text
+        assert api_client.filter.call_args[1] == {"noise_only": True}
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_explicit_stdin_input(self, api_client, text, expected_output):
+        """Filter text with IP addresses from stdin passed explicitly."""
+        runner = CliRunner()
+
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, ["-i", "-"], input=text)
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        assert api_client.filter.call_args[0][0].read() == text
+        assert api_client.filter.call_args[1] == {"noise_only": False}
 
 
 class TestHelp(object):
