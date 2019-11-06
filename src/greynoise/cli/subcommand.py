@@ -59,7 +59,8 @@ def filter(api_client, api_key, input_file, output_file, noise_only):
     if output_file is None:
         output_file = click.open_file("-", mode="w")
 
-    output_file.write(ANSI_MARKUP(api_client.filter(input_file, noise_only=noise_only)))
+    for chunk in api_client.filter(input_file, noise_only=noise_only):
+        output_file.write(ANSI_MARKUP(chunk))
 
 
 @click.command(name="help")
