@@ -64,17 +64,6 @@ class TestAlerts(object):
 class TestAnalyze(object):
     """Analyze subcommand test cases."""
 
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'analyze' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.analyze)
-        api_client.not_implemented.assert_called_with("analyze")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
 
 class TestFeedback(object):
     """Feedback subcommand test cases."""
