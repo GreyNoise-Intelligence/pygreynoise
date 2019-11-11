@@ -122,6 +122,7 @@ FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
     "txt": {
+        "analyze": gnql_stats_formatter,
         "ip": ip_context_formatter,
         "quick": ip_quick_check_formatter,
         "query": gnql_query_formatter,

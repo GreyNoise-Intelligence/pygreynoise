@@ -7,6 +7,7 @@ import click
 
 from greynoise.__version__ import __version__
 from greynoise.cli.decorator import (
+    echo_result,
     gnql_command,
     handle_exceptions,
     ip_lookup_command,
@@ -29,9 +30,35 @@ def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""
 
 
-@not_implemented_command
-def analyze():
+@click.command()
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+)
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@pass_api_client
+@echo_result
+@handle_exceptions
+def analyze(api_client, api_key, input_file, output_file, output_format):
     """Analyze the IP addresses in a log file, stdin, etc."""
+    if input_file is None:
+        if sys.stdin.isatty():
+            input_file = ""
+        else:
+            input_file = click.open_file("-")
+    if output_file is None:
+        output_file = click.open_file("-", mode="w")
+
+    results = [api_client.analyze(input_file)]
+    return results
 
 
 @not_implemented_command
