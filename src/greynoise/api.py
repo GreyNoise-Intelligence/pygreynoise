@@ -79,6 +79,7 @@ class GreyNoise(object):
     FILTER_TEXT_CHUNK_SIZE = 10000
 
     SECTION_KEY_TO_ELEMENT_KEY = {
+        "actors": "actor",
         "asns": "asn",
         "categories": "category",
         "classifications": "classification",
