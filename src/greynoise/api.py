@@ -174,10 +174,13 @@ class GreyNoise(object):
         # (undoing mapping done previously to keep track of count values)
         for section_key, section_value in text_stats["stats"].items():
             section_element_key = self.SECTION_KEY_TO_ELEMENT_KEY[section_key]
-            text_stats["stats"][section_key] = [
-                {section_element_key: element_key, "count": element_count}
-                for element_key, element_count in section_value.items()
-            ]
+            text_stats["stats"][section_key] = sorted(
+                [
+                    {section_element_key: element_key, "count": element_count}
+                    for element_key, element_count in section_value.items()
+                ],
+                key=lambda element: (-element["count"], element[section_element_key]),
+            )
 
         return text_stats
 
