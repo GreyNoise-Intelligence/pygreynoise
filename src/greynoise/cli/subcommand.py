@@ -44,10 +44,11 @@ def alerts():
     default="txt",
     help="Output format",
 )
+@click.option("-v", "--verbose", count=True, help="Verbose output")
 @pass_api_client
 @echo_result
 @handle_exceptions
-def analyze(api_client, api_key, input_file, output_file, output_format):
+def analyze(api_client, api_key, input_file, output_file, output_format, verbose):
     """Analyze the IP addresses in a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
