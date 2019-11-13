@@ -167,7 +167,10 @@ class GreyNoise(object):
             "count": 0,
             "stats": {},
         }
-        chunks_stats = [self._analyze_chunk(chunk) for chunk in chunks]
+        text_ip_addresses = set()
+        chunks_stats = [
+            self._analyze_chunk(chunk, text_ip_addresses) for chunk in chunks
+        ]
         functools.reduce(self._aggregate_stats, chunks_stats, text_stats)
 
         # This maps section dictionaries to list of dictionaries
@@ -184,20 +187,28 @@ class GreyNoise(object):
 
         return text_stats
 
-    def _analyze_chunk(self, text):
+    def _analyze_chunk(self, text, text_ip_addresses):
         """Analyze chunk of lines that contain IP addresses from a given text.
 
         :param text: Text input
         :type text: str
+        :param text_ip_addresses: IP addresses already seen in other chunks.
+        :type text_ip_addresses: set(str)
         :return: Iterator with stats for each one of the IP addresses found.
         :rtype: dict
 
         """
-        text_ip_addresses = set()
+        chunk_ip_addresses = set()
         for input_line in text:
-            text_ip_addresses.update(self.IPV4_REGEX.findall(input_line))
+            chunk_ip_addresses.update(self.IPV4_REGEX.findall(input_line))
 
-        chunk_stats = [self.stats(query=ip_address) for ip_address in text_ip_addresses]
+        # Keep only IP addresses not seen in other chunks and query those
+        chunk_ip_addresses -= text_ip_addresses
+        text_ip_addresses.update(chunk_ip_addresses)
+
+        chunk_stats = [
+            self.stats(query=ip_address) for ip_address in chunk_ip_addresses
+        ]
         return chunk_stats
 
     def _aggregate_stats(self, accumulator, chunk_stats):
