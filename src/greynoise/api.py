@@ -186,6 +186,21 @@ class GreyNoise(object):
                 key=lambda element: (-element["count"], element[section_element_key]),
             )
 
+        noise_ip_addresses = {
+            result["ip"] for result in self.quick(text_ip_addresses) if result["noise"]
+        }
+        extracted_ip_count = len(text_ip_addresses)
+        noise_ip_count = len(noise_ip_addresses)
+        not_noise_ip_count = extracted_ip_count - noise_ip_count
+        noise_not_noise_ratio = noise_ip_count / not_noise_ip_count
+
+        text_stats["summary"] = {
+            "extracted_ip_count": extracted_ip_count,
+            "noise_ip_count": noise_ip_count,
+            "not_noise_ip_count": not_noise_ip_count,
+            "noise_not_noise_ratio": "{:.2}".format(noise_not_noise_ratio),
+        }
+
         return text_stats
 
     def _analyze_chunk(self, text, text_ip_addresses):
