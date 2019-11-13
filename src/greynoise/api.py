@@ -198,7 +198,7 @@ class GreyNoise(object):
             "extracted_ip_count": extracted_ip_count,
             "noise_ip_count": noise_ip_count,
             "not_noise_ip_count": not_noise_ip_count,
-            "noise_not_noise_ratio": "{:.2}".format(noise_not_noise_ratio),
+            "noise_not_noise_ratio": noise_not_noise_ratio,
         }
 
         return text_stats

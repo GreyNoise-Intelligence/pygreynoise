@@ -69,8 +69,8 @@ def analyze(
     if output_file is None:
         output_file = click.open_file("-", mode="w")
 
-    results = [api_client.analyze(input_file)]
-    return results
+    result = api_client.analyze(input_file)
+    return result
 
 
 @not_implemented_command
