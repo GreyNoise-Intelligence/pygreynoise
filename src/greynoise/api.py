@@ -154,11 +154,13 @@ class GreyNoise(object):
         """Aggregate stats related to IP addresses from a given text.
 
         :param text: Text input
-        :type text: str
+        :type text: file-like | str
         :return: Aggregated stats for all the IP addresses found.
         :rtype: dict
 
         """
+        if isinstance(text, str):
+            text = text.splitlines()
         chunks = more_itertools.chunked(text, self.ANALYZE_TEXT_CHUNK_SIZE)
         text_stats = {
             "query": [],
@@ -229,7 +231,7 @@ class GreyNoise(object):
         """Filter lines that contain IP addresses from a given text.
 
         :param text: Text input
-        :type text: str
+        :type text: file-like | str
         :param noise_only:
             If set, return only lines that contain IP addresses classified as noise,
             otherwise, return lines that contain IP addresses not classified as noise.
@@ -238,6 +240,8 @@ class GreyNoise(object):
         :rtype: iterable
 
         """
+        if isinstance(text, str):
+            text = text.splitlines()
         chunks = more_itertools.chunked(text, self.FILTER_TEXT_CHUNK_SIZE)
         for chunk in chunks:
             yield self._filter_chunk(chunk, noise_only)
