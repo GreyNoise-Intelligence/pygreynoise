@@ -47,12 +47,23 @@ def alerts():
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 @pass_api_client
 @echo_result
+@click.pass_context
 @handle_exceptions
-def analyze(api_client, api_key, input_file, output_file, output_format, verbose):
+def analyze(
+    context, api_client, api_key, input_file, output_file, output_format, verbose
+):
     """Analyze the IP addresses in a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
-            input_file = ""
+            output = [
+                context.command.get_usage(context),
+                (
+                    "Error: at least one text file must be passed "
+                    "either through the -i/--input_file option or through a shell pipe."
+                ),
+            ]
+            click.echo("\n\n".join(output))
+            context.exit(-1)
         else:
             input_file = click.open_file("-")
     if output_file is None:
@@ -77,12 +88,21 @@ def feedback():
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
 @pass_api_client
+@click.pass_context
 @handle_exceptions
-def filter(api_client, api_key, input_file, output_file, noise_only):
-    """"Filter the noise from a log file, stdin, etc."""
+def filter(context, api_client, api_key, input_file, output_file, noise_only):
+    """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
-            input_file = ""
+            output = [
+                context.command.get_usage(context),
+                (
+                    "Error: at least one text file must be passed "
+                    "either through the -i/--input_file option or through a shell pipe."
+                ),
+            ]
+            click.echo("\n\n".join(output))
+            context.exit(-1)
         else:
             input_file = click.open_file("-")
     if output_file is None:
