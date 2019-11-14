@@ -83,7 +83,15 @@ class TestFeedback(object):
 class TestFilter(object):
     """Filter subcommand test cases."""
 
-    @pytest.mark.parametrize("expected_output", [""])
+    @pytest.mark.parametrize(
+        "expected_output",
+        [
+            (
+                "Error: at least one text file must be passed "
+                "either through the -i/--input_file option or through a shell pipe."
+            ),
+        ],
+    )
     def test_no_input_file(self, api_client, expected_output):
         """No input text passed."""
         runner = CliRunner()
@@ -93,9 +101,9 @@ class TestFilter(object):
         with patch("greynoise.cli.subcommand.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(subcommand.filter)
-        assert result.exit_code == 0
-        assert result.output == expected_output
-        api_client.filter.assert_called_with("", noise_only=False)
+        assert result.exit_code == -1
+        assert expected_output in result.output
+        api_client.filter.assert_not_called()
 
     @pytest.mark.parametrize(
         "text, expected_output",
