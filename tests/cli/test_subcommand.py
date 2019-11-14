@@ -1,3 +1,4 @@
+# coding=utf-8
 """CLI subcommands test cases."""
 
 import json
@@ -76,7 +77,7 @@ class TestAnalyze(object):
         },
     }
     DEFAULT_OUTPUT = textwrap.dedent(
-        """\
+        u"""\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
@@ -84,7 +85,7 @@ class TestAnalyze(object):
         - Extracted IP count: 0
         - Noise IP count: 0
         - Not noise IP count: 0
-        - Noise/Not noise ratio: 0
+        - Noise/Not noise ratio: 0.00
 
         Queries:
         - <ip_address_1>

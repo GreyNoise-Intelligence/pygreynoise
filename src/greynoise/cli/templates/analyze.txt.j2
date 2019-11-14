@@ -6,7 +6,7 @@
 - <key>Extracted IP count</key>: <value>{{ result.summary.extracted_ip_count }}</value>
 - <key>Noise IP count</key>: <value>{{ result.summary.noise_ip_count }}</value>
 - <key>Not noise IP count</key>: <value>{{ result.summary.not_noise_ip_count }}</value>
-- <key>Noise/Not noise ratio</key>: <value>{{ result.summary.noise_not_noise_ratio | round(2) }}</value>
+- <key>Noise/Not noise ratio</key>: <value>{{ "%.2f" | format(result.summary.noise_not_noise_ratio) }}</value>
 
 <header>Queries</header>:
 {%- call(query) macros.verbose_list(result.query) -%}
