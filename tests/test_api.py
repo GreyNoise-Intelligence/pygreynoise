@@ -206,6 +206,20 @@ class TestAnalyze(object):
                     },
                 },
             ),
+            (
+                "no ip address",
+                {
+                    "count": 0,
+                    "summary": {
+                        "ip_count": 0,
+                        "noise_ip_count": 0,
+                        "not_noise_ip_count": 0,
+                        "noise_ip_ratio": 0,
+                    },
+                    "query": [],
+                    "stats": {},
+                },
+            ),
         ),
     )
     def test_analyze(self, client, text, expected_output):
