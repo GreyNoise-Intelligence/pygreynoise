@@ -118,10 +118,19 @@ def gnql_stats_formatter(results, verbose):
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
+@colored_output
+def analyze_formatter(result, verbose):
+    """Conver analyze result into human-readable text."""
+    template = JINJA2_ENV.get_template("analyze.txt.j2")
+    max_width, _ = click.get_terminal_size()
+    return template.render(result=result, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
     "txt": {
+        "analyze": analyze_formatter,
         "ip": ip_context_formatter,
         "quick": ip_quick_check_formatter,
         "query": gnql_query_formatter,

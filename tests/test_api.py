@@ -2,7 +2,6 @@
 
 import pytest
 from mock import Mock, call, patch
-from six import StringIO
 
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -102,8 +101,135 @@ class TestNotImplemented(object):
         client.not_implemented("<subcommand>")
 
 
+class TestAnalyze(object):
+    """Greynoise client analyze test cases."""
+
+    @pytest.fixture
+    def client(self, client):
+        """API client fixture with quick method mocked."""
+        client.quick = Mock(
+            return_value=[
+                {"ip": "0.0.0.0", "noise": True},
+                {"ip": "255.255.255.255", "noise": False},
+            ]
+        )
+        client.stats = Mock(
+            side_effect=[
+                {
+                    "count": 1,
+                    "query": "0.0.0.0",
+                    "stats": {
+                        "actors": [{"actor": "<actor_1>", "count": 1}],
+                        "asns": [{"asn": "<asn_1>", "count": 1}],
+                        "categories": [{"category": "<category_1>", "count": 1}],
+                        "classifications": [
+                            {"classification": "<classification_1>", "count": 1}
+                        ],
+                        "countries": [{"country": "<country_1>", "count": 1}],
+                        "operating_systems": [
+                            {"operating_system": "<operating_system_1>", "count": 1}
+                        ],
+                        "organizations": [
+                            {"organization": "<organization_1>", "count": 1}
+                        ],
+                        "tags": [{"tag": "<tag_1>", "count": 1}],
+                    },
+                },
+                {
+                    "count": 1,
+                    "query": "255.255.255.255",
+                    "stats": {
+                        "actors": None,  # handle none values as empty lists
+                        "asns": [{"asn": "<asn_2>", "count": 1}],
+                        "categories": [{"category": "<category_2>", "count": 1}],
+                        "classifications": [
+                            {"classification": "<classification_2>", "count": 1}
+                        ],
+                        "countries": [{"country": "<country_2>", "count": 1}],
+                        "operating_systems": [
+                            {"operating_system": "<operating_system_2>", "count": 1}
+                        ],
+                        "organizations": [
+                            {"organization": "<organization_2>", "count": 1}
+                        ],
+                        "tags": [{"tag": "<tag_2>", "count": 1}],
+                    },
+                },
+            ]
+        )
+        yield client
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        (
+            (
+                "0.0.0.0\n255.255.255.255",
+                {
+                    "count": 2,
+                    "summary": {
+                        "ip_count": 2,
+                        "noise_ip_count": 1,
+                        "not_noise_ip_count": 1,
+                        "noise_ip_ratio": 0.50,
+                    },
+                    "query": ["0.0.0.0", "255.255.255.255"],
+                    "stats": {
+                        "actors": [{"actor": "<actor_1>", "count": 1}],
+                        "asns": [
+                            {"asn": "<asn_1>", "count": 1},
+                            {"asn": "<asn_2>", "count": 1},
+                        ],
+                        "categories": [
+                            {"category": "<category_1>", "count": 1},
+                            {"category": "<category_2>", "count": 1},
+                        ],
+                        "classifications": [
+                            {"classification": "<classification_1>", "count": 1},
+                            {"classification": "<classification_2>", "count": 1},
+                        ],
+                        "countries": [
+                            {"country": "<country_1>", "count": 1},
+                            {"country": "<country_2>", "count": 1},
+                        ],
+                        "operating_systems": [
+                            {"operating_system": "<operating_system_1>", "count": 1},
+                            {"operating_system": "<operating_system_2>", "count": 1},
+                        ],
+                        "organizations": [
+                            {"organization": "<organization_1>", "count": 1},
+                            {"organization": "<organization_2>", "count": 1},
+                        ],
+                        "tags": [
+                            {"tag": "<tag_1>", "count": 1},
+                            {"tag": "<tag_2>", "count": 1},
+                        ],
+                    },
+                },
+            ),
+            (
+                "no ip address",
+                {
+                    "count": 0,
+                    "summary": {
+                        "ip_count": 0,
+                        "noise_ip_count": 0,
+                        "not_noise_ip_count": 0,
+                        "noise_ip_ratio": 0,
+                    },
+                    "query": [],
+                    "stats": {},
+                },
+            ),
+        ),
+    )
+    def test_analyze(self, client, text, expected_output):
+        """Analyze input text."""
+        output = client.analyze(text)
+        assert output == expected_output
+
+
 class TestFilter(object):
-    """GreyNose client filter test cases."""
+    """GreyNoise client filter test cases."""
 
     @pytest.fixture
     def client(self, client):
@@ -134,7 +260,7 @@ class TestFilter(object):
     )
     def test_discard_noise(self, client, text, expected_output):
         """Discard lines with noisy IP addresses."""
-        output = "".join(client.filter(StringIO(text)))
+        output = "".join(client.filter(text))
         assert output == expected_output
 
     @pytest.mark.parametrize(
@@ -149,7 +275,7 @@ class TestFilter(object):
     )
     def test_select_noise(self, client, text, expected_output):
         """Select lines with noisy IP addresses."""
-        output = "".join(client.filter(StringIO(text), noise_only=True))
+        output = "".join(client.filter(text, noise_only=True))
         assert output == expected_output
 
 

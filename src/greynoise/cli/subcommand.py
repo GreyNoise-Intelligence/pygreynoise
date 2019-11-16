@@ -7,6 +7,7 @@ import click
 
 from greynoise.__version__ import __version__
 from greynoise.cli.decorator import (
+    echo_result,
     gnql_command,
     handle_exceptions,
     ip_lookup_command,
@@ -29,9 +30,47 @@ def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""
 
 
-@not_implemented_command
-def analyze():
+@click.command()
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+@click.option(
+    "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+)
+@click.option(
+    "-f",
+    "--format",
+    "output_format",
+    type=click.Choice(["json", "txt", "xml"]),
+    default="txt",
+    help="Output format",
+)
+@click.option("-v", "--verbose", count=True, help="Verbose output")
+@pass_api_client
+@echo_result
+@click.pass_context
+@handle_exceptions
+def analyze(
+    context, api_client, api_key, input_file, output_file, output_format, verbose
+):
     """Analyze the IP addresses in a log file, stdin, etc."""
+    if input_file is None:
+        if sys.stdin.isatty():
+            output = [
+                context.command.get_usage(context),
+                (
+                    "Error: at least one text file must be passed "
+                    "either through the -i/--input_file option or through a shell pipe."
+                ),
+            ]
+            click.echo("\n\n".join(output))
+            context.exit(-1)
+        else:
+            input_file = click.open_file("-")
+    if output_file is None:
+        output_file = click.open_file("-", mode="w")
+
+    result = api_client.analyze(input_file)
+    return result
 
 
 @not_implemented_command
@@ -49,12 +88,21 @@ def feedback():
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
 @pass_api_client
+@click.pass_context
 @handle_exceptions
-def filter(api_client, api_key, input_file, output_file, noise_only):
-    """"Filter the noise from a log file, stdin, etc."""
+def filter(context, api_client, api_key, input_file, output_file, noise_only):
+    """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
-            input_file = ""
+            output = [
+                context.command.get_usage(context),
+                (
+                    "Error: at least one text file must be passed "
+                    "either through the -i/--input_file option or through a shell pipe."
+                ),
+            ]
+            click.echo("\n\n".join(output))
+            context.exit(-1)
         else:
             input_file = click.open_file("-")
     if output_file is None:

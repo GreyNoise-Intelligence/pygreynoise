@@ -564,7 +564,7 @@ as malicious and tagged as a Bluekeep Exploit::
 .. note::
 
    This is the default command, that is, you can save some typing by just
-   writing ``greynoise <query>`` instead of ``greynose query <query>``.
+   writing ``greynoise <query>`` instead of ``greynoise query <query>``.
 
 
 Get statistics

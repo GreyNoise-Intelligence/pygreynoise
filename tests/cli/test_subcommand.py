@@ -1,3 +1,4 @@
+# coding=utf-8
 """CLI subcommands test cases."""
 
 import json
@@ -64,16 +65,118 @@ class TestAlerts(object):
 class TestAnalyze(object):
     """Analyze subcommand test cases."""
 
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'analyze' subcommand is not implemented yet.\n"
+    DEFAULT_API_RESPONSE = {
+        "query": ["<ip_address_1>", "<ip_address_2>"],
+        "count": 0,
+        "stats": {},
+        "summary": {
+            "ip_count": 0,
+            "noise_ip_count": 0,
+            "not_noise_ip_count": 0,
+            "noise_ip_ratio": 0,
+        },
+    }
+    DEFAULT_OUTPUT = textwrap.dedent(
+        u"""\
+        ╔═══════════════════════════╗
+        ║          Analyze          ║
+        ╚═══════════════════════════╝
+        Summary:
+        - IP count: 0
+        - Noise IP count: 0
+        - Not noise IP count: 0
+        - Noise IP ratio: 0.00
 
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.analyze)
-        api_client.not_implemented.assert_called_with("analyze")
-        assert result.exit_code == 1
-        assert result.output == expected_output
+        Queries:
+        - <ip_address_1>
+        - <ip_address_2>
+
+        No results found for this query.
+        """
+    )
+
+    @pytest.mark.parametrize(
+        "expected_output",
+        [
+            (
+                "Error: at least one text file must be passed "
+                "either through the -i/--input_file option or through a shell pipe."
+            ),
+        ],
+    )
+    def test_no_input_file(self, api_client, expected_output):
+        """No input text passed."""
+        runner = CliRunner()
+
+        api_client.analyze.return_value = expected_output
+
+        with patch("greynoise.cli.subcommand.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(subcommand.analyze)
+        assert result.exit_code == -1
+        assert expected_output in result.output
+        api_client.analyze.assert_not_called()
+
+    @pytest.mark.parametrize("text", ["<input_text>"])
+    def test_input_file(self, api_client, text):
+        """Analyze text with IP addresses from file."""
+        runner = CliRunner()
+
+        input_text = StringIO(text)
+        api_client.analyze.return_value = self.DEFAULT_API_RESPONSE
+
+        result = runner.invoke(subcommand.analyze, ["-i", input_text])
+        assert result.exit_code == 0
+        assert result.output == self.DEFAULT_OUTPUT
+        api_client.analyze.assert_called_with(input_text)
+
+    @pytest.mark.parametrize("text", ["<input_text>"])
+    def test_stdin_input(self, api_client, text):
+        """Analyze text with IP addresses from stdin."""
+        runner = CliRunner()
+
+        api_client.analyze.return_value = self.DEFAULT_API_RESPONSE
+
+        result = runner.invoke(subcommand.analyze, input=text)
+        assert result.exit_code == 0
+        assert result.output == self.DEFAULT_OUTPUT
+        assert api_client.analyze.call_args[0][0].read() == text
+
+    @pytest.mark.parametrize("text", ["<input_text>"])
+    def test_explicit_stdin_input(self, api_client, text):
+        """Analyze text with IP addresses from stdin passed explicitly."""
+        runner = CliRunner()
+
+        api_client.analyze.return_value = self.DEFAULT_API_RESPONSE
+
+        result = runner.invoke(subcommand.analyze, ["-i", "-"], input=text)
+        assert result.exit_code == 0
+        assert result.output == self.DEFAULT_OUTPUT
+        assert api_client.analyze.call_args[0][0].read() == text
+
+    def test_requests_exception(self, api_client):
+        """Error is displayed on requests library exception."""
+        runner = CliRunner()
+        expected = "API error: <error message>\n"
+
+        api_client.analyze.side_effect = RequestException("<error message>")
+        result = runner.invoke(subcommand.analyze, input="some text")
+        assert result.exit_code == -1
+        assert result.output == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.analyze,
+                input="some text",
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
 
 
 class TestFeedback(object):
@@ -94,7 +197,15 @@ class TestFeedback(object):
 class TestFilter(object):
     """Filter subcommand test cases."""
 
-    @pytest.mark.parametrize("expected_output", [""])
+    @pytest.mark.parametrize(
+        "expected_output",
+        [
+            (
+                "Error: at least one text file must be passed "
+                "either through the -i/--input_file option or through a shell pipe."
+            ),
+        ],
+    )
     def test_no_input_file(self, api_client, expected_output):
         """No input text passed."""
         runner = CliRunner()
@@ -104,9 +215,9 @@ class TestFilter(object):
         with patch("greynoise.cli.subcommand.sys") as sys:
             sys.stdin.isatty.return_value = True
             result = runner.invoke(subcommand.filter)
-        assert result.exit_code == 0
-        assert result.output == expected_output
-        api_client.filter.assert_called_with("", noise_only=False)
+        assert result.exit_code == -1
+        assert expected_output in result.output
+        api_client.filter.assert_not_called()
 
     @pytest.mark.parametrize(
         "text, expected_output",
