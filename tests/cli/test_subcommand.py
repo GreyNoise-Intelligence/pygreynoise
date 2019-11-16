@@ -70,10 +70,10 @@ class TestAnalyze(object):
         "count": 0,
         "stats": {},
         "summary": {
-            "extracted_ip_count": 0,
+            "ip_count": 0,
             "noise_ip_count": 0,
             "not_noise_ip_count": 0,
-            "noise_not_noise_ratio": 0,
+            "noise_ip_ratio": 0,
         },
     }
     DEFAULT_OUTPUT = textwrap.dedent(
@@ -82,10 +82,10 @@ class TestAnalyze(object):
         ║          Analyze          ║
         ╚═══════════════════════════╝
         Summary:
-        - Extracted IP count: 0
+        - IP count: 0
         - Noise IP count: 0
         - Not noise IP count: 0
-        - Noise/Not noise ratio: 0.00
+        - Noise IP ratio: 0.00
 
         Queries:
         - <ip_address_1>

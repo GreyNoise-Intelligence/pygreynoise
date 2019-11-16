@@ -167,10 +167,10 @@ class TestAnalyze(object):
                 {
                     "count": 2,
                     "summary": {
-                        "extracted_ip_count": 2,
+                        "ip_count": 2,
                         "noise_ip_count": 1,
-                        "noise_not_noise_ratio": 1.0,
                         "not_noise_ip_count": 1,
+                        "noise_ip_ratio": 0.50,
                     },
                     "query": ["0.0.0.0", "255.255.255.255"],
                     "stats": {

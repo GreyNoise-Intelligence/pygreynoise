@@ -69,16 +69,19 @@ class Analyzer(object):
             for result in self.api.quick(text_ip_addresses)
             if result["noise"]
         }
-        extracted_ip_count = len(text_ip_addresses)
+        ip_count = len(text_ip_addresses)
         noise_ip_count = len(noise_ip_addresses)
-        not_noise_ip_count = extracted_ip_count - noise_ip_count
-        noise_not_noise_ratio = noise_ip_count / not_noise_ip_count
+        not_noise_ip_count = ip_count - noise_ip_count
+        if ip_count > 0:
+            noise_ip_ratio = noise_ip_count / ip_count
+        else:
+            noise_ip_ratio = 0
 
         text_stats["summary"] = {
-            "extracted_ip_count": extracted_ip_count,
+            "ip_count": ip_count,
             "noise_ip_count": noise_ip_count,
             "not_noise_ip_count": not_noise_ip_count,
-            "noise_not_noise_ratio": noise_not_noise_ratio,
+            "noise_ip_ratio": noise_ip_ratio,
         }
 
         return text_stats
