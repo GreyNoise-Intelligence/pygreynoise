@@ -2,7 +2,6 @@
 
 import pytest
 from mock import Mock, call, patch
-from six import StringIO
 
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
@@ -134,7 +133,7 @@ class TestFilter(object):
     )
     def test_discard_noise(self, client, text, expected_output):
         """Discard lines with noisy IP addresses."""
-        output = "".join(client.filter(StringIO(text)))
+        output = "".join(client.filter(text))
         assert output == expected_output
 
     @pytest.mark.parametrize(
@@ -149,7 +148,7 @@ class TestFilter(object):
     )
     def test_select_noise(self, client, text, expected_output):
         """Select lines with noisy IP addresses."""
-        output = "".join(client.filter(StringIO(text), noise_only=True))
+        output = "".join(client.filter(text, noise_only=True))
         assert output == expected_output
 
 

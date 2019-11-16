@@ -39,7 +39,7 @@ class Analyzer(object):
 
         """
         if isinstance(text, str):
-            text = text.splitlines()
+            text = text.splitlines(keepends=True)
         chunks = more_itertools.chunked(text, self.ANALYZE_TEXT_CHUNK_SIZE)
         text_stats = {
             "query": [],
