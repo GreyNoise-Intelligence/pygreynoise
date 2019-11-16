@@ -64,11 +64,15 @@ class Analyzer(object):
                 key=lambda element: (-element["count"], element[section_element_key]),
             )
 
-        noise_ip_addresses = {
-            result["ip"]
-            for result in self.api.quick(text_ip_addresses)
-            if result["noise"]
-        }
+        if text_ip_addresses:
+            noise_ip_addresses = {
+                result["ip"]
+                for result in self.api.quick(text_ip_addresses)
+                if result["noise"]
+            }
+        else:
+            noise_ip_addresses = set()
+
         ip_count = len(text_ip_addresses)
         noise_ip_count = len(noise_ip_addresses)
         not_noise_ip_count = ip_count - noise_ip_count
