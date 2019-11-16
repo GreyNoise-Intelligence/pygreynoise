@@ -39,7 +39,7 @@ class Analyzer(object):
 
         """
         if isinstance(text, str):
-            text = text.splitlines(keepends=True)
+            text = text.splitlines(True)
         chunks = more_itertools.chunked(text, self.ANALYZE_TEXT_CHUNK_SIZE)
         text_stats = {
             "query": [],
@@ -77,7 +77,7 @@ class Analyzer(object):
         noise_ip_count = len(noise_ip_addresses)
         not_noise_ip_count = ip_count - noise_ip_count
         if ip_count > 0:
-            noise_ip_ratio = noise_ip_count / ip_count
+            noise_ip_ratio = float(noise_ip_count) / ip_count
         else:
             noise_ip_ratio = 0
 
