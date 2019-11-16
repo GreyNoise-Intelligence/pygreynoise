@@ -102,7 +102,7 @@ class TestNotImplemented(object):
 
 
 class TestFilter(object):
-    """GreyNose client filter test cases."""
+    """GreyNoise client filter test cases."""
 
     @pytest.fixture
     def client(self, client):
