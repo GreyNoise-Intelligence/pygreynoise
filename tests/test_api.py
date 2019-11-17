@@ -115,7 +115,7 @@ class TestRequest(object):
         response = client._request("endpoint")
         assert response == expected_response
         client.session.get.assert_called_with(
-            "{}/{}/{}".format(client.BASE_URL, client.API_VERSION, "endpoint"),
+            "{}/{}/{}".format(client.api_server, client.API_VERSION, "endpoint"),
             headers={
                 "User-Agent": "GreyNoise/{} (test)".format(__version__),
                 "key": "<api_key>",
