@@ -83,6 +83,34 @@ class TestLoadConfig(object):
 
     @patch("greynoise.util.open")
     @patch("greynoise.util.os")
+    def test_api_server_from_environment_variable(self, os, open):
+        """API server value retrieved from environment variable."""
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
+
+        os.environ = {"GREYNOISE_API_SERVER": expected["api_server"]}
+        os.path.isfile.return_value = True
+        file_content = textwrap.dedent(
+            """\
+            [greynoise]
+            api_key = {}
+            api_server = unexpected
+            timeout = {}
+            """.format(
+                expected["api_key"], expected["timeout"],
+            )
+        )
+        open().__enter__.return_value = StringIO(file_content)
+
+        config = load_config()
+        assert config == expected
+        open().__enter__.assert_called()
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
     def test_timeout_from_environment_variable(self, os, open):
         """Timeout value retrieved from environment variable."""
         expected = {
