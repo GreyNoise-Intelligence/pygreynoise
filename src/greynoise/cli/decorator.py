@@ -108,7 +108,9 @@ def pass_api_client(function):
                 context.exit(-1)
             api_key = config["api_key"]
 
-        api_client = GreyNoise(api_key=api_key, timeout=config["timeout"])
+        api_client = GreyNoise(
+            api_key=api_key, timeout=config["timeout"], integration_name="cli"
+        )
         return function(api_client, *args, **kwargs)
 
     return wrapper
