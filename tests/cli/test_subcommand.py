@@ -25,6 +25,7 @@ def api_client():
     with load_config_patcher as load_config:
         load_config.return_value = {
             "api_key": "<api_key>",
+            "api_server": "<api_server>",
             "timeout": DEFAULT_CONFIG["timeout"],
         }
         with api_client_cls_patcher as api_client_cls:
@@ -914,7 +915,11 @@ class TestSetup(object):
         """Save API key to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
-        expected_config = {"api_key": api_key, "timeout": DEFAULT_CONFIG["timeout"]}
+        expected_config = {
+            "api_key": api_key,
+            "api_server": DEFAULT_CONFIG["api_server"],
+            "timeout": DEFAULT_CONFIG["timeout"],
+        }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
         with patch("greynoise.cli.subcommand.save_config") as save_config:
@@ -924,18 +929,32 @@ class TestSetup(object):
         save_config.assert_called_with(expected_config)
 
     @pytest.mark.parametrize("key_option", ["-k", "--api-key"])
+    @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
-    def test_save_api_key_and_timeout(self, key_option, timeout_option):
+    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
+        api_server = "<api_server>"
         timeout = 123456
-        expected_config = {"api_key": api_key, "timeout": timeout}
+        expected_config = {
+            "api_key": api_key,
+            "api_server": api_server,
+            "timeout": timeout,
+        }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
         with patch("greynoise.cli.subcommand.save_config") as save_config:
             result = runner.invoke(
-                subcommand.setup, [key_option, api_key, timeout_option, timeout]
+                subcommand.setup,
+                [
+                    key_option,
+                    api_key,
+                    server_option,
+                    api_server,
+                    timeout_option,
+                    timeout,
+                ],
             )
         assert result.exit_code == 0
         assert result.output == expected_output
