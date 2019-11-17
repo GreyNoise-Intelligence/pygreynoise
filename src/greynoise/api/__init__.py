@@ -31,7 +31,6 @@ class GreyNoise(object):
     """
 
     NAME = "GreyNoise"
-    BASE_URL = "https://enterprise.api.greynoise.io"
     API_VERSION = "v2"
     EP_GNQL = "experimental/gnql"
     EP_GNQL_STATS = "experimental/gnql/stats"
@@ -77,14 +76,20 @@ class GreyNoise(object):
         )
     )
 
-    def __init__(self, api_key=None, timeout=None, use_cache=True):
-        if api_key is None or timeout is None:
+    def __init__(self, api_key=None, api_server=None, timeout=None, use_cache=True):
+        if any(
+            configuration_value is None
+            for configuration_value in (api_key, timeout, api_server)
+        ):
             config = load_config()
             if api_key is None:
                 api_key = config["api_key"]
+            if api_server is None:
+                api_server = config["api_server"]
             if timeout is None:
                 timeout = config["timeout"]
         self.api_key = api_key
+        self.api_server = api_server
         self.timeout = timeout
         self.use_cache = use_cache
         self.session = requests.Session()
@@ -111,7 +116,7 @@ class GreyNoise(object):
             "User-Agent": "GreyNoise/{}".format(__version__),
             "key": self.api_key,
         }
-        url = "/".join([self.BASE_URL, self.API_VERSION, endpoint])
+        url = "/".join([self.api_server, self.API_VERSION, endpoint])
         LOGGER.debug(
             "Sending API request...", url=url, method=method, params=params, json=json
         )

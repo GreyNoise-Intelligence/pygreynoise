@@ -183,13 +183,21 @@ def quick(
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
-def setup(api_key, timeout):
+@click.option("-s", "--api-server", help="API server")
+def setup(api_key, timeout, api_server):
     """Configure API key."""
     config = {"api_key": api_key}
+
     if timeout is None:
         config["timeout"] = DEFAULT_CONFIG["timeout"]
     else:
         config["timeout"] = timeout
+
+    if api_server is None:
+        config["api_server"] = DEFAULT_CONFIG["api_server"]
+    else:
+        config["api_server"] = api_server
+
     save_config(config)
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
