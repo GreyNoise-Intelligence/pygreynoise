@@ -130,7 +130,12 @@ class GreyNoise(object):
         }
         url = "/".join([self.api_server, self.API_VERSION, endpoint])
         LOGGER.debug(
-            "Sending API request...", url=url, method=method, params=params, json=json
+            "Sending API request...",
+            url=url,
+            method=method,
+            headers=headers,
+            params=params,
+            json=json,
         )
         request_method = getattr(self.session, method)
         response = request_method(
