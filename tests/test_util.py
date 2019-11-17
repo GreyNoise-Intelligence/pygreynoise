@@ -19,13 +19,21 @@ class TestLoadConfig(object):
         os.path.isfile.return_value = False
 
         config = load_config()
-        assert config == {"api_key": "", "timeout": 60}
+        assert config == {
+            "api_key": "",
+            "api_server": "https://enterprise.api.greynoise.io",
+            "timeout": 60,
+        }
 
     @patch("greynoise.util.open")
     @patch("greynoise.util.os")
     def test_values_from_configuration_file(self, os, open):
         """Values retrieved from configuration file."""
-        expected = {"api_key": "<api_key>", "timeout": 123456}
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server",
+            "timeout": 123456,
+        }
 
         os.environ = {}
         os.path.isfile.return_value = True
@@ -33,9 +41,10 @@ class TestLoadConfig(object):
             """\
             [greynoise]
             api_key = {}
+            api_server = {}
             timeout = {}
             """.format(
-                expected["api_key"], expected["timeout"]
+                expected["api_key"], expected["api_server"], expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -48,7 +57,11 @@ class TestLoadConfig(object):
     @patch("greynoise.util.os")
     def test_api_key_from_environment_variable(self, os, open):
         """API key value retrieved from environment variable."""
-        expected = {"api_key": "<api_key>", "timeout": 123456}
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
 
         os.environ = {"GREYNOISE_API_KEY": expected["api_key"]}
         os.path.isfile.return_value = True
@@ -56,9 +69,38 @@ class TestLoadConfig(object):
             """\
             [greynoise]
             api_key = unexpected
+            api_server = {}
             timeout = {}
             """.format(
-                expected["timeout"]
+                expected["api_server"], expected["timeout"],
+            )
+        )
+        open().__enter__.return_value = StringIO(file_content)
+
+        config = load_config()
+        assert config == expected
+        open().__enter__.assert_called()
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    def test_api_server_from_environment_variable(self, os, open):
+        """API server value retrieved from environment variable."""
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
+
+        os.environ = {"GREYNOISE_API_SERVER": expected["api_server"]}
+        os.path.isfile.return_value = True
+        file_content = textwrap.dedent(
+            """\
+            [greynoise]
+            api_key = {}
+            api_server = unexpected
+            timeout = {}
+            """.format(
+                expected["api_key"], expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -71,7 +113,11 @@ class TestLoadConfig(object):
     @patch("greynoise.util.os")
     def test_timeout_from_environment_variable(self, os, open):
         """Timeout value retrieved from environment variable."""
-        expected = {"api_key": "<api_key>", "timeout": 123456}
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
 
         os.environ = {"GREYNOISE_TIMEOUT": str(expected["timeout"])}
         os.path.isfile.return_value = True
@@ -79,9 +125,10 @@ class TestLoadConfig(object):
             """\
             [greynoise]
             api_key = {}
+            api_server = {}
             timeout = unexpected
             """.format(
-                expected["api_key"]
+                expected["api_key"], expected["api_server"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -94,7 +141,11 @@ class TestLoadConfig(object):
     @patch("greynoise.util.os")
     def test_timeout_from_environment_variable_with_invalid_value(self, os, open):
         """Invalid timeout value in environment variable is ignored."""
-        expected = {"api_key": "<api_key>", "timeout": 123456}
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
 
         os.environ = {"GREYNOISE_TIMEOUT": "invalid"}
         os.path.isfile.return_value = True
@@ -102,9 +153,10 @@ class TestLoadConfig(object):
             """\
             [greynoise]
             api_key = {}
+            api_server = {}
             timeout = {}
             """.format(
-                expected["api_key"], expected["timeout"]
+                expected["api_key"], expected["api_server"], expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -119,7 +171,11 @@ class TestSaveConfig(object):
 
     def test_save_config_dir_created(self):
         """Configuration directory created if missing."""
-        config = {"api_key": "<api_key>", "timeout": 123456}
+        config = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
 
         with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
             os.path.isdir.return_value = False
@@ -131,15 +187,20 @@ class TestSaveConfig(object):
 
     def test_save_config_file_written(self):
         """Configuration written to a file."""
-        config = {"api_key": "<api_key>", "timeout": 123456}
+        config = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+        }
         expected = textwrap.dedent(
             """\
             [greynoise]
             api_key = {}
+            api_server = {}
             timeout = {}
 
             """.format(
-                config["api_key"], config["timeout"]
+                config["api_key"], config["api_server"], config["timeout"],
             )
         )
 

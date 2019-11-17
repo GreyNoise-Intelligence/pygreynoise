@@ -11,11 +11,13 @@ Version `dev`_
   * add ``filter`` method.
   * add ``analyze`` method.
   * add ``scroll`` and ``size`` parameters to ``query`` method.
+  * add ``api_server`` parameter to ``__init__`` method.
 
 * CLI:
   * add ``interesting`` subcommand.
   * add ``filter`` subcommand.
   * add ``analyze`` subcommand.
+  * add ``api_server`` option to setup subcommand.
 
 * Both API client and CLI:
   * use structlog logging library.

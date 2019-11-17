@@ -11,7 +11,11 @@ from six.moves.configparser import ConfigParser
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = structlog.get_logger()
 
-DEFAULT_CONFIG = {"api_key": "", "timeout": 60}
+DEFAULT_CONFIG = {
+    "api_key": "",
+    "api_server": "https://enterprise.api.greynoise.io",
+    "timeout": 60,
+}
 
 
 def configure_logging():
@@ -65,6 +69,16 @@ def load_config():
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_key", api_key)
 
+    if "GREYNOISE_API_SERVER" in os.environ:
+        api_server = os.environ["GREYNOISE_API_SERVER"]
+        LOGGER.debug(
+            "API server found in environment variable: %s",
+            api_server,
+            api_server=api_server,
+        )
+        # Environment variable takes precedence over configuration file content
+        config_parser.set("greynoise", "api_server", api_server)
+
     if "GREYNOISE_TIMEOUT" in os.environ:
         timeout = os.environ["GREYNOISE_TIMEOUT"]
         try:
@@ -85,6 +99,7 @@ def load_config():
 
     return {
         "api_key": config_parser.get("greynoise", "api_key"),
+        "api_server": config_parser.get("greynoise", "api_server"),
         "timeout": config_parser.getint("greynoise", "timeout"),
     }
 
@@ -99,6 +114,7 @@ def save_config(config):
     config_parser = ConfigParser()
     config_parser.add_section("greynoise")
     config_parser.set("greynoise", "api_key", config["api_key"])
+    config_parser.set("greynoise", "api_server", config["api_server"])
     config_parser.set("greynoise", "timeout", str(config["timeout"]))
 
     config_dir = os.path.dirname(CONFIG_FILE)
