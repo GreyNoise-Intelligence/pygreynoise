@@ -3,7 +3,7 @@ Changelog
 =========
 
 Version `0.4.0`_
-===============
+================
 **Date**: November 18, 2019
 
 * API client:
