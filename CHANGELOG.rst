@@ -2,9 +2,9 @@
 Changelog
 =========
 
-Version `dev`_
+Version `0.4.0`_
 ===============
-**Date**: unreleased
+**Date**: November 18, 2019
 
 * API client:
   * add ``interesting`` method.
@@ -71,4 +71,4 @@ Version `0.2.0`_
 .. _`0.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.0...v0.2.1
 .. _`0.2.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.1...v0.2.2
 .. _`0.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.2...v0.3.0
-.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...HEAD
+.. _`0.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...0.4.0
