@@ -11,7 +11,7 @@ Version `dev`_
   * add ``filter`` method.
   * add ``analyze`` method.
   * add ``scroll`` and ``size`` parameters to ``query`` method.
-  * add ``api_server`` parameter to ``__init__`` method.
+  * add ``api_server`` and ``integration_name`` parameters to ``__init__`` method.
 
 * CLI:
   * add ``interesting`` subcommand.

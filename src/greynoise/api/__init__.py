@@ -76,7 +76,14 @@ class GreyNoise(object):
         )
     )
 
-    def __init__(self, api_key=None, api_server=None, timeout=None, use_cache=True):
+    def __init__(
+        self,
+        api_key=None,
+        api_server=None,
+        timeout=None,
+        use_cache=True,
+        integration_name=None,
+    ):
         if any(
             configuration_value is None
             for configuration_value in (api_key, timeout, api_server)
@@ -92,6 +99,7 @@ class GreyNoise(object):
         self.api_server = api_server
         self.timeout = timeout
         self.use_cache = use_cache
+        self.integration_name = integration_name
         self.session = requests.Session()
 
     def _request(self, endpoint, params=None, json=None, method="get"):
@@ -112,13 +120,22 @@ class GreyNoise(object):
         """
         if params is None:
             params = {}
+
+        user_agent_parts = ["GreyNoise/{}".format(__version__)]
+        if self.integration_name:
+            user_agent_parts.append("({})".format(self.integration_name))
         headers = {
-            "User-Agent": "GreyNoise/{}".format(__version__),
+            "User-Agent": " ".join(user_agent_parts),
             "key": self.api_key,
         }
         url = "/".join([self.api_server, self.API_VERSION, endpoint])
         LOGGER.debug(
-            "Sending API request...", url=url, method=method, params=params, json=json
+            "Sending API request...",
+            url=url,
+            method=method,
+            headers=headers,
+            params=params,
+            json=json,
         )
         request_method = getattr(self.session, method)
         response = request_method(

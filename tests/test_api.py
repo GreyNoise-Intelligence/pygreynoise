@@ -3,6 +3,7 @@
 import pytest
 from mock import Mock, call, patch
 
+from greynoise.__version__ import __version__
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
 
@@ -10,7 +11,7 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 @pytest.fixture
 def client():
     """API client fixture."""
-    client = GreyNoise(api_key="<api_key>")
+    client = GreyNoise(api_key="<api_key>", integration_name="test")
     client.IP_QUICK_CHECK_CACHE.clear()
     client.IP_CONTEXT_CACHE.clear()
     yield client
@@ -101,6 +102,28 @@ class TestRequest(object):
 
         response = client._request("endpoint")
         assert response == expected_response
+
+    def test_request_method_parameters(self, client):
+        """Request method is called with expected parameters."""
+        expected_response = {"expected": "response"}
+        client.session = Mock()
+        response = client.session.get()
+        response.status_code = 200
+        response.headers.get.return_value = "application/json"
+        response.json.return_value = expected_response
+
+        response = client._request("endpoint")
+        assert response == expected_response
+        client.session.get.assert_called_with(
+            "{}/{}/{}".format(client.api_server, client.API_VERSION, "endpoint"),
+            headers={
+                "User-Agent": "GreyNoise/{} (test)".format(__version__),
+                "key": "<api_key>",
+            },
+            timeout=client.timeout,
+            params={},
+            json=None,
+        )
 
 
 class TestNotImplemented(object):
