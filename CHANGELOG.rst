@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version `0.4.1`_
+================
+**Date**: Jan 3, 2020
+
+* API client:
+  * add ``spoofable`` field.
+
 Version `0.4.0`_
 ================
 **Date**: November 18, 2019
@@ -72,3 +79,4 @@ Version `0.2.0`_
 .. _`0.2.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.1...v0.2.2
 .. _`0.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.2...v0.3.0
 .. _`0.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...0.4.0
+.. _`0.4.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.0...0.4.1
