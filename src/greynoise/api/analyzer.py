@@ -24,6 +24,7 @@ class Analyzer(object):
         "operating_systems": "operating_system",
         "organizations": "organization",
         "tags": "tag",
+        "spoofable": "spoofable",
     }
 
     def __init__(self, api):
