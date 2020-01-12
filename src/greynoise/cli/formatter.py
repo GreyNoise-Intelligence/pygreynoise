@@ -53,7 +53,17 @@ def colored_output(function):
 
 def json_formatter(result, _verbose):
     """Format result as json."""
-    return json.dumps(result, indent=4, sort_keys=True)
+
+    # TODO: Need to include `seen:False` as well
+
+    all_results = []
+
+    for r in result:
+        if r.get("data") is not None and len(r.get("data")) > 0:
+            x = x + r["data"]
+
+    parsed = [json.dumps(record) for record in all_results]
+    return "\n".join(parsed)
 
 
 def xml_formatter(result, _verbose):
