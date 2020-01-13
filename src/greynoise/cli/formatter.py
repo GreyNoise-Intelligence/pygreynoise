@@ -60,7 +60,7 @@ def json_formatter(result, _verbose):
 
     for r in result:
         if r.get("data") is not None and len(r.get("data")) > 0:
-            x = x + r["data"]
+            all_results = all_results + r["data"]
 
     parsed = [json.dumps(record) for record in all_results]
     return "\n".join(parsed)
