@@ -9,5 +9,5 @@ click-repl==0.1.6
 dicttoxml==1.7.4
 jinja2==2.10.3
 requests==2.22.0
-six==1.13.0
+six==1.14.0
 structlog==19.2.0
