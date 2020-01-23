@@ -13,7 +13,7 @@ LOGGER = structlog.get_logger()
 
 DEFAULT_CONFIG = {
     "api_key": "",
-    "api_server": "https://enterprise.api.greynoise.io",
+    "api_server": "https://api.greynoise.io",
     "timeout": 60,
 }
 
