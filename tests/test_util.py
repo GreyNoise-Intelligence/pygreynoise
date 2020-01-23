@@ -21,7 +21,7 @@ class TestLoadConfig(object):
         config = load_config()
         assert config == {
             "api_key": "",
-            "api_server": "https://enterprise.api.greynoise.io",
+            "api_server": "https://api.greynoise.io",
             "timeout": 60,
         }
 
