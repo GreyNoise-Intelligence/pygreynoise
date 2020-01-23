@@ -100,10 +100,11 @@ class TestJSONFormatter(object):
 
     def test_json_format(self):
         """Format to json."""
-        assert json_formatter({"ip": "1.1.1.1"}, _verbose=False) == textwrap.dedent(
+        assert json_formatter({"a": "result"}, _verbose=False) == textwrap.dedent(
             """\
-            {"ip": "1.1.1.1"}
-            """
+            {
+                "a": "result"
+            }"""
         )
 
 
