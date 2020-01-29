@@ -2,5 +2,5 @@
 -r test.txt
 advbumpversion==1.2.0
 ipython==7.11.1;python_version>='3'
-pre-commit==1.21.0
+pre-commit==2.0.0
 tox==3.14.3
