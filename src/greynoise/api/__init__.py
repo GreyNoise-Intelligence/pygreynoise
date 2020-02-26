@@ -328,7 +328,7 @@ class GreyNoise(object):
     def stats(self, query, count=None):
         """Run GNQL stats query."""
         LOGGER.debug("Running GNQL stats query: %s...", query, query=query)
-        params={"query": query}
+        params = {"query": query}
         if count is not None:
             params["count"] = count
         response = self._request(self.EP_GNQL_STATS, params=params)
