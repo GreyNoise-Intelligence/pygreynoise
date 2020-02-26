@@ -5,8 +5,6 @@ Decorators used to add common functionality to subcommands.
 """
 import functools
 
-from requests.exceptions import RequestException
-
 import click
 import structlog
 from greynoise.api import GreyNoise
@@ -14,6 +12,7 @@ from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
 from greynoise.util import load_config
+from requests.exceptions import RequestException
 
 LOGGER = structlog.get_logger()
 

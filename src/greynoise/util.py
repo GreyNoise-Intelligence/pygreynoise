@@ -5,9 +5,8 @@ import os
 import re
 import sys
 
-from six.moves.configparser import ConfigParser
-
 import structlog
+from six.moves.configparser import ConfigParser
 
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = structlog.get_logger()

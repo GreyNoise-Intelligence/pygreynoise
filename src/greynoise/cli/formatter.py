@@ -7,12 +7,12 @@ import functools
 import json
 from xml.dom.minidom import parseString
 
-import colorama
-
 import ansimarkup
 import click
-from dicttoxml import dicttoxml
+import colorama
 from jinja2 import Environment, PackageLoader, select_autoescape
+
+from dicttoxml import dicttoxml
 
 JINJA2_ENV = Environment(
     loader=PackageLoader("greynoise.cli"),
