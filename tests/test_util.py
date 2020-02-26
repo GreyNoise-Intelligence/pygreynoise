@@ -2,11 +2,11 @@
 
 import textwrap
 
-import pytest
-from mock import patch
 from six import StringIO
 
+import pytest
 from greynoise.util import CONFIG_FILE, load_config, save_config, validate_ip
+from mock import patch
 
 
 class TestLoadConfig(object):

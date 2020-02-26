@@ -5,10 +5,10 @@ Decorators used to add common functionality to subcommands.
 """
 import functools
 
-import click
-import structlog
 from requests.exceptions import RequestException
 
+import click
+import structlog
 from greynoise.api import GreyNoise
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter

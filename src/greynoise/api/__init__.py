@@ -3,11 +3,11 @@
 import re
 from collections import OrderedDict
 
+import requests
+
 import cachetools
 import more_itertools
-import requests
 import structlog
-
 from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter

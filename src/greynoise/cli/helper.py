@@ -3,7 +3,6 @@
 import sys
 
 import click
-
 from greynoise.util import validate_ip
 
 

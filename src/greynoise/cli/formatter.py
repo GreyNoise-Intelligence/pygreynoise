@@ -7,9 +7,10 @@ import functools
 import json
 from xml.dom.minidom import parseString
 
+import colorama
+
 import ansimarkup
 import click
-import colorama
 from dicttoxml import dicttoxml
 from jinja2 import Environment, PackageLoader, select_autoescape
 

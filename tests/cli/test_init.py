@@ -2,9 +2,8 @@
 
 import pytest
 from click.testing import CliRunner
-from mock import Mock, patch
-
 from greynoise.cli import main
+from mock import Mock, patch
 
 
 class TestMain(object):

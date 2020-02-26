@@ -4,7 +4,6 @@
 import textwrap
 
 import pytest
-
 from greynoise.cli.formatter import (
     ANSI_MARKUP,
     gnql_query_formatter,
