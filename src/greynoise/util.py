@@ -2,9 +2,8 @@
 
 import logging
 import os
-import socket
 import sys
-
+import re
 import structlog
 from six.moves.configparser import ConfigParser
 
@@ -135,9 +134,8 @@ def validate_ip(ip_address, strict=True):
     :raises ValueError: When validation fails and strict is set to True.
 
     """
-    import re
 
-    valid_ip_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    valid_ip_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"  # noqa
     if re.match(valid_ip_regex, ip_address):
         return True
     else:
