@@ -135,10 +135,12 @@ def validate_ip(ip_address, strict=True):
     :raises ValueError: When validation fails and strict is set to True.
 
     """
-    try:
-        socket.inet_aton(ip_address)
+    import re
+
+    valid_ip_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    if re.match(valid_ip_regex, ip_address):
         return True
-    except socket.error:
+    else:
         error_message = "Invalid IP address: {!r}".format(ip_address)
         LOGGER.warning(error_message, ip_address=ip_address)
         if strict:
