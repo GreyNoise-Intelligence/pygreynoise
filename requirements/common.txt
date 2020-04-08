@@ -3,7 +3,7 @@
 -r common-py3.txt
 Click==7.0
 ansimarkup==1.4.0
-cachetools==3.1.1
+cachetools==4.1.0
 click-default-group==1.2.2
 click-repl==0.1.6
 dicttoxml==1.7.4
