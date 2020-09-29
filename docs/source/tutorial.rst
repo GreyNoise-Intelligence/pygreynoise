@@ -511,7 +511,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-   $ greynoise query 'classification:malicious tags:"Bluekeep Exploit"'
+   $ greynoise query "classification:malicious tags:Bluekeep Exploit"
    ╔═══════════════════════════╗
    ║       Query 1 of 1        ║
    ╚═══════════════════════════╝
