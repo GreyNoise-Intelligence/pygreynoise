@@ -29,6 +29,12 @@ This is an abstract python library built on top of the `GreyNoise`_ service. It 
 
 .. _GreyNoise: https://greynoise.io/
 
+Documentation
+=============
+Documentation is available here: `Documentation`_
+
+.. _Documentation: https://developer.greynoise.io/docs/libraries-sample-code
+
 Quick Start
 ===========
 **Install the library**:
