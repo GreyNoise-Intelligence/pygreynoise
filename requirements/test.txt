@@ -3,7 +3,7 @@
 -r test-py2.txt
 -r test-py3.txt
 flake8==3.7.9
-isort==4.3.21
+isort==5.6.2
 mock==3.0.5
 pytest-cov==2.8.1
 yamllint==1.20.0
