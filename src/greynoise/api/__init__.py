@@ -37,6 +37,7 @@ class GreyNoise(object):
     EP_INTERESTING = "interesting/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
+    EP_META_METADATA = "meta/metadata"
     EP_NOT_IMPLEMENTED = "request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -332,4 +333,10 @@ class GreyNoise(object):
         if count is not None:
             params["count"] = count
         response = self._request(self.EP_GNQL_STATS, params=params)
+        return response
+
+    def metadata(self):
+        """Get metadata."""
+        LOGGER.debug("Getting metadata...")
+        response = self._request(self.EP_META_METADATA)
         return response
