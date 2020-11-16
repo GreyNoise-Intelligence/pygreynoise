@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version `0.4.2`_
+================
+**Date**: Nov 16, 2020
+
+* API client:
+  * add ``metadata`` method.
+
+
 Version `0.4.1`_
 ================
 **Date**: Jan 3, 2020

@@ -303,7 +303,10 @@ class TestFilter(object):
                 "0.0.0.0\n255.255.255.255\nnot an ip address",
                 "<noise>0.0.0.0</noise>\n",
             ),
-            ("0.0.0.0 255.255.255.255\nnot an ip address", "",),
+            (
+                "0.0.0.0 255.255.255.255\nnot an ip address",
+                "",
+            ),
         ],
     )
     def test_select_noise(self, client, text, expected_output):
@@ -640,4 +643,17 @@ class TestStats(object):
         client._request.assert_called_with(
             "experimental/gnql/stats", params={"query": query}
         )
+        assert response == expected_response
+
+
+class TestMeta(object):
+    """GreyNoise client run GNQL stats query test cases."""
+
+    def test_metadata(self, client):
+        """Run GNQL stats query."""
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.metadata()
+        client._request.assert_called_with("meta/metadata")
         assert response == expected_response
