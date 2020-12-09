@@ -5,12 +5,11 @@ from __future__ import print_function
 
 import functools
 import json
-from xml.dom.minidom import parseString
 
 import ansimarkup
 import click
 import colorama
-from dicttoxml import dicttoxml
+from dict2xml import dict2xml
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 JINJA2_ENV = Environment(
@@ -58,7 +57,10 @@ def json_formatter(result, _verbose):
 
 def xml_formatter(result, _verbose):
     """Format result as xml."""
-    return parseString(dicttoxml(result)).toprettyxml()
+    xml_formatted = dict2xml({"item": result}, wrap='root', indent="   ")
+    # dict2xml does not add header, so add header manually
+    xml_header = '<?xml version="1.0"?>'
+    return "{}\n{}".format(xml_header, xml_formatted)
 
 
 def get_location(metadata):
