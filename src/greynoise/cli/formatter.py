@@ -57,9 +57,14 @@ def json_formatter(result, _verbose):
 
 def xml_formatter(result, _verbose):
     """Format result as xml."""
-    xml_formatted = dict2xml({"item": result}, wrap='root', indent="   ")
+    xml_formatted = ""
+    if type(result) is list:
+        xml_formatted = dict2xml({"item": result}, wrap="root", indent="\t")
+    else:
+        xml_formatted = dict2xml(result, wrap="root", indent="   ")
+
     # dict2xml does not add header, so add header manually
-    xml_header = '<?xml version="1.0"?>'
+    xml_header = '<?xml version="1.0" ?>'
     return "{}\n{}".format(xml_header, xml_formatted)
 
 

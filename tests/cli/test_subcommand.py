@@ -732,9 +732,9 @@ class TestQuick(object):
                     """\
                     <?xml version="1.0" ?>
                     <root>
-                    \t<item type="dict">
-                    \t\t<ip type="str">0.0.0.0</ip>
-                    \t\t<noise type="bool">True</noise>
+                    \t<item>
+                    \t\t<ip>0.0.0.0</ip>
+                    \t\t<noise>True</noise>
                     \t</item>
                     </root>"""
                 ),

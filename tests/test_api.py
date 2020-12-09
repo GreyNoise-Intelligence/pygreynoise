@@ -303,10 +303,7 @@ class TestFilter(object):
                 "0.0.0.0\n255.255.255.255\nnot an ip address",
                 "<noise>0.0.0.0</noise>\n",
             ),
-            (
-                "0.0.0.0 255.255.255.255\nnot an ip address",
-                "",
-            ),
+            ("0.0.0.0 255.255.255.255\nnot an ip address", "",),
         ],
     )
     def test_select_noise(self, client, text, expected_output):
