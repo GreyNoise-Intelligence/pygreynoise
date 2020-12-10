@@ -17,7 +17,7 @@ INSTALL_REQUIRES = [
     "cachetools",
     "click-default-group",
     "click-repl",
-    "dicttoxml",
+    "dict2xml",
     "jinja2",
     "more-itertools",
     "requests",

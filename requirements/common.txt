@@ -6,7 +6,7 @@ ansimarkup==1.4.0
 cachetools==3.1.1
 click-default-group==1.2.2
 click-repl==0.1.6
-dicttoxml==1.7.4
+dict2xml==1.6.1
 jinja2==2.11.1
 requests==2.22.0
 six==1.13.0

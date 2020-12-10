@@ -117,9 +117,8 @@ class TestXMLFormatter(object):
             """\
             <?xml version="1.0" ?>
             <root>
-            \t<a type="str">result</a>
-            </root>
-            """
+               <a>result</a>
+            </root>"""
         )
 
 
