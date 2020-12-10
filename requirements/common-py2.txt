@@ -2,3 +2,4 @@
 # packages in this file are not pinned to their latest version
 # because python2 is no longer supported
 more-itertools==5.0.0;python_version<'3'
+dict2xml==1.6.1;python_version<'3'

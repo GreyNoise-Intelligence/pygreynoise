@@ -8,7 +8,7 @@ Version `dev`_
 
 * API client:
   * add ``metadata`` method.
-
+  * replace `dicttoxml` with `dict2xml` for license-compatibility.
 
 Version `0.4.1`_
 ================
