@@ -1,2 +1,2 @@
-more-itertools==8.1.0;python_version>='3'
+more-itertools==8.6.0;python_version>='3'
 dict2xml==1.7.0;python_version>='3'
