@@ -3,3 +3,4 @@
 # because python2 is no longer supported
 more-itertools==5.0.0;python_version<'3'
 dict2xml==1.6.1;python_version<'3'
+cachetools==3.1.1;python_version<'3'

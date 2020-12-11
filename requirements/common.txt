@@ -3,7 +3,7 @@
 -r common-py3.txt
 Click==7.1.2
 ansimarkup==1.4.0
-cachetools==4.2.0
+
 click-default-group==1.2.2
 click-repl==0.1.6
 jinja2==2.11.2
