@@ -3,6 +3,5 @@
 -r test-py2.txt
 -r test-py3.txt
 flake8==3.8.4
-mock==4.0.3
 pytest-cov==2.10.1
 yamllint==1.25.0
