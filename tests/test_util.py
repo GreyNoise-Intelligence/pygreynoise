@@ -44,7 +44,9 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],
+                expected["api_key"],
+                expected["api_server"],
+                expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -72,7 +74,8 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             """.format(
-                expected["api_server"], expected["timeout"],
+                expected["api_server"],
+                expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -100,7 +103,8 @@ class TestLoadConfig(object):
             api_server = unexpected
             timeout = {}
             """.format(
-                expected["api_key"], expected["timeout"],
+                expected["api_key"],
+                expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -128,7 +132,8 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = unexpected
             """.format(
-                expected["api_key"], expected["api_server"],
+                expected["api_key"],
+                expected["api_server"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -156,7 +161,9 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],
+                expected["api_key"],
+                expected["api_server"],
+                expected["timeout"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -200,7 +207,9 @@ class TestSaveConfig(object):
             timeout = {}
 
             """.format(
-                config["api_key"], config["api_server"], config["timeout"],
+                config["api_key"],
+                config["api_server"],
+                config["timeout"],
             )
         )
 
