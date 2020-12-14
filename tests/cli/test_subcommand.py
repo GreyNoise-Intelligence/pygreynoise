@@ -401,13 +401,13 @@ class TestInteresting(object):
         assert "Usage: greynoise interesting" in result.output
         api_client.interesting.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
         expected = (
             "Error: at least one valid IP address must be passed either as an "
-            "argument (IP_ADDRESS) or through the -i/--input_file option."
+            "argument (IP_ADDRESS) or through the -i/--input_file option.\n"
         )
 
         result = runner.invoke(
@@ -416,7 +416,7 @@ class TestInteresting(object):
             parent=Context(main, info_name="greynoise"),
         )
         assert result.exit_code == -1
-        assert "Usage: greynoise interesting" in result.output
+        assert "Usage: greynoise interesting [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
@@ -424,10 +424,11 @@ class TestInteresting(object):
         """Interesting subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.interesting, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: interesting [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
@@ -552,10 +553,11 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: IP [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.ip.assert_not_called()
 
@@ -857,10 +859,11 @@ class TestQuick(object):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: quick [OPTIONS] [IP_ADDRESS}..." in result.output
         assert expected in result.output
         api_client.quick.assert_not_called()
 
@@ -963,10 +966,11 @@ class TestSetup(object):
     def test_missing_api_key(self):
         """Setup fails when api_key is not passed."""
         runner = CliRunner()
-        expected_error = 'Error: Missing option "-k" / "--api-key"'
+        expected_error = "Error: Missing option '-k' / '--api-key'"
 
         result = runner.invoke(subcommand.setup, [])
         assert result.exit_code == 2
+        assert "setup [OPTIONS]\nTry 'setup --help' for help." in result.output
         assert expected_error in result.output
 
 
