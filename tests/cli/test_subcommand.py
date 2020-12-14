@@ -557,7 +557,7 @@ class TestIP(object):
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
-        assert "Usage: IP [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert "Usage: ip [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.ip.assert_not_called()
 
@@ -863,7 +863,7 @@ class TestQuick(object):
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
-        assert "Usage: quick [OPTIONS] [IP_ADDRESS}..." in result.output
+        assert "Usage: quick [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.quick.assert_not_called()
 
