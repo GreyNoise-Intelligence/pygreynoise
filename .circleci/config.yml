@@ -128,7 +128,7 @@ jobs:
       - run:
           name: Setup environment variables
           command: |
-            echo "SONAR_SCANNER_VERSION=3.3.0.1492" >> $BASH_ENV
+            echo "SONAR_SCANNER_VERSION=4.5.0.2216" >> $BASH_ENV
             echo \
               'SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION' \
               >> $BASH_ENV
