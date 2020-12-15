@@ -27,6 +27,8 @@ class GreyNoise(object):
     :type api_key: str
     :param timeout: API requests timeout in seconds.
     :type timeout: int
+    :param proxy: Add URL for proxy to redirect lookups
+    :type proxy: str
 
     """
 
@@ -82,12 +84,13 @@ class GreyNoise(object):
         api_key=None,
         api_server=None,
         timeout=None,
+        proxy=None,
         use_cache=True,
         integration_name=None,
     ):
         if any(
             configuration_value is None
-            for configuration_value in (api_key, timeout, api_server)
+            for configuration_value in (api_key, timeout, api_server, proxy)
         ):
             config = load_config()
             if api_key is None:
@@ -96,9 +99,12 @@ class GreyNoise(object):
                 api_server = config["api_server"]
             if timeout is None:
                 timeout = config["timeout"]
+            if proxy is None:
+                proxy = config["proxy"]
         self.api_key = api_key
         self.api_server = api_server
         self.timeout = timeout
+        self.proxy = proxy
         self.use_cache = use_cache
         self.integration_name = integration_name
         self.session = requests.Session()
@@ -137,11 +143,23 @@ class GreyNoise(object):
             headers=headers,
             params=params,
             json=json,
+            proxy=self.proxy,
         )
         request_method = getattr(self.session, method)
-        response = request_method(
-            url, headers=headers, timeout=self.timeout, params=params, json=json
-        )
+        if self.proxy:
+            proxies = {protocol: self.proxy for protocol in ("http", "https")}
+            response = request_method(
+                url,
+                headers=headers,
+                timeout=self.timeout,
+                params=params,
+                json=json,
+                proxies=proxies,
+            )
+        else:
+            response = request_method(
+                url, headers=headers, timeout=self.timeout, params=params, json=json
+            )
         content_type = response.headers.get("Content-Type", "")
         if "application/json" in content_type:
             body = response.json()

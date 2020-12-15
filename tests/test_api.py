@@ -33,12 +33,14 @@ class TestInit(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": "<timeout>",
+            "proxy": "<proxy>",
         }
         with patch("greynoise.api.load_config") as load_config:
             client = GreyNoise(**config)
             assert client.api_key == config["api_key"]
             assert client.api_server == config["api_server"]
             assert client.timeout == config["timeout"]
+            assert client.proxy == config["proxy"]
             load_config.assert_not_called()
 
     def test_without_api_key(self):
@@ -47,6 +49,7 @@ class TestInit(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": "<timeout>",
+            "proxy": "<proxy>",
         }
         with patch("greynoise.api.load_config") as load_config:
             load_config.return_value = config
@@ -54,6 +57,7 @@ class TestInit(object):
             assert client.api_key == config["api_key"]
             assert client.api_server == config["api_server"]
             assert client.timeout == config["timeout"]
+            assert client.proxy == config["proxy"]
             load_config.assert_called()
 
 

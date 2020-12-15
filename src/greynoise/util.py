@@ -15,6 +15,7 @@ DEFAULT_CONFIG = {
     "api_key": "",
     "api_server": "https://api.greynoise.io",
     "timeout": 60,
+    "proxy": "",
 }
 
 
@@ -97,10 +98,21 @@ def load_config():
             # Environment variable takes precedence over configuration file content
             config_parser.set("greynoise", "timeout", timeout)
 
+    if "GREYNOISE_PROXY" in os.environ:
+        proxy = os.environ["GREYNOISE_PROXY"]
+        LOGGER.debug(
+            "Proxy found in environment variable: %s",
+            proxy,
+            proxy=proxy,
+        )
+        # Environment variable takes precedence over configuration file content
+        config_parser.set("greynoise", "proxy", proxy)
+
     return {
         "api_key": config_parser.get("greynoise", "api_key"),
         "api_server": config_parser.get("greynoise", "api_server"),
         "timeout": config_parser.getint("greynoise", "timeout"),
+        "proxy": config_parser.get("greynoise", "proxy"),
     }
 
 
@@ -116,6 +128,7 @@ def save_config(config):
     config_parser.set("greynoise", "api_key", config["api_key"])
     config_parser.set("greynoise", "api_server", config["api_server"])
     config_parser.set("greynoise", "timeout", str(config["timeout"]))
+    config_parser.set("greynoise", "proxy", config["proxy"])
 
     config_dir = os.path.dirname(CONFIG_FILE)
     if not os.path.isdir(config_dir):
