@@ -13,6 +13,7 @@ Version `dev`_
 * Both API client and CLI:
   * Update dependencies to the latest version
   * Add support for PROXY usage
+  * Update the IP validator to ensure better validation
 
 Version `0.4.1`_
 ================
