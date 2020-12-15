@@ -424,7 +424,7 @@ class TestInteresting(object):
         """Interesting subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.interesting, ["not-an-ip"])
         assert result.exit_code == 2
@@ -553,7 +553,7 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
@@ -859,7 +859,7 @@ class TestQuick(object):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
@@ -974,7 +974,7 @@ class TestSetup(object):
     def test_missing_api_key(self):
         """Setup fails when api_key is not passed."""
         runner = CliRunner()
-        expected_error = 'Error: Missing option "-k" / "--api-key"'
+        expected_error = "Error: Missing option '-k' / '--api-key'"
 
         result = runner.invoke(subcommand.setup, [])
         assert result.exit_code == 2
