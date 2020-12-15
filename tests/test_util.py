@@ -47,7 +47,10 @@ class TestLoadConfig(object):
             timeout = {}
             proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],expected["proxy"]
+                expected["api_key"],
+                expected["api_server"],
+                expected["timeout"],
+                expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -77,7 +80,9 @@ class TestLoadConfig(object):
             timeout = {}
             proxy = {}
             """.format(
-                expected["api_server"], expected["timeout"], expected["proxy"],
+                expected["api_server"],
+                expected["timeout"],
+                expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -107,7 +112,9 @@ class TestLoadConfig(object):
             timeout = {}
             proxy = {}
             """.format(
-                expected["api_key"], expected["timeout"], expected["proxy"],
+                expected["api_key"],
+                expected["timeout"],
+                expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -137,7 +144,9 @@ class TestLoadConfig(object):
             timeout = unexpected
             proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["proxy"],
+                expected["api_key"],
+                expected["api_server"],
+                expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -167,7 +176,10 @@ class TestLoadConfig(object):
             timeout = {}
             proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],expected["proxy"]
+                expected["api_key"],
+                expected["api_server"],
+                expected["timeout"],
+                expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -213,7 +225,10 @@ class TestSaveConfig(object):
             timeout = {}
             proxy = {}\n
             """.format(
-                config["api_key"], config["api_server"], config["timeout"], config["proxy"],
+                config["api_key"],
+                config["api_server"],
+                config["timeout"],
+                config["proxy"],
             )
         )
 
