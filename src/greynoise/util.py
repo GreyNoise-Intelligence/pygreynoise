@@ -15,7 +15,7 @@ DEFAULT_CONFIG = {
     "api_key": "",
     "api_server": "https://api.greynoise.io",
     "timeout": 60,
-    "proxy": ""
+    "proxy": "",
 }
 
 

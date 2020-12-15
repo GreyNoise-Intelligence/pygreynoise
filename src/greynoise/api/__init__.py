@@ -147,9 +147,14 @@ class GreyNoise(object):
         )
         request_method = getattr(self.session, method)
         if self.proxy:
-            proxies = {protocol: self.proxy for protocol in ('http', 'https')}
+            proxies = {protocol: self.proxy for protocol in ("http", "https")}
             response = request_method(
-                url, headers=headers, timeout=self.timeout, params=params, json=json, proxies=proxies
+                url,
+                headers=headers,
+                timeout=self.timeout,
+                params=params,
+                json=json,
+                proxies=proxies,
             )
         else:
             response = request_method(

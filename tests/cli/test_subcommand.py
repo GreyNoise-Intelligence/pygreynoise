@@ -424,7 +424,7 @@ class TestInteresting(object):
         """Interesting subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.interesting, ["not-an-ip"])
         assert result.exit_code == 2
@@ -530,7 +530,7 @@ class TestIP(object):
         assert "Usage: greynoise ip" in result.output
         api_client.ip.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
@@ -553,7 +553,7 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
@@ -859,7 +859,7 @@ class TestQuick(object):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
@@ -936,7 +936,9 @@ class TestSetup(object):
     @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
     @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
-    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option, proxy_option):
+    def test_save_api_key_and_timeout(
+        self, key_option, server_option, timeout_option, proxy_option
+    ):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
@@ -962,7 +964,7 @@ class TestSetup(object):
                     timeout_option,
                     timeout,
                     proxy_option,
-                    proxy
+                    proxy,
                 ],
             )
         assert result.exit_code == 0
@@ -972,7 +974,7 @@ class TestSetup(object):
     def test_missing_api_key(self):
         """Setup fails when api_key is not passed."""
         runner = CliRunner()
-        expected_error = "Error: Missing option '-k' / '--api-key'"
+        expected_error = 'Error: Missing option "-k" / "--api-key"'
 
         result = runner.invoke(subcommand.setup, [])
         assert result.exit_code == 2

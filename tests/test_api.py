@@ -33,7 +33,7 @@ class TestInit(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": "<timeout>",
-            "proxy": "<proxy>"
+            "proxy": "<proxy>",
         }
         with patch("greynoise.api.load_config") as load_config:
             client = GreyNoise(**config)
@@ -49,7 +49,7 @@ class TestInit(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": "<timeout>",
-            "proxy": "<proxy>"
+            "proxy": "<proxy>",
         }
         with patch("greynoise.api.load_config") as load_config:
             load_config.return_value = config
