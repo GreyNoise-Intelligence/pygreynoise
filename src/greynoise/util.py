@@ -99,7 +99,7 @@ def load_config():
             config_parser.set("greynoise", "timeout", timeout)
 
     if "GREYNOISE_PROXY" in os.environ:
-        api_server = os.environ["GREYNOISE_PROXY"]
+        proxy = os.environ["GREYNOISE_PROXY"]
         LOGGER.debug(
             "Proxy found in environment variable: %s",
             proxy,
