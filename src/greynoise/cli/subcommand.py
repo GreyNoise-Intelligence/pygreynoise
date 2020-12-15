@@ -183,7 +183,8 @@ def quick(
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 @click.option("-s", "--api-server", help="API server")
-def setup(api_key, timeout, api_server):
+@click.option("-p", "--proxy", help="Proxy URL")
+def setup(api_key, timeout, api_server, proxy):
     """Configure API key."""
     config = {"api_key": api_key}
 
@@ -196,6 +197,11 @@ def setup(api_key, timeout, api_server):
         config["api_server"] = DEFAULT_CONFIG["api_server"]
     else:
         config["api_server"] = api_server
+
+    if proxy is None:
+        config["proxy"] = DEFAULT_CONFIG["proxy"]
+    else:
+        config["proxy"] = proxy
 
     save_config(config)
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))

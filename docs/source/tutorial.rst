@@ -11,16 +11,17 @@ Create client object
 To interact with the API, a client object needs to be created::
 
    >>> from greynoise import GreyNoise
-   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>)
+   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>)
 
 where:
 
 - *api_key* is the key you have been given to use the API.
 - *timeout_in_seconds* is the timeout for each request sent to the API.
+- *proxy* is the url (ex `http://myproxy.corp.io:1234`) for requests to be routed through.
 
 .. note::
 
-   Both *api_key* and *timeout* are optional parameters and might not be required if a
+   All parameters are optional and might not be required if a
    configuration file has been created using the ``greynoise setup`` CLI command.
 
 
@@ -511,7 +512,7 @@ A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the G
 dataset. For example, to get context information related to activity has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
-   $ greynoise query 'classification:malicious tags:"Bluekeep Exploit"'
+   $ greynoise query "classification:malicious tags:Bluekeep Exploit"
    ╔═══════════════════════════╗
    ║       Query 1 of 1        ║
    ╚═══════════════════════════╝

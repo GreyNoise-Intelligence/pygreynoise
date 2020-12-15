@@ -29,6 +29,12 @@ This is an abstract python library built on top of the `GreyNoise`_ service. It 
 
 .. _GreyNoise: https://greynoise.io/
 
+Documentation
+=============
+Documentation is available here: `Documentation`_
+
+.. _Documentation: https://developer.greynoise.io/docs/libraries-sample-code
+
 Quick Start
 ===========
 **Install the library**:
@@ -38,6 +44,24 @@ Quick Start
 **Save your configuration**:
 
 ``greynoise setup --api-key <your-API-key>``
+
+Versioning
+==========
+This python package follows semantic versioning. According to this:
+
+* We will NEVER push a breaking change without a major version release.
+* We will only add new features and/or bug fixes with minor version releases.
+* We will only do bug fixes for patch version release.
+
+As such, we recommend you pin the dependency on this SDK to only allow minor version changes at most:
+
+```
+# allow patch version increments
+greynoise~=1.4.0
+
+# allow minor verison increments
+greynoise~=1.4
+```
 
 Usage
 =====

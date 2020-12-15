@@ -400,13 +400,13 @@ class TestInteresting(object):
         assert "Usage: greynoise interesting" in result.output
         api_client.interesting.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
         expected = (
             "Error: at least one valid IP address must be passed either as an "
-            "argument (IP_ADDRESS) or through the -i/--input_file option."
+            "argument (IP_ADDRESS) or through the -i/--input_file option.\n"
         )
 
         result = runner.invoke(
@@ -415,7 +415,7 @@ class TestInteresting(object):
             parent=Context(main, info_name="greynoise"),
         )
         assert result.exit_code == -1
-        assert "Usage: greynoise interesting" in result.output
+        assert "Usage: greynoise interesting [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
@@ -423,10 +423,11 @@ class TestInteresting(object):
         """Interesting subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.interesting, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: interesting [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
@@ -528,7 +529,7 @@ class TestIP(object):
         assert "Usage: greynoise ip" in result.output
         api_client.ip.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
@@ -551,10 +552,11 @@ class TestIP(object):
         """IP subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.ip, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: ip [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.ip.assert_not_called()
 
@@ -731,9 +733,9 @@ class TestQuick(object):
                     """\
                     <?xml version="1.0" ?>
                     <root>
-                    \t<item type="dict">
-                    \t\t<ip type="str">0.0.0.0</ip>
-                    \t\t<noise type="bool">True</noise>
+                    \t<item>
+                    \t\t<ip>0.0.0.0</ip>
+                    \t\t<noise>True</noise>
                     \t</item>
                     </root>"""
                 ),
@@ -856,10 +858,11 @@ class TestQuick(object):
         """Quick subcommand fails when ip_address is invalid."""
         runner = CliRunner()
 
-        expected = 'Error: Invalid value for "[IP_ADDRESS]...": not-an-ip\n'
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
 
         result = runner.invoke(subcommand.quick, ["not-an-ip"])
         assert result.exit_code == 2
+        assert "Usage: quick [OPTIONS] [IP_ADDRESS]..." in result.output
         assert expected in result.output
         api_client.quick.assert_not_called()
 
@@ -918,6 +921,7 @@ class TestSetup(object):
             "api_key": api_key,
             "api_server": DEFAULT_CONFIG["api_server"],
             "timeout": DEFAULT_CONFIG["timeout"],
+            "proxy": DEFAULT_CONFIG["proxy"],
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -930,16 +934,21 @@ class TestSetup(object):
     @pytest.mark.parametrize("key_option", ["-k", "--api-key"])
     @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
-    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option):
+    @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
+    def test_save_api_key_and_timeout(
+        self, key_option, server_option, timeout_option, proxy_option
+    ):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
         api_server = "<api_server>"
         timeout = 123456
+        proxy = "<proxy>"
         expected_config = {
             "api_key": api_key,
             "api_server": api_server,
             "timeout": timeout,
+            "proxy": proxy,
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -953,6 +962,8 @@ class TestSetup(object):
                     api_server,
                     timeout_option,
                     timeout,
+                    proxy_option,
+                    proxy,
                 ],
             )
         assert result.exit_code == 0
@@ -962,10 +973,11 @@ class TestSetup(object):
     def test_missing_api_key(self):
         """Setup fails when api_key is not passed."""
         runner = CliRunner()
-        expected_error = 'Error: Missing option "-k" / "--api-key"'
+        expected_error = "Error: Missing option '-k' / '--api-key'"
 
         result = runner.invoke(subcommand.setup, [])
         assert result.exit_code == 2
+        assert "setup [OPTIONS]\nTry 'setup --help' for help." in result.output
         assert expected_error in result.output
 
 

@@ -2,6 +2,18 @@
 Changelog
 =========
 
+Version `dev`_
+================
+**Date**: unreleased
+
+* API client:
+  * add ``metadata`` method.
+  * replace `dicttoxml` with `dict2xml` for license-compatibility.
+
+* Both API client and CLI:
+  * Update dependencies to the latest version
+  * Add support for PROXY usage
+
 Version `0.4.1`_
 ================
 **Date**: Jan 3, 2020
