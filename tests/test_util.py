@@ -23,6 +23,7 @@ class TestLoadConfig(object):
             "api_key": "",
             "api_server": "https://api.greynoise.io",
             "timeout": 60,
+            "proxy": "",
         }
 
     @patch("greynoise.util.open")
@@ -33,6 +34,7 @@ class TestLoadConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server",
             "timeout": 123456,
+            "proxy": "",
         }
 
         os.environ = {}
@@ -43,8 +45,9 @@ class TestLoadConfig(object):
             api_key = {}
             api_server = {}
             timeout = {}
+            proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],
+                expected["api_key"], expected["api_server"], expected["timeout"],expected["proxy"]
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -61,6 +64,7 @@ class TestLoadConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
 
         os.environ = {"GREYNOISE_API_KEY": expected["api_key"]}
@@ -71,8 +75,9 @@ class TestLoadConfig(object):
             api_key = unexpected
             api_server = {}
             timeout = {}
+            proxy = {}
             """.format(
-                expected["api_server"], expected["timeout"],
+                expected["api_server"], expected["timeout"], expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -89,6 +94,7 @@ class TestLoadConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
 
         os.environ = {"GREYNOISE_API_SERVER": expected["api_server"]}
@@ -99,8 +105,9 @@ class TestLoadConfig(object):
             api_key = {}
             api_server = unexpected
             timeout = {}
+            proxy = {}
             """.format(
-                expected["api_key"], expected["timeout"],
+                expected["api_key"], expected["timeout"], expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -117,6 +124,7 @@ class TestLoadConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": str(expected["timeout"])}
@@ -127,8 +135,9 @@ class TestLoadConfig(object):
             api_key = {}
             api_server = {}
             timeout = unexpected
+            proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"],
+                expected["api_key"], expected["api_server"], expected["proxy"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -145,6 +154,7 @@ class TestLoadConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": "invalid"}
@@ -155,8 +165,9 @@ class TestLoadConfig(object):
             api_key = {}
             api_server = {}
             timeout = {}
+            proxy = {}
             """.format(
-                expected["api_key"], expected["api_server"], expected["timeout"],
+                expected["api_key"], expected["api_server"], expected["timeout"],expected["proxy"]
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -175,6 +186,7 @@ class TestSaveConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
 
         with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
@@ -191,6 +203,7 @@ class TestSaveConfig(object):
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": 123456,
+            "proxy": "",
         }
         expected = textwrap.dedent(
             """\
@@ -198,9 +211,9 @@ class TestSaveConfig(object):
             api_key = {}
             api_server = {}
             timeout = {}
-
+            proxy = {}\n
             """.format(
-                config["api_key"], config["api_server"], config["timeout"],
+                config["api_key"], config["api_server"], config["timeout"], config["proxy"],
             )
         )
 
