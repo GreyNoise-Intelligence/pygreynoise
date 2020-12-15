@@ -922,6 +922,7 @@ class TestSetup(object):
             "api_key": api_key,
             "api_server": DEFAULT_CONFIG["api_server"],
             "timeout": DEFAULT_CONFIG["timeout"],
+            "proxy": DEFAULT_CONFIG["proxy"],
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -934,16 +935,19 @@ class TestSetup(object):
     @pytest.mark.parametrize("key_option", ["-k", "--api-key"])
     @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
-    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option):
+    @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
+    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option, proxy_option):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
         api_server = "<api_server>"
         timeout = 123456
+        proxy = "<proxy>"
         expected_config = {
             "api_key": api_key,
             "api_server": api_server,
             "timeout": timeout,
+            "proxy": proxy,
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -957,6 +961,8 @@ class TestSetup(object):
                     api_server,
                     timeout_option,
                     timeout,
+                    proxy_option,
+                    proxy
                 ],
             )
         assert result.exit_code == 0

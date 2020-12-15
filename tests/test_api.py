@@ -125,6 +125,10 @@ class TestRequest(object):
                 "key": "<api_key>",
             },
             timeout=client.timeout,
+            proxies={
+                'http': client.proxy,
+                'https': client.proxy
+            },
             params={},
             json=None,
         )
