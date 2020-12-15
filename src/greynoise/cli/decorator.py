@@ -7,12 +7,13 @@ import functools
 
 import click
 import structlog
+from requests.exceptions import RequestException
+
 from greynoise.api import GreyNoise
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
 from greynoise.util import load_config
-from requests.exceptions import RequestException
 
 LOGGER = structlog.get_logger()
 

@@ -9,7 +9,6 @@ import json
 import ansimarkup
 import click
 import colorama
-
 from dict2xml import dict2xml
 from jinja2 import Environment, PackageLoader, select_autoescape
 

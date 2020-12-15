@@ -1,6 +1,7 @@
 """Command line parameter types."""
 
 import click
+
 from greynoise.util import validate_ip
 
 

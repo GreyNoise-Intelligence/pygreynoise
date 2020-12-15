@@ -1,10 +1,11 @@
 """GreyNoise API client test cases."""
 
 import pytest
+from mock import Mock, call, patch
+
 from greynoise.__version__ import __version__
 from greynoise.api import GreyNoise
 from greynoise.exceptions import RateLimitError, RequestFailure
-from mock import Mock, call, patch
 
 
 @pytest.fixture

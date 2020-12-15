@@ -8,13 +8,14 @@ from collections import OrderedDict
 import pytest
 from click import Context
 from click.testing import CliRunner
+from mock import patch
+from requests.exceptions import RequestException
+from six import StringIO
+
 from greynoise.__version__ import __version__
 from greynoise.cli import main, subcommand
 from greynoise.exceptions import RequestFailure
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG
-from mock import patch
-from requests.exceptions import RequestException
-from six import StringIO
 
 
 @pytest.fixture
