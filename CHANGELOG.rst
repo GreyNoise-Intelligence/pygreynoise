@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version `**Date**: December 16, 2020`_
+Version `0.5.0`_
 ================
 **Date**: December 16, 2020
 
@@ -15,7 +15,7 @@ Version `**Date**: December 16, 2020`_
   * Add support for PROXY usage
   * Update the IP validator to ensure better validation
 
-Version `0.4.1...**Date**: December 16, 2020`_
+Version `0.4.1`_
 ================
 **Date**: Jan 3, 2020
 
