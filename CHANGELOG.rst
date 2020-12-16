@@ -117,4 +117,4 @@ Version `0.2.0`_
 .. _`0.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...0.4.0
 .. _`0.4.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.0...0.4.1
 .. _`0.5.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.1...0.5.0
-#.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...master
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...HEAD
