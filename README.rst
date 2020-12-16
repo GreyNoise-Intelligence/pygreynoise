@@ -56,6 +56,7 @@ This python package follows semantic versioning. According to this:
 As such, we recommend you pin the dependency on this SDK to only allow minor version changes at most:
 
 ::
+    
     # allow patch version increments
     greynoise~=1.4.0
     
