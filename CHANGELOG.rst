@@ -17,7 +17,7 @@ Version `0.5.0`_
 
 Version `0.4.1`_
 ================
-**Date**: Jan 3, 2020
+**Date**: January 3, 2020
 
 * API client:
   * add ``spoofable`` field.
