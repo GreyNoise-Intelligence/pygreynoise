@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version `0.5.0`_
+Version `**Date**: December 16, 2020`_
 ================
 **Date**: December 16, 2020
 
@@ -15,7 +15,7 @@ Version `0.5.0`_
   * Add support for PROXY usage
   * Update the IP validator to ensure better validation
 
-Version `0.4.1...0.5.0`_
+Version `0.4.1...**Date**: December 16, 2020`_
 ================
 **Date**: Jan 3, 2020
 
@@ -92,4 +92,4 @@ Version `0.2.0`_
 .. _`0.2.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.1...v0.2.2
 .. _`0.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.2.2...v0.3.0
 .. _`0.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...0.4.0
-.. _`0.4.1...0.5.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.0...0.4.1...0.5.0
+.. _`0.4.1...**Date**: December 16, 2020`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.0...0.4.1...**Date**: December 16, 2020
