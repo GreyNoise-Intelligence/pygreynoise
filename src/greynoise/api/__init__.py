@@ -40,6 +40,7 @@ class GreyNoise(object):
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
     EP_META_METADATA = "meta/metadata"
+    EP_META_PING = "meta/ping"
     EP_NOT_IMPLEMENTED = "request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -358,3 +359,12 @@ class GreyNoise(object):
         LOGGER.debug("Getting metadata...")
         response = self._request(self.EP_META_METADATA)
         return response
+
+    def test_connection(self):
+        """Test the API connection and API key."""
+        LOGGER.debug("Testing access to GreyNoise API and for valid API Key")
+        try:
+            self._request(self.EP_META_PING)
+            return "Success: Access and API Key Valid"
+        except Exception as e:
+            return e
