@@ -42,6 +42,20 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 {% endif -%}
 {% endmacro %}
 
+# Render tuples of element names and counts properly aligned
+# Width is based on the longest element in the list for each column
+# Also render follow same rules as "verbose_list" to render long lists
+{% macro column_verbose_list_bool(elements, field_name) %}
+{%- set max_elements = 20 %}
+{%- set elements_slice = elements[:max_elements if verbose < 1 else None] %}
+{%- set right_width = [6] | max %}
+{%- set left_width_verbose = [1] | max %}
+{%- set left_width = left_width_verbose if verbose > 1 else [left_width_verbose, max_width - 3 - right_width] | min %}
+{%- for element in elements_slice %}
+- <key>{{ "%-*s" | format(left_width, element[field_name]) }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
+{%- endfor %}
+{% endmacro %}
+
 # Render classification with proper color
 {% macro classification(value) %}
 {%- if value == "benign" -%}
