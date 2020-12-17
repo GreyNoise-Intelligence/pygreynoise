@@ -25,6 +25,13 @@
 
           <header>RAW DATA</header>
 ----------------------------
+{%- if ip_context.cve %}
+[CVE]
+{%- call(cve) macros.verbose_list(ip_context.cve) -%}
+- <key>CVE</key>: <value>{{ cve }}</value>
+{% endcall -%}
+{% endif %}
+
 {%- if ip_context.raw_data.scan %}
 [Scan]
 {%- call(scan) macros.verbose_list(ip_context.raw_data.scan) -%}
