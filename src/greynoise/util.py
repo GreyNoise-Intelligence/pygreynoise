@@ -149,8 +149,10 @@ def validate_ip(ip_address, strict=True):
 
     """
 
-    valid_ip_regex = (r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|"
-                      r"2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+    valid_ip_regex = (
+        r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|"
+        r"2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    )
     if re.match(valid_ip_regex, ip_address):
         return True
     else:

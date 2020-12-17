@@ -18,6 +18,7 @@ from greynoise.cli.formatter import (
 EXAMPLE_IP_CONTEXT = {
     "actor": "<actor>",
     "classification": "<classification>",
+    "cve": ["<cve#1>", "<cve#2>"],
     "first_seen": "<first_seen>",
     "ip": "<ip_address>",
     "last_seen": "<last_seen>",
@@ -29,8 +30,12 @@ EXAMPLE_IP_CONTEXT = {
         "country_code": "<country_code>",
         "organization": "<organization>",
         "os": "<os>",
+        "region": "<region>",
         "rdns": "<rdns>",
         "tor": False,
+        "spoofable": False,
+        "vpn": False,
+        "vpn_service": "<vpn_service>",
     },
     "raw_data": {
         "ja3": [
@@ -48,6 +53,7 @@ EXAMPLE_IP_CONTEXT = {
         },
     },
     "seen": True,
+    "spoofable": False,
     "tags": ["<tag#1>", "<tag#2>", "<tag#3>"],
 }
 
@@ -71,13 +77,19 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         <key>ASN</key>: <value><asn></value>
         <key>Category</key>: <value><category></value>
         <key>Location</key>: <value><city>, <country> (<country_code>)</value>
+        <key>Region</key>: <value><region></value>
         <key>Organization</key>: <value><organization></value>
         <key>OS</key>: <value><os></value>
         <key>rDNS</key>: <value><rdns></value>
+        <key>Spoofable</key>: <value>False</value>
         <key>Tor</key>: <value>False</value>
 
                   <header>RAW DATA</header>
         ----------------------------
+        [CVE]
+        - <key>CVE</key>: <value><cve#1></value>
+        - <key>CVE</key>: <value><cve#2></value>
+
         [Scan]
         - <key>Port/Proto</key>: <value>123456/TCP</value>
         - <key>Port/Proto</key>: <value>123456/UDP</value>
@@ -86,6 +98,11 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         - <value>/</value>
         - <value>/favicon.ico</value>
         - <value>/robots.txt</value>
+
+        [Useragents]
+        - <value><useragent#1></value>
+        - <value><useragent#2></value>
+        - <value><useragent#3></value>
 
         [JA3]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#1></value>
