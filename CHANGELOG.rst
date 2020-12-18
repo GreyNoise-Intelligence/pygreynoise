@@ -6,17 +6,9 @@ Version `dev`_
 ================
 **Date**: unreleased
 
-* API client:
-
-  * 1
-
-* CLI:
-
-  * 1
-
 * Both API client and CLI:
 
-  * 1
+  * Fix IP_Validation method bug which was preventing valid IPs from being submitted
 
 Version `0.5.0`_
 ================
