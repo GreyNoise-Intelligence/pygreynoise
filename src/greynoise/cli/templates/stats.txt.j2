@@ -34,6 +34,11 @@
 {{- macros.column_verbose_list(result.stats.organizations, "organization") }}
 {%- endif %}
 
+{%- if result.stats.spoofable %}
+<header>Spoofable</header>:
+{{- macros.column_verbose_list_bool(result.stats.spoofable, "spoofable") }}
+{%- endif %}
+
 {%- if result.stats.tags %}
 <header>Tags</header>:
 {{- macros.column_verbose_list(result.stats.tags, "tag") }}
