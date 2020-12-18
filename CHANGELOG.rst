@@ -6,6 +6,14 @@ Version `dev`_
 ================
 **Date**: unreleased
 
+* API client:
+
+  * Added ``test_connection`` method to allow for integrations to validate connection and API key
+
+* CLI:
+
+  * Added spoofable and CVE outputs where possible
+
 * Both API client and CLI:
 
   * Fix IP_Validation method bug which was preventing valid IPs from being submitted
