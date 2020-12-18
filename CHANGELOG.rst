@@ -2,15 +2,33 @@
 Changelog
 =========
 
+Version `dev`_
+================
+**Date**: unreleased
+
+* API client:
+
+  * 1
+
+* CLI:
+
+  * 1
+
+* Both API client and CLI:
+
+  * 1
+
 Version `0.5.0`_
 ================
 **Date**: December 16, 2020
 
 * API client:
+
   * add ``metadata`` method.
   * replace `dicttoxml` with `dict2xml` for license-compatibility.
 
 * Both API client and CLI:
+
   * Update dependencies to the latest version
   * Add support for PROXY usage
   * Update the IP validator to ensure better validation
@@ -20,6 +38,7 @@ Version `0.4.1`_
 **Date**: January 3, 2020
 
 * API client:
+
   * add ``spoofable`` field.
 
 Version `0.4.0`_
@@ -27,6 +46,7 @@ Version `0.4.0`_
 **Date**: November 18, 2019
 
 * API client:
+
   * add ``interesting`` method.
   * add ``filter`` method.
   * add ``analyze`` method.
@@ -34,6 +54,7 @@ Version `0.4.0`_
   * add ``api_server`` and ``integration_name`` parameters to ``__init__`` method.
 
 * CLI:
+
   * add ``interesting`` subcommand.
   * add ``filter`` subcommand.
   * add ``analyze`` subcommand.
@@ -62,7 +83,9 @@ Version `0.2.2`_
 ================
 **Date**: August 28, 2019
 
-* CLI: fix ``setup`` subcommand when configuration directory doesn't exist.
+* CLI:
+
+  * fix ``setup`` subcommand when configuration directory doesn't exist.
 
 
 Version `0.2.1`_
@@ -94,3 +117,4 @@ Version `0.2.0`_
 .. _`0.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.3.0...0.4.0
 .. _`0.4.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.0...0.4.1
 .. _`0.5.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.1...0.5.0
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...HEAD
