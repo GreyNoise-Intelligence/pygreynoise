@@ -89,6 +89,9 @@ jobs:
           name: Style check (isort)
           command: isort --check-only setup.py src/**/*.py tests/**/*.py docs/**/*.py
       - run:
+          name: Style check (rst)
+          command: rst-lint *.rst
+      - run:
           name: Static analysis (flake8)
           command: flake8 setup.py src tests docs
       - run:
