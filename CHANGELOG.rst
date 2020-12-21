@@ -8,6 +8,10 @@ Version `dev`_
 
 * API client:
 
+* Dependencies:
+
+  * Updated sphinx to 3.4.0
+
 Version `0.6.0`_
 ================
 **Date**: December 21, 2020
