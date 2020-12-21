@@ -6,7 +6,9 @@ Version `dev`_
 ================
 **Date**: unreleased
 
-* API client:
+* CLI:
+
+  * Updated json_formatter for query commands to return data only as New Line Delimited JSON
 
 * Dependencies:
 
