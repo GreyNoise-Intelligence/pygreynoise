@@ -52,7 +52,10 @@ def colored_output(function):
 
 def json_formatter(result, _verbose):
     """Format result as json."""
-    return json.dumps(result, indent=4, sort_keys=True)
+    if isinstance(result,list) and 'data' in result[0]:
+        return json.dumps(result[0]['data'], indent=4, sort_keys=True)
+    else:
+        return json.dumps(result, indent=4, sort_keys=True)
 
 
 def xml_formatter(result, _verbose):
