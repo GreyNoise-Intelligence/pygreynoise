@@ -8,6 +8,9 @@ Version `dev`_
 
 * API client:
 
+  * Updated logic in quick to better handle non-list format input ('ip_1,ip_2')instead of
+    ['ip_1','ip_2']
+
 * Dependencies:
 
   * Updated sphinx to 3.4.0
