@@ -287,9 +287,8 @@ class GreyNoise(object):
         :rtype: dict
 
         """
-        if isinstance(ip_addresses, str) and "," not in ip_addresses:
-            ip_addresses = [ip_addresses]
-        elif isinstance(ip_addresses, str) and "," in ip_addresses:
+
+        if isinstance(ip_addresses, str):
             ip_addresses = ip_addresses.split(",")
 
         LOGGER.debug("Getting noise status...", ip_addresses=ip_addresses)
