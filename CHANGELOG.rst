@@ -8,6 +8,8 @@ Version `dev`_
 
 * API client:
 
+  * Add "include_invalid" option to QUICK lookup to return invalid IPs as part of the JSON response
+
 * Dependencies:
 
   * Updated sphinx to 3.4.0
