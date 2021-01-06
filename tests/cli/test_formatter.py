@@ -358,8 +358,24 @@ class TestRIOTFormatter(object):
         "result, expected",
         (
             (
-                [{"ip": "0.0.0.0", "riot": True}],
-                ANSI_MARKUP.parse("<riot>0.0.0.0</riot> is in RIOT dataset."),
+                [
+                    {
+                        "ip": "0.0.0.0",
+                        "riot": True,
+                        "category": "<category>",
+                        "name": "<name>",
+                        "description": "<description>",
+                        "explanation": "<explanation>",
+                        "last_updated": "<last_updated>",
+                        "reference": "<reference>",
+                    }
+                ],
+                ANSI_MARKUP.parse(
+                    "<riot>0.0.0.0</riot> is in RIOT dataset. "
+                    "Name: <value><name></value> "
+                    "Category: <value><category></value> "
+                    "Last Updated: <value><last_updated></value>"
+                ),
             ),
             (
                 [{"ip": "0.0.0.0", "riot": False}],
