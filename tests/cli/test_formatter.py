@@ -12,8 +12,8 @@ from greynoise.cli.formatter import (
     ip_context_formatter,
     ip_quick_check_formatter,
     json_formatter,
-    xml_formatter,
     riot_formatter,
+    xml_formatter,
 )
 
 EXAMPLE_IP_CONTEXT = {
