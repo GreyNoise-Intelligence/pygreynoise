@@ -10,6 +10,8 @@ Version `dev`_
 
   * Updated json_formatter for query commands to return data only as New Line Delimited JSON
 
+  * Add "include_invalid" option to QUICK lookup to return invalid IPs as part of the JSON response
+
 * Dependencies:
 
   * Updated sphinx to 3.4.0
