@@ -292,8 +292,9 @@ class GreyNoise(object):
         :type include_invalid: bool
 
         """
+
         if isinstance(ip_addresses, str):
-            ip_addresses = [ip_addresses]
+            ip_addresses = ip_addresses.split(",")
 
         LOGGER.debug("Getting noise status...", ip_addresses=ip_addresses)
 
