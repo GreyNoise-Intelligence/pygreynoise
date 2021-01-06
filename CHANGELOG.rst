@@ -9,18 +9,14 @@ Version `dev`_
 * API client:
 
   * Add "include_invalid" option to QUICK lookup to return invalid IPs as part of the JSON response
-
   * Added support for new /riot endpoint
+  * Updated logic in quick to better handle non-list format input ('ip_1,ip_2')instead of
+    ['ip_1','ip_2']
 
 * CLI:
 
   * Added support for new riot command
   * Updated json_formatter for query commands to return data only as New Line Delimited JSON
-
-* API client:
-
-  * Updated logic in quick to better handle non-list format input ('ip_1,ip_2')instead of
-    ['ip_1','ip_2']
 
 * Dependencies:
 
