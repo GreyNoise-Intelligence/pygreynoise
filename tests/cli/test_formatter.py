@@ -12,6 +12,7 @@ from greynoise.cli.formatter import (
     ip_context_formatter,
     ip_quick_check_formatter,
     json_formatter,
+    riot_formatter,
     xml_formatter,
 )
 
@@ -348,3 +349,83 @@ class TestGNQLStatsFormatter(object):
     def test_format_gnql_stats(self, result, expected):
         """Format GNQL stats."""
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
+
+
+class TestRIOTFormatter(object):
+    """RIOT formatter tests."""
+
+    @pytest.mark.parametrize(
+        "result, expected",
+        (
+            (
+                [
+                    {
+                        "ip": "0.0.0.0",
+                        "riot": True,
+                        "category": "<category>",
+                        "name": "<name>",
+                        "description": "<description>",
+                        "explanation": "<explanation>",
+                        "last_updated": "<last_updated>",
+                        "reference": "<reference>",
+                    }
+                ],
+                ANSI_MARKUP.parse(
+                    "<riot>0.0.0.0</riot> is in RIOT dataset. "
+                    "Name: <value><name></value> "
+                    "Category: <value><category></value> "
+                    "Last Updated: <value><last_updated></value>"
+                ),
+            ),
+            (
+                [{"ip": "0.0.0.0", "riot": False}],
+                ANSI_MARKUP.parse(
+                    "<not-riot>0.0.0.0</not-riot>"
+                    " is <bold>NOT FOUND</bold> in RIOT dataset."
+                ),
+            ),
+        ),
+    )
+    def test_format_riot(self, result, expected):
+        """Format IP quick check."""
+        assert riot_formatter(result, verbose=False).strip("\n") == expected
+
+    @pytest.mark.parametrize(
+        "result, expected",
+        (
+            (
+                [
+                    {
+                        "ip": "0.0.0.0",
+                        "riot": True,
+                        "category": "<category>",
+                        "name": "<name>",
+                        "description": "<description>",
+                        "explanation": "<explanation>",
+                        "last_updated": "<last_updated>",
+                        "reference": "<reference>",
+                    }
+                ],
+                ANSI_MARKUP.parse(
+                    textwrap.dedent(
+                        u"""\
+                    <riot>0.0.0.0</riot> is in RIOT dataset.
+
+                              <header>OVERVIEW</header>
+                    ----------------------------
+                    <key>IP</key>: <value>0.0.0.0</value>
+                    <key>RIOT</key>: <value>True</value>
+                    <key>Category</key>: <value><category></value>
+                    <key>Name</key>: <value><name></value>
+                    <key>Description</key>: <value><description></value>
+                    <key>Explanation</key>: <value><explanation></value>
+                    <key>Last Updated</key>: <value><last_updated></value>
+                    <key>Reference</key>: <value><reference></value>"""
+                    )
+                ),
+            ),
+        ),
+    )
+    def test_format_riot_verbose(self, result, expected):
+        """Format IP quick check."""
+        assert riot_formatter(result, verbose=True).strip("\n") == expected
