@@ -25,6 +25,8 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "value": ansimarkup.parse("<green>"),
         "noise": ansimarkup.parse("<light-yellow>"),
         "not-noise": ansimarkup.parse("<dim>"),
+        "riot": ansimarkup.parse("<light-yellow>"),
+        "not-riot": ansimarkup.parse("<dim>"),
         "malicious": ansimarkup.parse("<light-red>"),
         "unknown": ansimarkup.parse("<dim>"),
         "benign": ansimarkup.parse("<light-green>"),
@@ -133,6 +135,14 @@ def analyze_formatter(result, verbose):
     return template.render(result=result, verbose=verbose, max_width=max_width)
 
 
+@colored_output
+def riot_formatter(results, verbose):
+    """Convert RIOT to human-readable text."""
+    template = JINJA2_ENV.get_template("riot.txt.j2")
+    max_width, _ = click.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -142,5 +152,6 @@ FORMATTERS = {
         "quick": ip_quick_check_formatter,
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
+        "riot": riot_formatter,
     },
 }

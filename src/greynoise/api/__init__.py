@@ -41,6 +41,7 @@ class GreyNoise(object):
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
     EP_META_METADATA = "meta/metadata"
     EP_META_PING = "meta/ping"
+    EP_RIOT = "riot/{ip_address}"
     EP_NOT_IMPLEMENTED = "request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -176,6 +177,8 @@ class GreyNoise(object):
 
         if response.status_code == 429:
             raise RateLimitError()
+        if response.status_code == 404:
+            return body
         if response.status_code >= 400:
             raise RequestFailure(response.status_code, body)
 
@@ -368,3 +371,23 @@ class GreyNoise(object):
             return "Success: Access and API Key Valid"
         except Exception as e:
             return e
+
+    def riot(self, ip_address):
+        """Check if IP is in RIOT data set
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+        """
+        LOGGER.debug("Checking RIOT for %s...", ip_address, ip_address=ip_address)
+        validate_ip(ip_address)
+
+        endpoint = self.EP_RIOT.format(ip_address=ip_address)
+        response = self._request(endpoint)
+
+        if "ip" not in response:
+            response["ip"] = ip_address
+
+        return response

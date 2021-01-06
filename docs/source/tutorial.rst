@@ -107,6 +107,23 @@ Detailed context information for any given IP address is also available::
       }
     }
 
+Any IP can also be checked to see if it exists within the RIOT dataset::
+
+    >>> api_client.riot('58.220.219.247')
+    {
+        'ip': '8.8.8.8',
+        'riot': True,
+        'category': 'public_dns',
+        'name': 'Google Public DNS',
+        'description': "Google's global domain name system (DNS) resolution service.",
+        'explanation': "Public DNS services are used as alternatives to ISP's name servers. You may
+        see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP
+        to resolve DNS lookups.",
+        'last_updated': '2021-01-06T01:56:45Z',
+        'logo_url': 'https://www.gstatic.com/devrel-devsite/prod/v9d82702993bc22f782b7874a0f933b5e39c1f0889acab7d1fce0d6deb8e0f63d/cloud/images/cloud-logo.svg',
+        'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative'
+    }
+
 .. note::
 
     The ``ip`` and ``quick`` methods use an LRU cache with a timeout of one hour to
@@ -418,6 +435,7 @@ subcommands, use the *--help* option::
     pcap         Get PCAP for a given IP address.
     quick        Quickly check whether or not one or many IPs are "noise".
     repl         Start an interactive shell.
+    riot         Query GreyNoise IP to see if it is in the RIOT dataset.
     setup        Configure API key.
     signature    Submit an IDS signature to GreyNoise to be deployed to all...
     stats        Get aggregate stats from a given GNQL query.
@@ -655,4 +673,5 @@ operating system, etc.::
     - Ethereum Node Scanner         2
     - IMAP Scanner                  2
     - IOT MQTT Scanner              2
-    Showing results 1 - 20. Run again with -v for full output.
+    Showing results 1 - 20. Run again with -v for full output
+

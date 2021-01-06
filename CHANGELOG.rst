@@ -8,6 +8,12 @@ Version `dev`_
 
 * API client:
 
+  * Added support for new /riot endpoint
+
+* CLI:
+
+  * Added support for new riot command
+
 * Dependencies:
 
   * Updated sphinx to 3.4.0

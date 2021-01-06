@@ -153,6 +153,24 @@ def ip(
     return results
 
 
+@ip_lookup_command
+@click.option("-v", "--verbose", count=True, help="Verbose output")
+def riot(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    ip_address,
+):
+    """Query GreyNoise IP to see if it is in the RIOT dataset."""
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = [api_client.riot(ip_address=ip_address) for ip_address in ip_addresses]
+    return results
+
+
 @not_implemented_command
 def pcap():
     """Get PCAP for a given IP address."""
