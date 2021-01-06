@@ -3,10 +3,8 @@
 -r common-py3.txt
 Click==7.1.2
 ansimarkup==1.4.0
-
 click-default-group==1.2.2
 click-repl==0.1.6
 jinja2==2.11.2
 requests==2.25.1
 six==1.15.0
-structlog==20.1.0
