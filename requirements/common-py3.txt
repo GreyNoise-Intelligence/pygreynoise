@@ -1,3 +1,5 @@
 more-itertools==8.6.0;python_version>='3'
 dict2xml==1.7.0;python_version>='3'
 cachetools==4.2.0;python_version>='3'
+structlog==20.1.0;python_version=='3.5' # pyup: ignore
+structlog==20.2.0;python_version>='3.6'

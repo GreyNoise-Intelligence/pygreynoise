@@ -59,6 +59,29 @@ this::
       }
     ]
 
+When there's a list of IP addresses to verify, and invalid IPs provide should be included in the
+output they can be checked all at once like this::
+
+    >>> api_client.quick(['8.8.8.8', '58.220.219.247', '110.153.82.818'],include_invalid=True)
+    [
+      {
+        "ip": "8.8.8.8",
+        "noise": false,
+        "code": "0x05",
+        "code_message": "This IP is commonly spoofed in Internet-scan activity"
+      },
+      {
+        "ip": "58.220.219.247",
+        "noise": true,
+        "code": "0x01",
+        "code_message": "The IP has been observed by the GreyNoise sensor network"
+      },
+      {
+      "ip": "110.153.82.818",
+      "noise": False,
+      "code": "404",
+      "code_message": "IP is Invalid"}
+    ]
 Detailed context information for any given IP address is also available::
 
     >>> api_client.ip('58.220.219.247')
