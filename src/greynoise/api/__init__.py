@@ -41,6 +41,7 @@ class GreyNoise(object):
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
     EP_META_METADATA = "meta/metadata"
     EP_META_PING = "meta/ping"
+    EP_RIOT = "riot/{ip_address}"
     EP_NOT_IMPLEMENTED = "request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -65,6 +66,7 @@ class GreyNoise(object):
             "IP was classified as noise, but has not been observed "
             "engaging in Internet-wide scans or attacks in over 60 days"
         ),
+        "404": "IP is Invalid",
     }
 
     CACHE_MAX_SIZE = 1000
@@ -176,7 +178,7 @@ class GreyNoise(object):
 
         if response.status_code == 429:
             raise RateLimitError()
-        if response.status_code >= 400:
+        if response.status_code >= 400 and response.status_code != 404:
             raise RequestFailure(response.status_code, body)
 
         return body
@@ -278,7 +280,7 @@ class GreyNoise(object):
         response = self._request(self.EP_GNQL, params=params)
         return response
 
-    def quick(self, ip_addresses):
+    def quick(self, ip_addresses, include_invalid=False):
         """Get activity associated with one or more IP addresses.
 
         :param ip_addresses: One or more IP addresses to use in the look-up.
@@ -286,13 +288,17 @@ class GreyNoise(object):
         :return: Bulk status information for IP addresses.
         :rtype: dict
 
+        :param include_invalid: True or False
+        :type include_invalid: bool
+
         """
 
         if isinstance(ip_addresses, str):
             ip_addresses = ip_addresses.split(",")
 
         LOGGER.debug("Getting noise status...", ip_addresses=ip_addresses)
-        ip_addresses = [
+
+        valid_ip_addresses = [
             ip_address
             for ip_address in ip_addresses
             if validate_ip(ip_address, strict=False)
@@ -302,7 +308,7 @@ class GreyNoise(object):
             cache = self.IP_QUICK_CHECK_CACHE
             # Keep the same ordering as in the input
             ordered_results = OrderedDict(
-                (ip_address, cache.get(ip_address)) for ip_address in ip_addresses
+                (ip_address, cache.get(ip_address)) for ip_address in valid_ip_addresses
             )
             api_ip_addresses = [
                 ip_address
@@ -327,10 +333,11 @@ class GreyNoise(object):
                         ip_address, api_result
                     )
             results = list(ordered_results.values())
+
         else:
             results = []
             chunks = more_itertools.chunked(
-                ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                valid_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
             )
             for chunk in chunks:
                 result = self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
@@ -338,6 +345,12 @@ class GreyNoise(object):
                     results.extend(result)
                 else:
                     results.append(result)
+
+        [
+            results.append({"ip": ip, "noise": False, "code": "404"})
+            for ip in ip_addresses
+            if ip not in valid_ip_addresses and include_invalid
+        ]
 
         for result in results:
             code = result["code"]
@@ -369,3 +382,23 @@ class GreyNoise(object):
             return "Success: Access and API Key Valid"
         except Exception as e:
             return e
+
+    def riot(self, ip_address):
+        """Check if IP is in RIOT data set
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+        """
+        LOGGER.debug("Checking RIOT for %s...", ip_address, ip_address=ip_address)
+        validate_ip(ip_address)
+
+        endpoint = self.EP_RIOT.format(ip_address=ip_address)
+        response = self._request(endpoint)
+
+        if "ip" not in response:
+            response["ip"] = ip_address
+
+        return response
