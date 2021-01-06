@@ -18,17 +18,18 @@ JINJA2_ENV = Environment(
 )
 
 colorama.init()
+DIM = "<dim>"
 ANSI_MARKUP = ansimarkup.AnsiMarkup(
     tags={
         "header": ansimarkup.parse("<bold>"),
         "key": ansimarkup.parse("<blue>"),
         "value": ansimarkup.parse("<green>"),
         "noise": ansimarkup.parse("<light-yellow>"),
-        "not-noise": ansimarkup.parse("<dim>"),
+        "not-noise": ansimarkup.parse(DIM),
         "riot": ansimarkup.parse("<light-yellow>"),
-        "not-riot": ansimarkup.parse("<dim>"),
+        "not-riot": ansimarkup.parse(DIM),
         "malicious": ansimarkup.parse("<light-red>"),
-        "unknown": ansimarkup.parse("<dim>"),
+        "unknown": ansimarkup.parse(DIM),
         "benign": ansimarkup.parse("<light-green>"),
     }
 )
