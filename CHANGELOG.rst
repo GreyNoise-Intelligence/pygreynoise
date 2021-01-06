@@ -6,9 +6,7 @@ Version `dev`_
 ================
 **Date**: unreleased
 
-* CLI:
-
-  * Updated json_formatter for query commands to return data only as New Line Delimited JSON
+* API client:
 
   * Add "include_invalid" option to QUICK lookup to return invalid IPs as part of the JSON response
 
@@ -17,6 +15,7 @@ Version `dev`_
 * CLI:
 
   * Added support for new riot command
+  * Updated json_formatter for query commands to return data only as New Line Delimited JSON
 
 * Dependencies:
 
