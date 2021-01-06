@@ -11,6 +11,7 @@ Version `dev`_
 * Dependencies:
 
   * Updated sphinx to 3.4.0
+  * Updated structlog to 20.2.0 for python 3.6 and 3.7
 
 Version `0.6.0`_
 ================
