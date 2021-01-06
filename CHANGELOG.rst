@@ -6,7 +6,9 @@ Version `dev`_
 ================
 **Date**: unreleased
 
-* API client:
+* CLI:
+
+  * Updated json_formatter for query commands to return data only as New Line Delimited JSON
 
   * Updated logic in quick to better handle non-list format input ('ip_1,ip_2')instead of
     ['ip_1','ip_2']
@@ -14,6 +16,7 @@ Version `dev`_
 * Dependencies:
 
   * Updated sphinx to 3.4.0
+  * Updated structlog to 20.2.0 for python 3.6 and 3.7
 
 Version `0.6.0`_
 ================
