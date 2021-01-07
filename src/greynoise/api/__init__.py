@@ -20,6 +20,7 @@ LOGGER = structlog.get_logger()
 
 
 def initialize_cache(cache_max_size, cache_ttl):
+    """A function to initialize cache"""
     cache = cachetools.TTLCache(maxsize=cache_max_size, ttl=cache_ttl)
     return cache
 
@@ -122,8 +123,9 @@ class GreyNoise(object):
             cache_max_size = 1000
         self.cache_max_size = cache_max_size
 
-        self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
-        self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
+        if use_cache:
+            self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
+            self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
 
     def _request(self, endpoint, params=None, json=None, method="get"):
         """Handle the requesting of information from the API.
