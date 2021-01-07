@@ -12,6 +12,7 @@ Version `dev`_
   * Added support for new /riot endpoint
   * Updated logic in quick to better handle non-list format input ('ip_1,ip_2')instead of
     ['ip_1','ip_2']
+  * Added ability to configure CACHE TTL and CACHE MAX SIZE instead of only using hardcoded defaults
 
 * CLI:
 

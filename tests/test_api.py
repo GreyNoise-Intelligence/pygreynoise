@@ -12,8 +12,6 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 def client():
     """API client fixture."""
     client = GreyNoise(api_key="<api_key>", integration_name="test")
-#    client.IP_QUICK_CHECK_CACHE.clear()
-#    client.IP_CONTEXT_CACHE.clear()
     yield client
 
 

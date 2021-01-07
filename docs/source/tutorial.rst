@@ -11,13 +11,16 @@ Create client object
 To interact with the API, a client object needs to be created::
 
    >>> from greynoise import GreyNoise
-   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>)
+   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>, use_cache=True, cache_max_size=1000, cache_ttl=3600)
 
 where:
 
 - *api_key* is the key you have been given to use the API.
 - *timeout_in_seconds* is the timeout for each request sent to the API.
 - *proxy* is the url (ex `http://myproxy.corp.io:1234`) for requests to be routed through.
+- *use_cache* is used to disable (enabled by default) use of local cache for lookups.
+- *cache_max_size* is used to define the max size of the cache, if enabled.
+- *cache_ttl* is used to define the TTL of the data in the cache, if enabled.
 
 .. note::
 
@@ -82,6 +85,7 @@ output they can be checked all at once like this::
       "code": "404",
       "code_message": "IP is Invalid"}
     ]
+
 Detailed context information for any given IP address is also available::
 
     >>> api_client.ip('58.220.219.247')
