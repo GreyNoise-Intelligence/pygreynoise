@@ -15,4 +15,4 @@ In particular, it will allow you to:
 
 - get a list of noise IP address found in a given date.
 
-.. _GreyNoise API: http://dev.greynoise.io:8000/
+.. _GreyNoise API: https://developer.greynoise.io/reference

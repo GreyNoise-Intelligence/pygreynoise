@@ -19,6 +19,12 @@ if not structlog.is_configured():
 LOGGER = structlog.get_logger()
 
 
+def initialize_cache(cache_max_size, cache_ttl):
+    """A function to initialize cache"""
+    cache = cachetools.TTLCache(maxsize=cache_max_size, ttl=cache_ttl)
+    return cache
+
+
 class GreyNoise(object):
 
     """GreyNoise API client.
@@ -69,11 +75,6 @@ class GreyNoise(object):
         "404": "IP is Invalid",
     }
 
-    CACHE_MAX_SIZE = 1000
-    CACHE_TTL = 3600
-    IP_QUICK_CHECK_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
-    IP_CONTEXT_CACHE = cachetools.TTLCache(maxsize=CACHE_MAX_SIZE, ttl=CACHE_TTL)
-
     IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
     IPV4_REGEX = re.compile(
@@ -90,6 +91,8 @@ class GreyNoise(object):
         proxy=None,
         use_cache=True,
         integration_name=None,
+        cache_max_size=None,
+        cache_ttl=None,
     ):
         if any(
             configuration_value is None
@@ -111,6 +114,18 @@ class GreyNoise(object):
         self.use_cache = use_cache
         self.integration_name = integration_name
         self.session = requests.Session()
+
+        if cache_ttl is None or not isinstance(cache_ttl, int):
+            cache_ttl = 3600
+        self.cache_ttl = cache_ttl
+
+        if cache_max_size is None or not isinstance(cache_max_size, int):
+            cache_max_size = 1000
+        self.cache_max_size = cache_max_size
+
+        if use_cache:
+            self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
+            self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
 
     def _request(self, endpoint, params=None, json=None, method="get"):
         """Handle the requesting of information from the API.
@@ -242,10 +257,10 @@ class GreyNoise(object):
 
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         if self.use_cache:
-            cache = self.IP_CONTEXT_CACHE
+            cache = self.ip_context_cache
             response = (
                 cache[ip_address]
-                if ip_address in self.IP_CONTEXT_CACHE
+                if ip_address in self.ip_context_cache
                 else cache.setdefault(ip_address, self._request(endpoint))
             )
         else:
@@ -305,7 +320,7 @@ class GreyNoise(object):
         ]
 
         if self.use_cache:
-            cache = self.IP_QUICK_CHECK_CACHE
+            cache = self.ip_quick_check_cache
             # Keep the same ordering as in the input
             ordered_results = OrderedDict(
                 (ip_address, cache.get(ip_address)) for ip_address in valid_ip_addresses
