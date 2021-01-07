@@ -83,6 +83,8 @@ build then merge the PR into master.
 Once the PR is merged, push the new tag, then use CircleCI to confirm the new tag builds
 successfully and pushes to PyPI
 
+`git push --tags`
+
 ## Prep for next version
 
 Run the ``reset_changelog.py`` script to add in the default sections needed in CHANGELOG.rst to
