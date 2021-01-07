@@ -19,6 +19,11 @@ if not structlog.is_configured():
 LOGGER = structlog.get_logger()
 
 
+def initialize_cache(cache_max_size, cache_ttl):
+    cache = cachetools.TTLCache(maxsize=cache_max_size, ttl=cache_ttl)
+    return cache
+
+
 class GreyNoise(object):
 
     """GreyNoise API client.
@@ -109,20 +114,16 @@ class GreyNoise(object):
         self.integration_name = integration_name
         self.session = requests.Session()
 
-        if cache_ttl is None:
+        if cache_ttl is None or not isinstance(cache_ttl, int):
             cache_ttl = 3600
         self.cache_ttl = cache_ttl
 
-        if cache_max_size is None:
+        if cache_max_size is None or not isinstance(cache_max_size, int):
             cache_max_size = 1000
         self.cache_max_size = cache_max_size
 
-        self.ip_quick_check_cache = cachetools.TTLCache(
-            maxsize=cache_max_size, ttl=cache_ttl
-        )
-        self.ip_context_cache = cachetools.TTLCache(
-            maxsize=cache_max_size, ttl=cache_ttl
-        )
+        self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
+        self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
 
     def _request(self, endpoint, params=None, json=None, method="get"):
         """Handle the requesting of information from the API.
