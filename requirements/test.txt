@@ -3,6 +3,6 @@
 -r test-py2.txt
 -r test-py3.txt
 flake8==3.8.4
-pytest-cov==2.10.1
+pytest-cov==2.11.0
 yamllint==1.25.0
 restructuredtext-lint==1.3.2
