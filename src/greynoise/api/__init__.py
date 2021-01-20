@@ -133,7 +133,7 @@ class GreyNoise(object):
             self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
 
         if use_psychic:
-            self.psychic_object = psychic.Psychic(psychic_mode=PsychicMode.DISK)
+            self.psychic_object = psychic.Psychic(psychic_mode=PsychicMode.MEM)
             #print("[+] Psychic mode enabled")
             
 

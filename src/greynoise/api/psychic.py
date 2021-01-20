@@ -93,14 +93,32 @@ def open_handle_to_data_file():
     # Return open handle to file
     return open("/Users/andrew/.config/greynoise/data_files/data_file.bin", "rb")
 
+def load_data_file_into_memory():
+
+    # Open read-only binary file handle to data file
+    f = open("/Users/andrew/.config/greynoise/data_files/data_file.bin", "rb")
+    
+    # Slurp up the entire file into an in memory byte array called "mem"
+    mem = f.read()
+
+    # Close the file handle
+    f.close()
+
+    # Return mem
+    return mem
+
+
 class Psychic(object):
 
     def __init__(self, 
             psychic_mode=PsychicMode.DISK,
-            psychic_file_handle=None):
+            psychic_file_handle=None,
+            psychic_in_memory_data_structure=None,
+            ):
 
         self.psychic_mode = psychic_mode
         self.psychic_file_handle = psychic_file_handle
+        self.psychic_in_memory_data_structure = psychic_in_memory_data_structure
 
         # Check for data file
         if data_file_exists() == False:
@@ -119,7 +137,7 @@ class Psychic(object):
         if self.psychic_mode == PsychicMode.MEM:
 
             # Slurp data file into memory
-            self.mem = load_data_file_into_mem()
+            self.psychic_in_memory_data_structure = load_data_file_into_memory()
 
         elif self.psychic_mode == PsychicMode.DISK:
 
@@ -141,7 +159,7 @@ class Psychic(object):
         result = bool()
 
         if self.psychic_mode == PsychicMode.MEM:
-            result = check_ip_against_in_mem_data_structure(ip)
+            result = self.check_ip_against_in_mem_data_structure(ip)
         elif self.psychic_mode == PsychicMode.DISK:
             result = self.check_ip_against_on_disk_data_file(ip)
         else:
@@ -181,13 +199,13 @@ class Psychic(object):
 
         return results
 
-    def check_ip_against_in_memory_data_file(self, ip):
+    def check_ip_against_in_mem_data_structure(self, ip):
         
         # Get offset and bit position
         offset, position = ip2offsetposition(ip)
 
         # Read the byte
-        b = self.psychic_in_mem_data_structure[offset:offset+1]
+        b = self.psychic_in_memory_data_structure[offset:offset+1]
 
         # Convert the byte and mask to a list of IPs that are noise
         ips = offset_and_bytemask_to_ips(offset, b)
