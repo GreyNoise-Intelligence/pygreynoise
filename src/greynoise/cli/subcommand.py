@@ -45,12 +45,13 @@ def alerts():
     help="Output format",
 )
 @click.option("-v", "--verbose", count=True, help="Verbose output")
+@click.option("-p", "--psychic", count=True, help="Use Psychic")
 @pass_api_client
 @echo_result
 @click.pass_context
 @handle_exceptions
 def analyze(
-    context, api_client, api_key, input_file, output_file, output_format, verbose
+    context, api_client, api_key, input_file, output_file, output_format, verbose, psychic
 ):
     """Analyze the IP addresses in a log file, stdin, etc."""
     if input_file is None:
@@ -137,6 +138,7 @@ def interesting(context, api_client, api_key, input_file, ip_address):
 
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
+@click.option("-p", "--psychic", count=True, help="Use Psychic")
 def ip(
     context,
     api_client,
@@ -145,6 +147,7 @@ def ip(
     output_file,
     output_format,
     verbose,
+    psychic,
     ip_address,
 ):
     """Query GreyNoise for all information on a given IP."""
@@ -155,6 +158,7 @@ def ip(
 
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
+@click.option("-p", "--psychic", count=True, help="Use Psychic")
 def riot(
     context,
     api_client,
@@ -163,6 +167,7 @@ def riot(
     output_file,
     output_format,
     verbose,
+    psychic,
     ip_address,
 ):
     """Query GreyNoise IP to see if it is in the RIOT dataset."""
@@ -178,7 +183,7 @@ def pcap():
 
 @gnql_command
 def query(
-    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+    context, api_client, api_key, input_file, output_file, output_format, verbose, psychic, query
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
@@ -187,8 +192,9 @@ def query(
 
 
 @ip_lookup_command
+@click.option("-p", "--psychic", count=True, help="Use Psychic")
 def quick(
-    context, api_client, api_key, input_file, output_file, output_format, ip_address
+    context, api_client, api_key, input_file, output_file, output_format, psychic, ip_address
 ):
     """Quickly check whether or not one or many IPs are "noise"."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)

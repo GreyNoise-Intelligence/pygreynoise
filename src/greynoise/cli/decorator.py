@@ -40,6 +40,7 @@ def echo_result(function):
             formatter = formatter[context.command.name]
 
         output = formatter(result, params.get("verbose", False)).strip("\n")
+        psychic = formatter(result, params.get("psychic", False)).strip("\n")
         click.echo(
             output, file=params.get("output_file", click.open_file("-", mode="w"))
         )
@@ -90,6 +91,7 @@ def pass_api_client(function):
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
         api_key = context.params.get("api_key")
+        psychic = bool(kwargs["psychic"])
         config = load_config()
 
         if api_key is None:
@@ -107,10 +109,11 @@ def pass_api_client(function):
                 )
                 context.exit(-1)
             api_key = config["api_key"]
-
+            
         api_client = GreyNoise(
-            api_key=api_key, timeout=config["timeout"], integration_name="cli"
+            api_key=api_key, timeout=config["timeout"], integration_name="cli", use_psychic=bool(psychic)
         )
+
         return function(api_client, *args, **kwargs)
 
     return wrapper
@@ -135,6 +138,7 @@ def gnql_command(function):
         help="Output format",
     )
     @click.option("-v", "--verbose", count=True, help="Verbose output")
+    @click.option("-p", "--psychic", count=True, help="Enable psychic")
     @pass_api_client
     @click.pass_context
     @echo_result

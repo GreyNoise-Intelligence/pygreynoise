@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     "api_server": "https://api.greynoise.io",
     "timeout": 60,
     "proxy": "",
+    "data_file_uri": "http://localhost:8000/data_file.bin.gz",
 }
 
 
@@ -113,6 +114,7 @@ def load_config():
         "api_server": config_parser.get("greynoise", "api_server"),
         "timeout": config_parser.getint("greynoise", "timeout"),
         "proxy": config_parser.get("greynoise", "proxy"),
+        "data_file_uri": config_parser.get("greynoise", "data_file_uri"),
     }
 
 
@@ -129,6 +131,7 @@ def save_config(config):
     config_parser.set("greynoise", "api_server", config["api_server"])
     config_parser.set("greynoise", "timeout", str(config["timeout"]))
     config_parser.set("greynoise", "proxy", config["proxy"])
+    config_parser.set("greynoise", "data_file_uri", config["data_file_uri"])
 
     config_dir = os.path.dirname(CONFIG_FILE)
     if not os.path.isdir(config_dir):

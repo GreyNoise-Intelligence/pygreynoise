@@ -11,6 +11,7 @@ import structlog
 from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
+from greynoise.api.psychic import Psychic, PsychicMode
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import configure_logging, load_config, validate_ip
 
@@ -89,6 +90,8 @@ class GreyNoise(object):
         api_server=None,
         timeout=None,
         proxy=None,
+        use_psychic=False,
+        psychic_mode=PsychicMode.DISK,
         use_cache=True,
         integration_name=None,
         cache_max_size=None,
@@ -112,6 +115,8 @@ class GreyNoise(object):
         self.timeout = timeout
         self.proxy = proxy
         self.use_cache = use_cache
+        self.use_psychic = use_psychic
+        self.psychic_mode = psychic_mode
         self.integration_name = integration_name
         self.session = requests.Session()
 
@@ -126,6 +131,11 @@ class GreyNoise(object):
         if use_cache:
             self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
             self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
+
+        if use_psychic:
+            self.psychic_object = psychic.Psychic(psychic_mode=PsychicMode.DISK)
+            print("[+] Psychic mode enabled")
+            
 
     def _request(self, endpoint, params=None, json=None, method="get"):
         """Handle the requesting of information from the API.
@@ -252,8 +262,16 @@ class GreyNoise(object):
         :rtype: dict
 
         """
+
+        
+
         LOGGER.debug("Getting context for %s...", ip_address, ip_address=ip_address)
         validate_ip(ip_address)
+
+        if self.use_psychic:
+            response = {"ip": ip_address, "seen": False}
+            if self.psychic_object.check_ip(ip_address) is False:
+                return response
 
         endpoint = self.EP_NOISE_CONTEXT.format(ip_address=ip_address)
         if self.use_cache:
@@ -319,12 +337,36 @@ class GreyNoise(object):
             if validate_ip(ip_address, strict=False)
         ]
 
+        
+        ordered_results = OrderedDict(
+                (ip_address, None) for ip_address in valid_ip_addresses
+        )
+        if self.use_psychic:
+            results = self.psychic_object.check_ips(ip_addresses)
+
+            """
+            check_ips() returns something that looks like this:
+            {"1.1.1.1": True}
+            """
+            
+            # Need to make sure the results look like the expected return object
+            for ip_address, result in results.items():
+                if result is False:
+                    ordered_results[ip_address] = {
+                        "ip": ip_address,
+                        "noise": False,
+                        "code": "0x00"
+                    }
+
         if self.use_cache:
             cache = self.ip_quick_check_cache
             # Keep the same ordering as in the input
-            ordered_results = OrderedDict(
-                (ip_address, cache.get(ip_address)) for ip_address in valid_ip_addresses
-            )
+            
+            for ip_address, result in ordered_results.items():
+                if result is None:
+                    ordered_results[ip_address] = cache.get(ip_address)
+
+        ########
             api_ip_addresses = [
                 ip_address
                 for ip_address, result in ordered_results.items()
