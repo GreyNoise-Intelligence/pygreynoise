@@ -88,10 +88,11 @@ def feedback():
 @click.option(
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
+@click.option("-p", "--psychic", count=True, help="Use Psychic")
 @pass_api_client
 @click.pass_context
 @handle_exceptions
-def filter(context, api_client, api_key, input_file, output_file, noise_only):
+def filter(context, api_client, api_key, input_file, output_file, noise_only, psychic):
     """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():

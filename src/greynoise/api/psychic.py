@@ -136,7 +136,7 @@ class Psychic(object):
 
     def check_ip(self, ip):
         
-        print("[PSYCHIC] check_ip() called on %s" % ip)
+        #print("[PSYCHIC] check_ip() called on %s" % ip)
         
         result = bool()
 
@@ -151,7 +151,7 @@ class Psychic(object):
 
     def check_ips(self, ips):
 
-        print("[PSYCHIC] check_ips() called on %s" % str(ips))
+        #print("[PSYCHIC] check_ips() called on %s" % str(ips))
         
         results = {}
 

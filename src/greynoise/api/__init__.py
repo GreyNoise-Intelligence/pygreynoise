@@ -134,7 +134,7 @@ class GreyNoise(object):
 
         if use_psychic:
             self.psychic_object = psychic.Psychic(psychic_mode=PsychicMode.DISK)
-            print("[+] Psychic mode enabled")
+            #print("[+] Psychic mode enabled")
             
 
     def _request(self, endpoint, params=None, json=None, method="get"):
