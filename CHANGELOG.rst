@@ -8,6 +8,16 @@ Version `dev`_
 
 * API client:
 
+  *
+
+* CLI:
+
+  *
+
+* Dependencies:
+
+  * Updated cachetools to 4.2.1
+
 Version `0.7.0`_
 ================
 **Date**: January 07, 2021
