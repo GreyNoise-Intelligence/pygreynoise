@@ -11,7 +11,7 @@ Create client object
 To interact with the API, a client object needs to be created::
 
    >>> from greynoise import GreyNoise
-   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>, use_cache=True, cache_max_size=1000, cache_ttl=3600)
+   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>, use_cache=True, cache_max_size=1000, cache_ttl=3600, integration_name=<integration_name>)
 
 where:
 
@@ -21,11 +21,17 @@ where:
 - *use_cache* is used to disable (enabled by default) use of local cache for lookups.
 - *cache_max_size* is used to define the max size of the cache, if enabled.
 - *cache_ttl* is used to define the TTL of the data in the cache, if enabled.
+- *integration_name* is used to define the name an version number of an integration that is embedding the SDK (example: greynoise-appname-v1.0.0)
 
 .. note::
 
    All parameters are optional and might not be required if a
    configuration file has been created using the ``greynoise setup`` CLI command.
+
+.. note::
+
+   For third-parties developing integrations with the GreyNoise API, the integration_name parameter
+   is preferred.
 
 
 Check specific IPs
@@ -158,6 +164,10 @@ Any IP can also be checked to see if it exists within the RIOT dataset::
     can be disabled to get live responses from the API by passing ``use_cache=False``
     when the ``GreyNoise`` class is instantiated.
 
+Sample Python Code
+------------------
+
+.. include:: sample.py
 
 GNQL
 ----
