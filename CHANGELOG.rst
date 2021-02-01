@@ -17,6 +17,8 @@ Version `dev`_
 * Dependencies:
 
   * Updated cachetools to 4.2.1
+  * Updated jinja2 to 2.11.3
+
 
 Version `0.7.0`_
 ================
