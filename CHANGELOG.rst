@@ -18,6 +18,7 @@ Version `dev`_
 
   * Updated cachetools to 4.2.1
   * Updated jinja2 to 2.11.3
+  * Updated more-itertools to 8.7.0
 
 
 Version `0.7.0`_
