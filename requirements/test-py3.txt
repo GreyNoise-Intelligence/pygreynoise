@@ -1,6 +1,6 @@
 black==20.8b1;python_version>='3.6'
 pylint==2.6.2;python_version=='3.5' # pyup: ignore
-pylint==2.7.1;python_version>='3.6'
+pylint==2.7.2;python_version>='3.6'
 twine==3.3.0;python_version>='3.6'
 pytest==6.1.2;python_version=='3.5' # pyup: ignore
 pytest==6.2.2;python_version>='3.6'
