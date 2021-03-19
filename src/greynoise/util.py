@@ -57,7 +57,8 @@ def load_config():
     if os.path.isfile(CONFIG_FILE):
         LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE, path=CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
-            config_parser.read_file(config_file)
+            # cannot update this to read_file() until py27 support is removed
+            config_parser.readfp(config_file)
     else:
         LOGGER.warning(
             "Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE
