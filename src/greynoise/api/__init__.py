@@ -447,7 +447,6 @@ class GreyNoise(object):
         response = self._request(self.EP_PING)
         return response
 
-
     def riot(self, ip_address):
         """Check if IP is in RIOT data set
 

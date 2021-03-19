@@ -670,14 +670,14 @@ class TestMeta(object):
         assert response == expected_response
 
 
-class TestMetaPing(object):
-    """GreyNoise client run Meta Ping test cases."""
+class TestPing(object):
+    """GreyNoise client run Ping test cases."""
 
-    def test_metadata_ping(self, client):
-        """Run GNQL stats query."""
-        expected_response = "Success: Access and API Key Valid"
+    def test_ping(self, client):
+        """Run ping test"""
+        expected_response = {"message": "pong"}
 
         client._request = Mock(return_value=expected_response)
         response = client.test_connection()
-        client._request.assert_called_with("meta/ping")
+        client._request.assert_called_with("ping")
         assert response == expected_response
