@@ -32,6 +32,7 @@ class TestInit(object):
             "api_server": "<api_server>",
             "timeout": "<timeout>",
             "proxy": "<proxy>",
+            "offering": "<offering>",
         }
         with patch("greynoise.api.load_config") as load_config:
             client = GreyNoise(**config)
@@ -39,6 +40,7 @@ class TestInit(object):
             assert client.api_server == config["api_server"]
             assert client.timeout == config["timeout"]
             assert client.proxy == config["proxy"]
+            assert client.offering == config["offering"]
             load_config.assert_not_called()
 
     def test_without_api_key(self):
@@ -48,6 +50,7 @@ class TestInit(object):
             "api_server": "<api_server>",
             "timeout": "<timeout>",
             "proxy": "<proxy>",
+            "offering": "<offering>",
         }
         with patch("greynoise.api.load_config") as load_config:
             load_config.return_value = config
@@ -56,6 +59,7 @@ class TestInit(object):
             assert client.api_server == config["api_server"]
             assert client.timeout == config["timeout"]
             assert client.proxy == config["proxy"]
+            assert client.offering == config["offering"]
             load_config.assert_called()
 
 
@@ -148,6 +152,7 @@ class TestAnalyze(object):
                 {"ip": "255.255.255.255", "noise": False},
             ]
         )
+        client.riot = Mock(return_value={"ip": "0.0.0.0", "riot": False})
         client.stats = Mock(
             side_effect=[
                 {
@@ -204,8 +209,10 @@ class TestAnalyze(object):
                     "summary": {
                         "ip_count": 2,
                         "noise_ip_count": 1,
+                        "riot_ip_count": 0,
                         "not_noise_ip_count": 1,
                         "noise_ip_ratio": 0.50,
+                        "riot_ip_ratio": 0.0,
                     },
                     "query": ["0.0.0.0", "255.255.255.255"],
                     "stats": {
@@ -249,7 +256,9 @@ class TestAnalyze(object):
                         "ip_count": 0,
                         "noise_ip_count": 0,
                         "not_noise_ip_count": 0,
+                        "riot_ip_count": 0,
                         "noise_ip_ratio": 0,
+                        "riot_ip_ratio": 0,
                     },
                     "query": [],
                     "stats": {},

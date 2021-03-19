@@ -24,6 +24,7 @@ class TestLoadConfig(object):
             "api_server": "https://api.greynoise.io",
             "timeout": 60,
             "proxy": "",
+            "offering": "enterprise",
         }
 
     @patch("greynoise.util.open")
@@ -35,6 +36,7 @@ class TestLoadConfig(object):
             "api_server": "<api_server",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         os.environ = {}
@@ -46,11 +48,13 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             proxy = {}
+            offering = {}
             """.format(
                 expected["api_key"],
                 expected["api_server"],
                 expected["timeout"],
                 expected["proxy"],
+                expected["offering"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -68,6 +72,7 @@ class TestLoadConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         os.environ = {"GREYNOISE_API_KEY": expected["api_key"]}
@@ -79,10 +84,12 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             proxy = {}
+            offering = {}
             """.format(
                 expected["api_server"],
                 expected["timeout"],
                 expected["proxy"],
+                expected["offering"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -100,6 +107,7 @@ class TestLoadConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         os.environ = {"GREYNOISE_API_SERVER": expected["api_server"]}
@@ -111,10 +119,12 @@ class TestLoadConfig(object):
             api_server = unexpected
             timeout = {}
             proxy = {}
+            offering = {}
             """.format(
                 expected["api_key"],
                 expected["timeout"],
                 expected["proxy"],
+                expected["offering"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -132,6 +142,7 @@ class TestLoadConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": str(expected["timeout"])}
@@ -143,9 +154,46 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = unexpected
             proxy = {}
+            offering = {}
             """.format(
                 expected["api_key"],
                 expected["api_server"],
+                expected["proxy"],
+                expected["offering"],
+            )
+        )
+        open().__enter__.return_value = StringIO(file_content)
+
+        config = load_config()
+        assert config == expected
+        open().__enter__.assert_called()
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    def test_offering_from_environment_variable(self, os, open):
+        """API key value retrieved from environment variable."""
+        expected = {
+            "api_key": "<api_key>",
+            "api_server": "<api_server>",
+            "timeout": 123456,
+            "proxy": "",
+            "offering": "enterprise",
+        }
+
+        os.environ = {"GREYNOISE_OFFERING": expected["offering"]}
+        os.path.isfile.return_value = True
+        file_content = textwrap.dedent(
+            """\
+            [greynoise]
+            api_key = {}
+            api_server = {}
+            timeout = {}
+            proxy = {}
+            offering = unexpected
+            """.format(
+                expected["api_key"],
+                expected["api_server"],
+                expected["timeout"],
                 expected["proxy"],
             )
         )
@@ -164,6 +212,7 @@ class TestLoadConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": "invalid"}
@@ -175,11 +224,13 @@ class TestLoadConfig(object):
             api_server = {}
             timeout = {}
             proxy = {}
+            offering = {}
             """.format(
                 expected["api_key"],
                 expected["api_server"],
                 expected["timeout"],
                 expected["proxy"],
+                expected["offering"],
             )
         )
         open().__enter__.return_value = StringIO(file_content)
@@ -199,6 +250,7 @@ class TestSaveConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
 
         with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
@@ -216,6 +268,7 @@ class TestSaveConfig(object):
             "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
+            "offering": "enterprise",
         }
         expected = textwrap.dedent(
             """\
@@ -223,12 +276,14 @@ class TestSaveConfig(object):
             api_key = {}
             api_server = {}
             timeout = {}
-            proxy = {}\n
+            proxy = {}
+            offering = {}\n
             """.format(
                 config["api_key"],
                 config["api_server"],
                 config["timeout"],
                 config["proxy"],
+                config["offering"],
             )
         )
 

@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     "api_server": "https://api.greynoise.io",
     "timeout": 60,
     "proxy": "",
+    "offering": "enterprise",
 }
 
 
@@ -56,7 +57,7 @@ def load_config():
     if os.path.isfile(CONFIG_FILE):
         LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE, path=CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
-            config_parser.readfp(config_file)
+            config_parser.read_file(config_file)
     else:
         LOGGER.warning(
             "Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE
@@ -108,11 +109,22 @@ def load_config():
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "proxy", proxy)
 
+    if "GREYNOISE_OFFERING" in os.environ:
+        offering = os.environ["GREYNOISE_OFFERING"]
+        LOGGER.debug(
+            "Offering found in environment variable: %s",
+            offering,
+            offering=offering,
+        )
+        # Environment variable takes precedence over configuration file content
+        config_parser.set("greynoise", "offering", offering)
+
     return {
         "api_key": config_parser.get("greynoise", "api_key"),
         "api_server": config_parser.get("greynoise", "api_server"),
         "timeout": config_parser.getint("greynoise", "timeout"),
         "proxy": config_parser.get("greynoise", "proxy"),
+        "offering": config_parser.get("greynoise", "offering"),
     }
 
 
@@ -129,6 +141,7 @@ def save_config(config):
     config_parser.set("greynoise", "api_server", config["api_server"])
     config_parser.set("greynoise", "timeout", str(config["timeout"]))
     config_parser.set("greynoise", "proxy", config["proxy"])
+    config_parser.set("greynoise", "offering", config["offering"])
 
     config_dir = os.path.dirname(CONFIG_FILE)
     if not os.path.isdir(config_dir):

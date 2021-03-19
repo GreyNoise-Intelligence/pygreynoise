@@ -8,11 +8,16 @@ Version `dev`_
 
 * API client:
 
-  *
+  * Added support for Community API
+  * Added information about "integration_name" parameter to docs
+  * **BREAKING CHANGE** Updated test_connection() to use /ping endpoint and return API response
+    message and exception instead of string values
 
 * CLI:
 
-  *
+  * Added support for Community API
+  * Updated Analyze command to include RIOT
+  * Changed default behavior to no longer use `query`.  Invalid commands return error now
 
 * Dependencies:
 
