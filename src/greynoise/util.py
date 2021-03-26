@@ -60,9 +60,7 @@ def load_config():
             # cannot update this to read_file() until py27 support is removed
             config_parser.readfp(config_file)
     else:
-        LOGGER.debug(
-            "Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE
-        )
+        LOGGER.debug("Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE)
 
     if "GREYNOISE_API_KEY" in os.environ:
         api_key = os.environ["GREYNOISE_API_KEY"]
