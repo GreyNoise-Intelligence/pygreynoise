@@ -22,6 +22,8 @@
 {% for ip_context in results %}
 {%- if ip_context.riot %}
 <riot>{{ ip_context.ip }}</riot> is in RIOT dataset. Name: <value>{{ ip_context.name }}</value> Category: <value>{{ ip_context.category }}</value> Last Updated: <value>{{ ip_context.last_updated }}</value>
+{%- elif ip_context.message %}
+{{ ip_context.message }}
 {%- else %}
 <not-riot>{{ ip_context.ip }}</not-riot> is <bold>NOT FOUND</bold> in RIOT dataset.
 {%- endif %}

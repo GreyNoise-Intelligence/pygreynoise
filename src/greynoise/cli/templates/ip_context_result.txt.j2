@@ -7,6 +7,10 @@
 <key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
 <key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
+<key>Spoofable</key>: <value>{{ ip_context.spoofable }}</value>
+<key>BOT</key>: <value>{{ ip_context.bot }}</value>
+<key>VPN</key>: <value>{{ ip_context.vpn }}</value>
+<key>VPN Service</key>: <value>{{ ip_context.vpn_service }}</value>
 {% if ip_context.tags -%}
 <key>Tags</key>:
 {%- call(tag) macros.verbose_list(ip_context.tags) -%}
@@ -22,7 +26,6 @@
 <key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
 <key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
 <key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>
-<key>Spoofable</key>: <value>{{ ip_context.metadata.spoofable|string }}</value>
 <key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>
 
           <header>RAW DATA</header>
@@ -64,5 +67,5 @@
 {%- elif ip_context.error %}
 {{ ip_context.error }}
 {% else %}
-{{ ip_context.ip }} has not been seen in scans in the past 30 days.
+{{ ip_context.ip }} has not been seen in scans in the past 90 days.
 {% endif %}

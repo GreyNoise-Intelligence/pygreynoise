@@ -97,11 +97,16 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if "seen" in ip_context and ip_context["seen"]:
-            metadata = ip_context["metadata"]
-            metadata["location"] = get_location(metadata)
+        if "seen" in ip_context:
+            if ip_context["seen"]:
+                metadata = ip_context["metadata"]
+                metadata["location"] = get_location(metadata)
+                template = JINJA2_ENV.get_template("ip_context.txt.j2")
+            else:
+                template = JINJA2_ENV.get_template("ip_context.txt.j2")
+        elif "noise" in ip_context or "riot" in ip_context:
+            template = JINJA2_ENV.get_template("ip_community.txt.j2")
 
-    template = JINJA2_ENV.get_template("ip_context.txt.j2")
     return template.render(results=results, verbose=verbose)
 
 
@@ -150,6 +155,14 @@ def riot_formatter(results, verbose):
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
+@colored_output
+def interesting_formatter(results, verbose):
+    """Convert RIOT to human-readable text."""
+    template = JINJA2_ENV.get_template("interesting.txt.j2")
+    max_width, _ = click.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -160,5 +173,6 @@ FORMATTERS = {
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
         "riot": riot_formatter,
+        "interesting": interesting_formatter,
     },
 }

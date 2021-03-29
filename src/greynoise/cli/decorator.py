@@ -122,6 +122,12 @@ def gnql_command(function):
     @click.command()
     @click.argument("query", required=False)
     @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
     @click.option(
         "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
@@ -152,6 +158,12 @@ def ip_lookup_command(function):
     @click.command()
     @click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
     @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
     @click.option(
         "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
