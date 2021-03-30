@@ -90,6 +90,7 @@ def pass_api_client(function):
     def wrapper(*args, **kwargs):
         context = click.get_current_context()
         api_key = context.params.get("api_key")
+        offering = context.params.get("offering")
         config = load_config()
 
         if api_key is None:
@@ -108,8 +109,14 @@ def pass_api_client(function):
                 context.exit(-1)
             api_key = config["api_key"]
 
+        if offering is None:
+            if not config["offering"]:
+                offering = "enterprise"
+            else:
+                offering = config["offering"]
+
         api_client = GreyNoise(
-            api_key=api_key, timeout=config["timeout"], integration_name="cli"
+            api_key=api_key, offering=offering, timeout=config["timeout"], integration_name="cli"
         )
         return function(api_client, *args, **kwargs)
 
