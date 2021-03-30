@@ -27,6 +27,7 @@ def api_client():
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": DEFAULT_CONFIG["timeout"],
+            "offering": "enterprise",
         }
         with api_client_cls_patcher as api_client_cls:
             api_client = api_client_cls()
