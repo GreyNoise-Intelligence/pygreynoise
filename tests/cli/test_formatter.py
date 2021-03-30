@@ -18,6 +18,7 @@ from greynoise.cli.formatter import (
 
 EXAMPLE_IP_CONTEXT = {
     "actor": "<actor>",
+    "bot": False,
     "classification": "<classification>",
     "cve": ["<cve#1>", "<cve#2>"],
     "first_seen": "<first_seen>",
@@ -34,11 +35,13 @@ EXAMPLE_IP_CONTEXT = {
         "region": "<region>",
         "rdns": "<rdns>",
         "tor": False,
-        "spoofable": False,
-        "vpn": False,
-        "vpn_service": "<vpn_service>",
     },
     "raw_data": {
+        "hassh": [
+            {"hassh": "<hassh#1>", "port": 123456},
+            {"hassh": "<hassh#2>", "port": 123456},
+            {"hassh": "<hassh#3>", "port": 123456},
+        ],
         "ja3": [
             {"fingerprint": "<fingerprint#1>", "port": 123456},
             {"fingerprint": "<fingerprint#2>", "port": 123456},
@@ -56,6 +59,8 @@ EXAMPLE_IP_CONTEXT = {
     "seen": True,
     "spoofable": False,
     "tags": ["<tag#1>", "<tag#2>", "<tag#3>"],
+    "vpn": False,
+    "vpn_service": "",
 }
 
 EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
@@ -68,6 +73,10 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         <key>First seen</key>: <value><first_seen></value>
         <key>IP</key>: <value><ip_address></value>
         <key>Last seen</key>: <value><last_seen></value>
+        <key>Spoofable</key>: <value>False</value>
+        <key>BOT</key>: <value>False</value>
+        <key>VPN</key>: <value>False</value>
+        <key>VPN Service</key>: <value></value>
         <key>Tags</key>:
         - <value><tag#1></value>
         - <value><tag#2></value>
@@ -82,7 +91,6 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         <key>Organization</key>: <value><organization></value>
         <key>OS</key>: <value><os></value>
         <key>rDNS</key>: <value><rdns></value>
-        <key>Spoofable</key>: <value>False</value>
         <key>Tor</key>: <value>False</value>
 
                   <header>RAW DATA</header>
@@ -182,7 +190,7 @@ class TestIPContextFormatter(object):
                         ╚═══════════════════════════╝
                         IP address: <ip_address#3>
 
-                        <ip_address#3> has not been seen in scans in the past 30 days."""  # noqa
+                        <ip_address#3> has not been seen in scans in the past 90 days."""  # noqa
                     )
                 ),
             ),

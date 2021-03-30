@@ -73,8 +73,10 @@ class TestAnalyze(object):
         "summary": {
             "ip_count": 0,
             "noise_ip_count": 0,
+            "riot_ip_count": 0,
             "not_noise_ip_count": 0,
             "noise_ip_ratio": 0,
+            "riot_ip_ratio": 0,
         },
     }
     DEFAULT_OUTPUT = textwrap.dedent(
@@ -86,7 +88,9 @@ class TestAnalyze(object):
         - IP count: 0
         - Noise IP count: 0
         - Not noise IP count: 0
+        - RIOT IP count: 0
         - Noise IP ratio: 0.00
+        - RIOT IP ratio: 0.00
 
         Queries:
         - <ip_address_1>
@@ -923,6 +927,7 @@ class TestSetup(object):
             "api_server": DEFAULT_CONFIG["api_server"],
             "timeout": DEFAULT_CONFIG["timeout"],
             "proxy": DEFAULT_CONFIG["proxy"],
+            "offering": DEFAULT_CONFIG["offering"],
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -936,8 +941,9 @@ class TestSetup(object):
     @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
     @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
+    @pytest.mark.parametrize("offering_option", ["-O", "--offering"])
     def test_save_api_key_and_timeout(
-        self, key_option, server_option, timeout_option, proxy_option
+        self, key_option, server_option, timeout_option, proxy_option, offering_option
     ):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
@@ -945,11 +951,13 @@ class TestSetup(object):
         api_server = "<api_server>"
         timeout = 123456
         proxy = "<proxy>"
+        offering = "<offering>"
         expected_config = {
             "api_key": api_key,
             "api_server": api_server,
             "timeout": timeout,
             "proxy": proxy,
+            "offering": offering,
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -965,6 +973,8 @@ class TestSetup(object):
                     timeout,
                     proxy_option,
                     proxy,
+                    offering_option,
+                    offering,
                 ],
             )
         assert result.exit_code == 0

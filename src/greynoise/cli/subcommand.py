@@ -136,6 +136,12 @@ def interesting(context, api_client, api_key, input_file, ip_address):
 
 
 @ip_lookup_command
+@click.option(
+    "-O",
+    "--offering",
+    help="Which API offering to use, enterprise or community, "
+    "defaults to enterprise",
+)
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 def ip(
     context,
@@ -146,6 +152,7 @@ def ip(
     output_format,
     verbose,
     ip_address,
+    offering,
 ):
     """Query GreyNoise for all information on a given IP."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -164,6 +171,7 @@ def riot(
     output_format,
     verbose,
     ip_address,
+    offering,
 ):
     """Query GreyNoise IP to see if it is in the RIOT dataset."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -178,7 +186,15 @@ def pcap():
 
 @gnql_command
 def query(
-    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    query,
+    offering,
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
@@ -187,8 +203,21 @@ def query(
 
 
 @ip_lookup_command
+@click.option(
+    "-O",
+    "--offering",
+    help="Which API offering to use, enterprise or community, "
+    "defaults to enterprise",
+)
 def quick(
-    context, api_client, api_key, input_file, output_file, output_format, ip_address
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    ip_address,
+    offering,
 ):
     """Quickly check whether or not one or many IPs are "noise"."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -200,10 +229,16 @@ def quick(
 
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
+@click.option(
+    "-O",
+    "--offering",
+    help="Which API offering to use, enterprise or community, "
+    "defaults to enterprise",
+)
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 @click.option("-s", "--api-server", help="API server")
 @click.option("-p", "--proxy", help="Proxy URL")
-def setup(api_key, timeout, api_server, proxy):
+def setup(api_key, timeout, api_server, proxy, offering):
     """Configure API key."""
     config = {"api_key": api_key}
 
@@ -222,6 +257,11 @@ def setup(api_key, timeout, api_server, proxy):
     else:
         config["proxy"] = proxy
 
+    if offering is None:
+        config["offering"] = DEFAULT_CONFIG["offering"]
+    else:
+        config["offering"] = offering
+
     save_config(config)
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
@@ -233,7 +273,15 @@ def signature():
 
 @gnql_command
 def stats(
-    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    query,
+    offering,
 ):
     """Get aggregate stats from a given GNQL query."""
     queries = get_queries(context, input_file, query)

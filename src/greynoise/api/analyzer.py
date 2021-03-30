@@ -71,22 +71,39 @@ class Analyzer(object):
                 for result in self.api.quick(text_ip_addresses)
                 if result["noise"]
             }
+            riot_ip_addresses = []
+            for ip_address in text_ip_addresses:
+                result = self.api.riot(ip_address)
+                if result["riot"]:
+                    print("RIOT IP:" + ip_address)
+                    riot_ip_addresses.append(result["ip"])
+
+            noise_ip_addresses = [
+                ip for ip in noise_ip_addresses if ip not in riot_ip_addresses
+            ]
+
         else:
             noise_ip_addresses = set()
+            riot_ip_addresses = set()
 
         ip_count = len(text_ip_addresses)
         noise_ip_count = len(noise_ip_addresses)
-        not_noise_ip_count = ip_count - noise_ip_count
+        riot_ip_count = len(riot_ip_addresses)
+        not_noise_ip_count = ip_count - noise_ip_count - riot_ip_count
         if ip_count > 0:
             noise_ip_ratio = float(noise_ip_count) / ip_count
+            riot_ip_ratio = float(riot_ip_count) / ip_count
         else:
             noise_ip_ratio = 0
+            riot_ip_ratio = 0
 
         text_stats["summary"] = {
             "ip_count": ip_count,
             "noise_ip_count": noise_ip_count,
             "not_noise_ip_count": not_noise_ip_count,
+            "riot_ip_count": riot_ip_count,
             "noise_ip_ratio": noise_ip_ratio,
+            "riot_ip_ratio": riot_ip_ratio,
         }
 
         return text_stats

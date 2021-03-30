@@ -2,17 +2,22 @@
 Changelog
 =========
 
-Version `dev`_
+Version `0.8.0`_
 ================
-**Date**: unreleased
+**Date**: March 26, 2021
 
 * API client:
 
-  *
+  * Added support for Community API
+  * Added information about "integration_name" parameter to docs
+  * **BREAKING CHANGE** Updated test_connection() to use /ping endpoint and return API response
+    message and exception instead of string values
 
 * CLI:
 
-  *
+  * Added support for Community API
+  * Updated Analyze command to include RIOT
+  * Changed default behavior to no longer use `query`.  Invalid commands return error now
 
 * Dependencies:
 
@@ -161,4 +166,4 @@ Version `0.2.0`_
 .. _`0.5.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.1...0.5.0
 .. _`0.6.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...0.6.0
 .. _`0.7.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.6.0...0.7.0
-.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...HEAD
+.. _`0.8.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...0.8.0

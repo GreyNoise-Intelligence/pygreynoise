@@ -11,7 +11,8 @@ Create client object
 To interact with the API, a client object needs to be created::
 
    >>> from greynoise import GreyNoise
-   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>, use_cache=True, cache_max_size=1000, cache_ttl=3600)
+   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>,
+       use_cache=True, cache_max_size=1000, cache_ttl=3600, integration_name=<name_of_integration>)
 
 where:
 
@@ -21,6 +22,7 @@ where:
 - *use_cache* is used to disable (enabled by default) use of local cache for lookups.
 - *cache_max_size* is used to define the max size of the cache, if enabled.
 - *cache_ttl* is used to define the TTL of the data in the cache, if enabled.
+- *integration_name* is used to define the name of an integration the SDK is built into, if needed.
 
 .. note::
 
@@ -702,3 +704,60 @@ operating system, etc.::
     - IOT MQTT Scanner              2
     Showing results 1 - 20. Run again with -v for full output
 
+Community API Users
+====================
+
+The GreyNoise API and CLI components can both be used with the [GreyNoise Community API](https://developer.greynoise.io/reference/community-api).
+
+The Community API only includes a single IP lookup endpoint, so only the IP lookup command in both the API and CLI components will work if enabled.
+
+To enable Community API usage, do the following:
+
+CLI Config File
+---------------
+
+::
+
+    $ greynoise setup --api-key "<api_key>" --offering community
+    Configuration saved to '/home/username/.config/greynoise/config'
+
+    $ greynoise ip 192.223.30.35
+
+    ╔═══════════════════════════╗
+    ║     Community 1 of 1      ║
+    ╚═══════════════════════════╝
+
+    IP: 192.223.30.35
+    NOISE: True
+    RIOT: False
+    Name: unknown
+    Classification: unknown
+    Last seen: 2021-03-18
+    Link: https://viz.greynoise.io/ip/192.223.30.35
+
+
+CLI IP Command
+--------------
+
+::
+
+   $ greynoise ip <ip_address> --api-key "<api_key>" --offering community
+
+API Client
+----------
+
+::
+
+    $ api_client = GreyNoise(api_key=<api_key>, offering="community")
+    $ api_client.ip('192.223.30.35')
+
+    {
+        'ip': '192.223.30.35',
+        'noise': True,
+        'riot': False,
+        'classification': 'unknown',
+        'name': 'unknown',
+        'link': 'https://viz.greynoise.io/ip/192.223.30.35',
+        'last_seen': '2021-03-18',
+        'message': 'Success'
+    }
