@@ -3,7 +3,7 @@ pylint==2.6.2;python_version=='3.5' # pyup: ignore
 pylint==2.7.4;python_version>='3.6'
 twine==3.4.1;python_version>='3.6'
 pytest==6.1.2;python_version=='3.5' # pyup: ignore
-pytest==6.2.2;python_version>='3.6'
+pytest==6.2.3;python_version>='3.6'
 isort==5.8.0;python_version>='3.6'
 isort==4.3.21;python_version=='3.5' # pyup: ignore
 mock==4.0.3;python_version>='3.6'
