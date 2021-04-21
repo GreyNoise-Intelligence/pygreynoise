@@ -198,7 +198,7 @@ def query(
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
-    results = [api_client.query(query=item, size="10") for item in queries]
+    results = [api_client.query(query=item) for item in queries]
     return results
 
 
