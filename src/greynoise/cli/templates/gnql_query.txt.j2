@@ -14,7 +14,7 @@ Additionally, use the stats command to pull just statistics for this query
 {%- if result.data %}
 {%- for ip_context in result.data[:10] %}
 {{ macros.result_header(loop) }}
-{%- include "ip_context_result_query.txt.j2" %}
+{%- include "ip_context_result.txt.j2" %}
 {%- endfor %}
 {% else %}
 No results found for this query.
