@@ -75,7 +75,6 @@ class Analyzer(object):
             for ip_address in text_ip_addresses:
                 result = self.api.riot(ip_address)
                 if result["riot"]:
-                    print("RIOT IP:" + ip_address)
                     riot_ip_addresses.append(result["ip"])
 
             noise_ip_addresses = [
