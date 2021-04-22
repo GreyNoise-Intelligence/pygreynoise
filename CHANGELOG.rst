@@ -2,6 +2,19 @@
 Changelog
 =========
 
+Version `0.9.0`_
+================
+**Date**: April 21, 2021
+
+* API client:
+
+  * Removed rouge debug statement from analysis command
+
+* CLI
+
+  * Fixed query command to display text output for queries with more than 10k results
+    * Query now limits results to 10 on the text output
+
 Version `0.8.0`_
 ================
 **Date**: March 26, 2021
@@ -167,3 +180,4 @@ Version `0.2.0`_
 .. _`0.6.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...0.6.0
 .. _`0.7.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.6.0...0.7.0
 .. _`0.8.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...0.8.0
+.. _`0.9.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.8.0...0.9.0

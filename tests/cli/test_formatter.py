@@ -250,6 +250,8 @@ class TestGNQLQueryFormatter(object):
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
                         Query: <ip_address>
+                        Count of IPs Returned: 1
+
 
                         ┌───────────────────────────┐
                         │       Result 1 of 1       │
