@@ -618,7 +618,7 @@ class TestPCAP(object):
 
 
 class TestQuery(object):
-    """"Query subcommand tests."""
+    """Query subcommand tests."""
 
     def test_query(self, api_client):
         """Run query."""
@@ -994,7 +994,7 @@ class TestSetup(object):
 
 
 class TestStats(object):
-    """"Stats subcommand tests."""
+    """Stats subcommand tests."""
 
     def test_stats(self, api_client):
         """Run stats query."""
