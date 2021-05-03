@@ -306,7 +306,7 @@ class TestFilter(object):
         runner = CliRunner()
 
         api_client.filter.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden\n"
 
@@ -442,7 +442,7 @@ class TestInteresting(object):
         runner = CliRunner()
 
         api_client.interesting.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden\n"
 
@@ -571,7 +571,7 @@ class TestIP(object):
         runner = CliRunner()
 
         api_client.ip.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden\n"
 
@@ -696,7 +696,7 @@ class TestQuery(object):
         runner = CliRunner()
 
         api_client.query.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
@@ -877,7 +877,7 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client.quick.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
@@ -1072,7 +1072,7 @@ class TestStats(object):
         runner = CliRunner()
 
         api_client.stats.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
