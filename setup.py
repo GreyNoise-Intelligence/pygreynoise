@@ -27,7 +27,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name="greynoise",
-    version="0.9.0",
+    version="0.9.1",
     description="Abstraction to interact with GreyNoise API.",
     url="https://greynoise.io/",
     author="GreyNoise Intelligence",
