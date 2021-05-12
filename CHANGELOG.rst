@@ -14,7 +14,6 @@ Version `dev`_
 
   * Updated cachetools to 4.2.2
   * Updated six to 1.16.0
-  * Updated Click to 8.0.0 for py36 and py37
   * Updated jinja2 to 3.0.0 for py36 and py37
 
 Version `0.9.1`_
