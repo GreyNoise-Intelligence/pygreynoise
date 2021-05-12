@@ -2,13 +2,25 @@
 Changelog
 =========
 
+Version `dev`_
+================
+**Date**: unreleased
+
+* API client:
+
+* CLI:
+
+* Dependencies:
+
+  * Updated cachetools to 4.2.2
+  * Updated six to 1.16.0
+  * Updated jinja2 to 3.0.0 for py36 and py37
+
 Version `0.9.1`_
 ================
 **Date**: May 05, 2021
 
-* API client:
-
-* CLI
+* CLI:
 
   * #465: Fixed error handling on expired API key
 
@@ -24,7 +36,7 @@ Version `0.9.0`_
 
   * Removed rouge debug statement from analysis command
 
-* CLI
+* CLI:
 
   * Fixed query command to display text output for queries with more than 10k results
     * Query now limits results to 10 on the text output
@@ -196,3 +208,4 @@ Version `0.2.0`_
 .. _`0.8.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...0.8.0
 .. _`0.9.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.8.0...0.9.0
 .. _`0.9.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.0...0.9.1
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.1...HEAD
