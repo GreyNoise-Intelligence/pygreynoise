@@ -3,6 +3,6 @@ dict2xml==1.7.0;python_version>='3'
 cachetools==4.2.2;python_version>='3'
 structlog==20.1.0;python_version=='3.5' # pyup: ignore
 structlog==21.1.0;python_version>='3.6'
-Click==7.1.2
+Click==8.0.1
 jinja2==2.11.3;python_version=='3.5' # pyup: ignore
 jinja2==3.0.0;python_version>='3.6'
