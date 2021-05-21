@@ -1,4 +1,4 @@
-more-itertools==8.7.0;python_version>='3'
+more-itertools==8.8.0;python_version>='3'
 dict2xml==1.7.0;python_version>='3'
 cachetools==4.2.2;python_version>='3'
 structlog==20.1.0;python_version=='3.5' # pyup: ignore
