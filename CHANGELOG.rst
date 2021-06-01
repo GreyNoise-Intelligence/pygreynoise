@@ -8,13 +8,22 @@ Version `dev`_
 
 * API client:
 
+  * Fixed error handling for both `error` and `message` responses
+  * Implemented ipaddress package for IP validation to prevent non-routable IP addresses from being
+    sent for query to the API
+
 * CLI:
+
+  * Updated warning messages to help identify invalid vs non-routable IPs
 
 * Dependencies:
 
   * Updated cachetools to 4.2.2
   * Updated six to 1.16.0
-  * Updated jinja2 to 3.0.0 for py36 and py37
+  * Updated jinja2 to 3.0.1 for py36 and py37
+  * Updated Click to 8.0.1
+  * Updated click-repl to 0.2.0
+  * Updated more-itertools to 8.8.0
 
 Version `0.9.1`_
 ================

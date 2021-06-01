@@ -106,3 +106,5 @@ ENV/
 # idea
 .idea/
 workspace/
+
+.DS_Store

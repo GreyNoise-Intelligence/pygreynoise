@@ -63,7 +63,12 @@ def handle_exceptions(function):
             return function(*args, **kwargs)
         except RequestFailure as exception:
             body = exception.args[1]
-            error_message = "API error: {}".format(body["message"])
+            if "message" in body:
+                error_message = "API error: {}".format(body["message"])
+            elif "error" in body:
+                error_message = "API error: {}".format(body["error"])
+            else:
+                error_message = "API error: {}".format(body)
             LOGGER.error(error_message)
             click.echo(error_message)
             click.get_current_context().exit(-1)

@@ -148,16 +148,16 @@ class TestAnalyze(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "0.0.0.0", "noise": True},
-                {"ip": "255.255.255.255", "noise": False},
+                {"ip": "8.8.8.8", "noise": True},
+                {"ip": "123.123.123.123", "noise": False},
             ]
         )
-        client.riot = Mock(return_value={"ip": "0.0.0.0", "riot": False})
+        client.riot = Mock(return_value={"ip": "8.8.8.8", "riot": False})
         client.stats = Mock(
             side_effect=[
                 {
                     "count": 1,
-                    "query": "0.0.0.0",
+                    "query": "8.8.8.8",
                     "stats": {
                         "actors": [{"actor": "<actor_1>", "count": 1}],
                         "asns": [{"asn": "<asn_1>", "count": 1}],
@@ -177,7 +177,7 @@ class TestAnalyze(object):
                 },
                 {
                     "count": 1,
-                    "query": "255.255.255.255",
+                    "query": "123.123.123.123",
                     "stats": {
                         "actors": None,  # handle none values as empty lists
                         "asns": [{"asn": "<asn_2>", "count": 1}],
@@ -203,7 +203,7 @@ class TestAnalyze(object):
         "text, expected_output",
         (
             (
-                "0.0.0.0\n255.255.255.255",
+                "8.8.8.8\n123.123.123.123",
                 {
                     "count": 2,
                     "summary": {
@@ -214,7 +214,7 @@ class TestAnalyze(object):
                         "noise_ip_ratio": 0.50,
                         "riot_ip_ratio": 0.0,
                     },
-                    "query": ["0.0.0.0", "255.255.255.255"],
+                    "query": ["8.8.8.8", "123.123.123.123"],
                     "stats": {
                         "actors": [{"actor": "<actor_1>", "count": 1}],
                         "asns": [
@@ -280,8 +280,8 @@ class TestFilter(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "0.0.0.0", "noise": True},
-                {"ip": "255.255.255.255", "noise": False},
+                {"ip": "8.8.8.8", "noise": True},
+                {"ip": "123.123.123.123", "noise": False},
             ]
         )
         yield client
@@ -290,13 +290,13 @@ class TestFilter(object):
         "text, expected_output",
         [
             (
-                "0.0.0.0\n255.255.255.255\nnot an ip address",
-                "<not-noise>255.255.255.255</not-noise>\nnot an ip address",
+                "8.8.8.8\n123.123.123.123\nnot an ip address",
+                "<not-noise>123.123.123.123</not-noise>\nnot an ip address",
             ),
             (
-                "0.0.0.0 255.255.255.255\nnot an ip address",
+                "8.8.8.8 123.123.123.123\nnot an ip address",
                 (
-                    "<noise>0.0.0.0</noise> <not-noise>255.255.255.255</not-noise>\n"
+                    "<noise>8.8.8.8</noise> <not-noise>123.123.123.123</not-noise>\n"
                     "not an ip address"
                 ),
             ),
@@ -311,11 +311,11 @@ class TestFilter(object):
         "text, expected_output",
         [
             (
-                "0.0.0.0\n255.255.255.255\nnot an ip address",
-                "<noise>0.0.0.0</noise>\n",
+                "8.8.8.8\n123.123.123.123\nnot an ip address",
+                "<noise>8.8.8.8</noise>\n",
             ),
             (
-                "0.0.0.0 255.255.255.255\nnot an ip address",
+                "8.8.8.8 123.123.123.123\nnot an ip address",
                 "",
             ),
         ],
@@ -331,7 +331,7 @@ class TestInteresting(object):
 
     def test_interesting(self, client):
         """Report an IP as "interesting"."""
-        ip_address = "0.0.0.0"
+        ip_address = "8.8.8.8"
         expected_response = {}
         client._request = Mock(return_value=expected_response)
         response = client.interesting(ip_address)
@@ -357,7 +357,7 @@ class TestIP(object):
 
     def test_ip(self, client):
         """Get IP address information."""
-        ip_address = "0.0.0.0"
+        ip_address = "8.8.8.8"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
@@ -367,7 +367,7 @@ class TestIP(object):
 
     def test_ip_with_cache(self, client):
         """Get IP address information with cache."""
-        ip_address = "0.0.0.0"
+        ip_address = "8.8.8.8"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
@@ -381,7 +381,7 @@ class TestIP(object):
     def test_ip_without_cache(self, client_without_cache):
         """Get IP address information without cache."""
         client = client_without_cache
-        ip_address = "0.0.0.0"
+        ip_address = "8.8.8.8"
         expected_response = {}
 
         client._request = Mock(return_value=expected_response)
@@ -411,15 +411,15 @@ class TestQuick(object):
         "ip_addresses, expected_request, mock_response, expected_results",
         (
             (
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
                     "noise/multi/quick",
-                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                    json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x01", "ip": "127.0.0.1", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x01", "ip": "67.68.68.79", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
                 [
                     {
@@ -427,7 +427,7 @@ class TestQuick(object):
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip": "0.0.0.0",
+                        "ip": "8.8.8.8",
                         "noise": False,
                     },
                     {
@@ -435,23 +435,23 @@ class TestQuick(object):
                         "code_message": (
                             "IP has been observed by the GreyNoise sensor network"
                         ),
-                        "ip": "127.0.0.1",
+                        "ip": "67.68.68.79",
                         "noise": False,
                     },
                     {
                         "code": "0x99",
                         "code_message": "Code message unknown: 0x99",
-                        "ip": "10.0.0.0",
+                        "ip": "123.123.123.123",
                         "noise": False,
                     },
                 ],
             ),
             (
-                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                ["8.8.8.8", "not-an-ip", "123.123.123.123"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
                 [
                     {
@@ -459,43 +459,43 @@ class TestQuick(object):
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip": "0.0.0.0",
+                        "ip": "8.8.8.8",
                         "noise": False,
                     },
                     {
                         "code": "0x99",
                         "code_message": "Code message unknown: 0x99",
-                        "ip": "10.0.0.0",
+                        "ip": "123.123.123.123",
                         "noise": False,
                     },
                 ],
             ),
             (
-                "0.0.0.0",
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                "8.8.8.8",
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                 [
                     {
                         "code": "0x00",
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip": "0.0.0.0",
+                        "ip": "8.8.8.8",
                         "noise": False,
                     }
                 ],
             ),
             (
-                ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                 [
                     {
                         "code": "0x00",
                         "code_message": (
                             "IP has never been observed scanning the Internet"
                         ),
-                        "ip": "0.0.0.0",
+                        "ip": "8.8.8.8",
                         "noise": False,
                     }
                 ],
@@ -523,34 +523,34 @@ class TestQuick(object):
         "ip_addresses, expected_request, mock_response",
         (
             (
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
                     "noise/multi/quick",
-                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                    json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x01", "ip": "127.0.0.1", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x01", "ip": "67.68.68.79", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
             ),
             (
-                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                ["8.8.8.8", "not-an-ip", "123.123.123.123"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
             ),
             (
-                "0.0.0.0",
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                "8.8.8.8",
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
             (
-                ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
         ),
     )
@@ -570,34 +570,34 @@ class TestQuick(object):
         "ip_addresses, expected_request, mock_response",
         (
             (
-                ["0.0.0.0", "127.0.0.1", "10.0.0.0"],
+                ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
                     "noise/multi/quick",
-                    json={"ips": ["0.0.0.0", "127.0.0.1", "10.0.0.0"]},
+                    json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x01", "ip": "127.0.0.1", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x01", "ip": "67.68.68.79", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
             ),
             (
-                ["0.0.0.0", "not-an-ip", "10.0.0.0"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0", "10.0.0.0"]}),
+                ["8.8.8.8", "not-an-ip", "123.123.123.123"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
                 [
-                    {"code": "0x00", "ip": "0.0.0.0", "noise": False},
-                    {"code": "0x99", "ip": "10.0.0.0", "noise": False},
+                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
             ),
             (
-                "0.0.0.0",
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                "8.8.8.8",
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
             (
-                ["not-an-ip#1", "0.0.0.0", "not-an-ip#2"],
-                call("noise/multi/quick", json={"ips": ["0.0.0.0"]}),
-                {"code": "0x00", "ip": "0.0.0.0", "noise": False},
+                ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
+                call("noise/multi/quick", json={"ips": ["8.8.8.8"]}),
+                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
         ),
     )
