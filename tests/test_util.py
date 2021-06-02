@@ -304,8 +304,7 @@ class TestValidateIP(object):
         """Valid ip address values."""
         validate_ip(ip)
 
-    @pytest.mark.parametrize("ip", (
-        "0.0.0.-1", "255.255.255.256", "not an ip address"))
+    @pytest.mark.parametrize("ip", ("0.0.0.-1", "255.255.255.256", "not an ip address"))
     def test_invalid(self, ip):
         """Invalid ip address values."""
         with pytest.raises(ValueError) as exception:
