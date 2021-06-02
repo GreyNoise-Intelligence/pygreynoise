@@ -1,6 +1,5 @@
 """GreyNoise API client."""
 
-import re
 from collections import OrderedDict
 
 import cachetools
