@@ -1,4 +1,6 @@
 """Utility functions."""
+# unicode_literals needed for py2 support of ipaddress functionality
+from __future__ import unicode_literals
 
 import ipaddress
 import logging
