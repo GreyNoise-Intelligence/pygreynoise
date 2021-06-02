@@ -78,12 +78,6 @@ class GreyNoise(object):
 
     IP_QUICK_CHECK_CHUNK_SIZE = 1000
 
-    IPV4_REGEX = re.compile(
-        r"(?:{octet}\.){{3}}{octet}".format(
-            octet=r"(?:(?:25[0-5])|(?:2[0-4]\d)|(?:1?\d?\d))"
-        )
-    )
-
     def __init__(
         self,
         api_key=None,

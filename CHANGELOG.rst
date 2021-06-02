@@ -6,7 +6,7 @@ Version `1.0.0`_
 ================
 **Date**: June 02, 2021
 
-*** Removed Supported for Python2 - BREAKING CHANGE ***
+*** Removed Support for Python2 - BREAKING CHANGE ***
 
 * API client:
 
