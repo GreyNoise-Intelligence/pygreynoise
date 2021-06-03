@@ -1,8 +1,7 @@
 """Utility functions."""
-
+import ipaddress
 import logging
 import os
-import re
 import sys
 
 import structlog
@@ -57,8 +56,7 @@ def load_config():
     if os.path.isfile(CONFIG_FILE):
         LOGGER.debug("Parsing configuration file: %s...", CONFIG_FILE, path=CONFIG_FILE)
         with open(CONFIG_FILE) as config_file:
-            # cannot update this to read_file() until py27 support is removed
-            config_parser.readfp(config_file)
+            config_parser.read_file(config_file)
     else:
         LOGGER.debug("Configuration file not found: %s", CONFIG_FILE, path=CONFIG_FILE)
 
@@ -160,16 +158,25 @@ def validate_ip(ip_address, strict=True):
     :raises ValueError: When validation fails and strict is set to True.
 
     """
+    is_valid = False
 
-    valid_ip_regex = (
-        r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|"
-        r"2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-    )
-    if re.match(valid_ip_regex, ip_address):
-        return True
-    else:
+    try:
+        ipaddress.ip_address(ip_address)
+        is_valid = True
+    except ValueError:
         error_message = "Invalid IP address: {!r}".format(ip_address)
         LOGGER.warning(error_message, ip_address=ip_address)
         if strict:
             raise ValueError(error_message)
         return False
+
+    if is_valid:
+        is_routable = ipaddress.ip_address(ip_address).is_global
+        if is_routable:
+            return True
+        else:
+            error_message = "Non-Routable IP address: {!r}".format(ip_address)
+            LOGGER.warning(error_message, ip_address=ip_address)
+            if strict:
+                raise ValueError(error_message)
+            return False

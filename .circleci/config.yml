@@ -9,9 +9,6 @@ workflows:
   version: 2
   build:
     jobs:
-      - py27:
-          filters:
-            <<: *TAGS_FILTER
       - py35:
           filters:
             <<: *TAGS_FILTER
@@ -29,7 +26,6 @@ workflows:
       - pypi:
           requires:
             # release to pypi only when test cases pass in all python versions
-            - py27
             - py35
             - py36
             - py37
@@ -57,11 +53,6 @@ DEFAULT_STEPS: &DEFAULT_STEPS
       path: workspace/test_results
 
 jobs:
-  py27:
-    docker:
-      - image: circleci/python:2.7
-    steps: *DEFAULT_STEPS
-
   py35:
     docker:
       - image: circleci/python:3.5

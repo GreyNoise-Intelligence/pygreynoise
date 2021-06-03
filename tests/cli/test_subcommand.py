@@ -357,7 +357,7 @@ class TestHelp(object):
 class TestInteresting(object):
     """Interesting subcommand test cases."""
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_interesting(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting"."""
         runner = CliRunner()
@@ -369,7 +369,7 @@ class TestInteresting(object):
         assert result.output == ""
         api_client.interesting.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_input_file(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting" from input file."""
         runner = CliRunner()
@@ -381,7 +381,7 @@ class TestInteresting(object):
         assert result.output == ""
         api_client.interesting.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_stdin_input(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting" from stdin."""
         runner = CliRunner()
@@ -446,7 +446,7 @@ class TestInteresting(object):
         )
         expected = "API error: forbidden\n"
 
-        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
         assert result.output == expected
 
@@ -456,7 +456,7 @@ class TestInteresting(object):
         expected = "API error: <error message>\n"
 
         api_client.interesting.side_effect = RequestException("<error message>")
-        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
         assert result.output == expected
 
@@ -468,7 +468,7 @@ class TestInteresting(object):
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
                 subcommand.interesting,
-                ["0.0.0.0"],
+                ["8.8.8.8"],
                 parent=Context(main, info_name="greynoise"),
             )
             assert result.exit_code == -1
@@ -478,7 +478,7 @@ class TestInteresting(object):
 class TestIP(object):
     """IP subcommand tests."""
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_ip(self, api_client, ip_address, expected_response):
         """Get IP address information."""
         runner = CliRunner()
@@ -492,7 +492,7 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_input_file(self, api_client, ip_address, expected_response):
         """Get IP address information from input file."""
         runner = CliRunner()
@@ -508,7 +508,7 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_stdin_input(self, api_client, ip_address, expected_response):
         """Get IP address information from stdin."""
         runner = CliRunner()
@@ -575,7 +575,7 @@ class TestIP(object):
         )
         expected = "API error: forbidden\n"
 
-        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
+        result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
         assert result.output == expected
 
@@ -585,7 +585,7 @@ class TestIP(object):
         expected = "API error: <error message>\n"
 
         api_client.ip.side_effect = RequestException("<error message>")
-        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
+        result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
         assert result.output == expected
 
@@ -596,7 +596,7 @@ class TestIP(object):
         with patch("greynoise.cli.decorator.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
-                subcommand.ip, ["0.0.0.0"], parent=Context(main, info_name="greynoise")
+                subcommand.ip, ["8.8.8.8"], parent=Context(main, info_name="greynoise")
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
@@ -726,27 +726,27 @@ class TestQuick(object):
         "ip_address, output_format, expected",
         (
             (
-                "0.0.0.0",
+                "8.8.8.8",
                 "json",
                 json.dumps(
-                    [{"ip": "0.0.0.0", "noise": True}], indent=4, sort_keys=True
+                    [{"ip": "8.8.8.8", "noise": True}], indent=4, sort_keys=True
                 ),
             ),
             (
-                "0.0.0.0",
+                "8.8.8.8",
                 "xml",
                 textwrap.dedent(
                     """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
-                    \t\t<ip>0.0.0.0</ip>
+                    \t\t<ip>8.8.8.8</ip>
                     \t\t<noise>True</noise>
                     \t</item>
                     </root>"""
                 ),
             ),
-            ("0.0.0.0", "txt", "0.0.0.0 is classified as NOISE."),
+            ("8.8.8.8", "txt", "8.8.8.8 is classified as NOISE."),
         ),
     )
     def test_quick(self, api_client, ip_address, output_format, expected):
@@ -766,15 +766,15 @@ class TestQuick(object):
         "ip_addresses, mock_response, expected",
         (
             (
-                ["0.0.0.0", "0.0.0.1"],
+                ["8.8.8.8", "8.8.8.9"],
                 [
-                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
-                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
                 ],
                 json.dumps(
                     [
-                        {"ip": "0.0.0.0", "noise": True},
-                        {"ip": "0.0.0.1", "noise": False},
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
                     ],
                     indent=4,
                     sort_keys=True,
@@ -799,15 +799,15 @@ class TestQuick(object):
         "ip_addresses, mock_response, expected",
         (
             (
-                ["0.0.0.0", "0.0.0.1"],
+                ["8.8.8.8", "8.8.8.9"],
                 [
-                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
-                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
                 ],
                 json.dumps(
                     [
-                        {"ip": "0.0.0.0", "noise": True},
-                        {"ip": "0.0.0.1", "noise": False},
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
                     ],
                     indent=4,
                     sort_keys=True,
@@ -841,7 +841,7 @@ class TestQuick(object):
         assert "Usage: greynoise quick" in result.output
         api_client.quick.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
@@ -881,7 +881,7 @@ class TestQuick(object):
         )
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.quick, ["0.0.0.0"])
+        result = runner.invoke(subcommand.quick, ["8.8.8.8"])
         assert result.exit_code == -1
         assert expected in result.output
 
@@ -893,7 +893,7 @@ class TestQuick(object):
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
                 subcommand.quick,
-                ["0.0.0.0"],
+                ["8.8.8.8"],
                 parent=Context(main, info_name="greynoise"),
             )
             assert result.exit_code == -1
