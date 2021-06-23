@@ -148,8 +148,8 @@ class TestAnalyze(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "8.8.8.8", "noise": True},
-                {"ip": "123.123.123.123", "noise": False},
+                {"ip": "8.8.8.8", "noise": True, "riot": False},
+                {"ip": "123.123.123.123", "noise": False, "riot": False},
             ]
         )
         client.riot = Mock(return_value={"ip": "8.8.8.8", "riot": False})
@@ -280,8 +280,8 @@ class TestFilter(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "8.8.8.8", "noise": True},
-                {"ip": "123.123.123.123", "noise": False},
+                {"ip": "8.8.8.8", "noise": True, "riot": True},
+                {"ip": "123.123.123.123", "noise": False, "riot": False},
             ]
         )
         yield client

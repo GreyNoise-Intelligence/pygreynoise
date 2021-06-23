@@ -87,10 +87,15 @@ def feedback():
 @click.option(
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
+@click.option(
+    "--riot-only", is_flag=True, help="Select lines containing RIOT addresses"
+)
 @pass_api_client
 @click.pass_context
 @handle_exceptions
-def filter(context, api_client, api_key, input_file, output_file, noise_only):
+def filter(
+    context, api_client, api_key, input_file, output_file, noise_only, riot_only
+):
     """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
@@ -108,7 +113,9 @@ def filter(context, api_client, api_key, input_file, output_file, noise_only):
     if output_file is None:
         output_file = click.open_file("-", mode="w")
 
-    for chunk in api_client.filter(input_file, noise_only=noise_only):
+    for chunk in api_client.filter(
+        input_file, noise_only=noise_only, riot_only=riot_only
+    ):
         output_file.write(ANSI_MARKUP(chunk))
 
 
@@ -136,12 +143,6 @@ def interesting(context, api_client, api_key, input_file, ip_address):
 
 
 @ip_lookup_command
-@click.option(
-    "-O",
-    "--offering",
-    help="Which API offering to use, enterprise or community, "
-    "defaults to enterprise",
-)
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 def ip(
     context,
@@ -203,12 +204,6 @@ def query(
 
 
 @ip_lookup_command
-@click.option(
-    "-O",
-    "--offering",
-    help="Which API offering to use, enterprise or community, "
-    "defaults to enterprise",
-)
 def quick(
     context,
     api_client,

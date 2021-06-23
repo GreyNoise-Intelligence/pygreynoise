@@ -242,7 +242,9 @@ class TestFilter(object):
         result = runner.invoke(subcommand.filter, ["-i", input_text])
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
-        api_client.filter.assert_called_with(input_text, noise_only=False)
+        api_client.filter.assert_called_with(
+            input_text, noise_only=False, riot_only=False
+        )
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -261,7 +263,10 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": False}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": False,
+        }
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -280,7 +285,32 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": True}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": True,
+            "riot_only": False,
+        }
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_riot_only(self, api_client, text, expected_output):
+        """Filter text with IP addresses from stdin using riot only flag."""
+        runner = CliRunner()
+
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, ["--riot-only"], input=text)
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        assert api_client.filter.call_args[0][0].read() == text
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": True,
+        }
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -299,7 +329,10 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": False}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": False,
+        }
 
     def test_request_failure(self, api_client):
         """Error is displayed on API request failure."""

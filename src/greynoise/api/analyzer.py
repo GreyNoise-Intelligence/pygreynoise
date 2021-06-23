@@ -66,20 +66,14 @@ class Analyzer(object):
             )
 
         if text_ip_addresses:
-            noise_ip_addresses = {
-                result["ip"]
-                for result in self.api.quick(text_ip_addresses)
-                if result["noise"]
-            }
+            noise_ip_addresses = []
             riot_ip_addresses = []
-            for ip_address in text_ip_addresses:
-                result = self.api.riot(ip_address)
+
+            for result in self.api.quick(text_ip_addresses):
+                if result["noise"]:
+                    noise_ip_addresses.append(result["ip"])
                 if result["riot"]:
                     riot_ip_addresses.append(result["ip"])
-
-            noise_ip_addresses = [
-                ip for ip in noise_ip_addresses if ip not in riot_ip_addresses
-            ]
 
         else:
             noise_ip_addresses = set()

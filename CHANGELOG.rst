@@ -2,6 +2,23 @@
 Changelog
 =========
 
+Version `dev`_
+================
+**Date**: unreleased
+
+* API client:
+
+  * Update filter command to use new quick endpoint with noise/riot updates
+  * Update analyze command to use new quick endpoint with noise/riot updates
+
+* CLI:
+
+  * Update quick command to handle quick endpoint noise/riot updates
+
+* Dependencies:
+
+  * Updated Click to 8.0.1
+
 Version `1.0.0`_
 ================
 **Date**: June 02, 2021
@@ -23,7 +40,6 @@ Version `1.0.0`_
   * Updated cachetools to 4.2.2
   * Updated six to 1.16.0
   * Updated jinja2 to 3.0.1 for py36 and py37
-  * Updated Click to 8.0.1
   * Updated click-repl to 0.2.0
   * Updated more-itertools to 8.8.0
 
@@ -220,3 +236,4 @@ Version `0.2.0`_
 .. _`0.9.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.8.0...0.9.0
 .. _`0.9.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.0...0.9.1
 .. _`1.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.1...1.0.0
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.0.0...HEAD
