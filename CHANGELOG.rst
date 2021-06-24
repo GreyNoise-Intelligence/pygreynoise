@@ -14,6 +14,7 @@ Version `1.1.0`_
 * CLI:
 
   * Update quick command to handle quick endpoint noise/riot updates
+  * Add support for RIOT trust_level output
 
 * Dependencies:
 
