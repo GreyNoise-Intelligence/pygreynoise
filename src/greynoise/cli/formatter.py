@@ -5,9 +5,9 @@ from __future__ import print_function
 
 import functools
 import json
+import shutil
 
 import ansimarkup
-import click
 import colorama
 from dict2xml import dict2xml
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -26,7 +26,7 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "value": ansimarkup.parse("<green>"),
         "noise": ansimarkup.parse("<light-yellow>"),
         "not-noise": ansimarkup.parse(DIM),
-        "riot": ansimarkup.parse("<light-yellow>"),
+        "riot": ansimarkup.parse("<magenta>"),
         "not-riot": ansimarkup.parse(DIM),
         "malicious": ansimarkup.parse("<light-red>"),
         "unknown": ansimarkup.parse(DIM),
@@ -135,7 +135,7 @@ def gnql_query_formatter(results, verbose):
 def gnql_stats_formatter(results, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
@@ -143,7 +143,7 @@ def gnql_stats_formatter(results, verbose):
 def analyze_formatter(result, verbose):
     """Conver analyze result into human-readable text."""
     template = JINJA2_ENV.get_template("analyze.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(result=result, verbose=verbose, max_width=max_width)
 
 
@@ -151,7 +151,7 @@ def analyze_formatter(result, verbose):
 def riot_formatter(results, verbose):
     """Convert RIOT to human-readable text."""
     template = JINJA2_ENV.get_template("riot.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
@@ -159,7 +159,7 @@ def riot_formatter(results, verbose):
 def interesting_formatter(results, verbose):
     """Convert RIOT to human-readable text."""
     template = JINJA2_ENV.get_template("interesting.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 

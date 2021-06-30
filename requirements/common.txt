@@ -1,4 +1,4 @@
-Click==7.1.2
+Click==8.0.1
 ansimarkup==1.4.0
 cachetools==4.2.2;python_version>='3'
 click-default-group==1.2.2

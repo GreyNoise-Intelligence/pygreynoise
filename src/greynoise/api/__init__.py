@@ -73,6 +73,8 @@ class GreyNoise(object):
             "IP was classified as noise, but has not been observed "
             "engaging in Internet-wide scans or attacks in over 60 days"
         ),
+        "0x09": "IP was found in RIOT",
+        "0x10": "IP has been observed by the GreyNoise sensor network and is in RIOT",
         "404": "IP is Invalid",
     }
 
@@ -227,7 +229,7 @@ class GreyNoise(object):
             analyzer = Analyzer(self)
             return analyzer.analyze(text)
 
-    def filter(self, text, noise_only=False):
+    def filter(self, text, noise_only=False, riot_only=False):
         """Filter lines that contain IP addresses from a given text.
 
         :param text: Text input
@@ -236,12 +238,18 @@ class GreyNoise(object):
             If set, return only lines that contain IP addresses classified as noise,
             otherwise, return lines that contain IP addresses not classified as noise.
         :type noise_only: bool
+        :param riot_only:
+            If set, return only lines that contain IP addresses in RIOT,
+            otherwise, return lines that contain IP addresses not in RIOT.
+        :type riot_only: bool
         :return: Iterator that yields lines in chunks
         :rtype: iterable
 
         """
         filter = Filter(self)
-        for filtered_chunk in filter.filter(text, noise_only=noise_only):
+        for filtered_chunk in filter.filter(
+            text, noise_only=noise_only, riot_only=riot_only
+        ):
             yield filtered_chunk
 
     def interesting(self, ip_address):

@@ -378,12 +378,14 @@ class TestRIOTFormatter(object):
                         "explanation": "<explanation>",
                         "last_updated": "<last_updated>",
                         "reference": "<reference>",
+                        "trust_level": "<trust_level>",
                     }
                 ],
                 ANSI_MARKUP.parse(
                     "<riot>0.0.0.0</riot> is in RIOT dataset. "
                     "Name: <value><name></value> "
                     "Category: <value><category></value> "
+                    "Trust Level: <value><trust_level></value> "
                     "Last Updated: <value><last_updated></value>"
                 ),
             ),
@@ -414,6 +416,7 @@ class TestRIOTFormatter(object):
                         "explanation": "<explanation>",
                         "last_updated": "<last_updated>",
                         "reference": "<reference>",
+                        "trust_level": "<trust_level>",
                     }
                 ],
                 ANSI_MARKUP.parse(
@@ -426,6 +429,7 @@ class TestRIOTFormatter(object):
                     <key>IP</key>: <value>0.0.0.0</value>
                     <key>RIOT</key>: <value>True</value>
                     <key>Category</key>: <value><category></value>
+                    <key>Trust Level</key>: <value><trust_level></value>
                     <key>Name</key>: <value><name></value>
                     <key>Description</key>: <value><description></value>
                     <key>Explanation</key>: <value><explanation></value>
