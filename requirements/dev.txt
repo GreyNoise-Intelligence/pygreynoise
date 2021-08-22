@@ -3,4 +3,4 @@
 advbumpversion==1.2.0
 ipython==7.25.0;python_version>='3'
 pre-commit==2.13.0
-tox==3.23.1
+tox==3.24.3
