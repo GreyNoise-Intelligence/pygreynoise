@@ -118,6 +118,13 @@ def ip_quick_check_formatter(results, verbose):
 
 
 @colored_output
+def ip_multi_context_formatter(results, verbose):
+    """Convert IP multi context result into human-readable text."""
+    template = JINJA2_ENV.get_template("ip_multi_context.txt.j2")
+    return template.render(results=results, verbose=verbose)
+
+
+@colored_output
 def gnql_query_formatter(results, verbose):
     """Convert GNQL query result into human-readable text."""
     for result in results:
@@ -174,5 +181,6 @@ FORMATTERS = {
         "stats": gnql_stats_formatter,
         "riot": riot_formatter,
         "interesting": interesting_formatter,
+        "ip-multi": ip_multi_context_formatter,
     },
 }

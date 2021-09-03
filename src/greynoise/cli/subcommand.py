@@ -195,11 +195,15 @@ def query(
     output_format,
     verbose,
     query,
+    size,
+    scroll,
     offering,
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
-    results = [api_client.query(query=item) for item in queries]
+    results = [
+        api_client.query(query=item, size=size, scroll=scroll) for item in queries
+    ]
     return results
 
 
@@ -219,6 +223,30 @@ def quick(
     results = []
     if ip_addresses:
         results.extend(api_client.quick(ip_addresses=ip_addresses))
+    return results
+
+
+@ip_lookup_command
+def ip_multi(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    ip_address,
+    offering,
+):
+    """
+    Perform Context lookup for multiple IPs at once.\n
+    Example: greynoise ip-multi 1.1.1.1 2.2.2.2 3.3.3.3\n
+    Example: greynoise ip-multi 1.1.1.1,2.2.2.2,3.3.3.3\n
+    Example: greynoise ip-multi -i <filename>
+    """
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = []
+    if ip_addresses:
+        results.extend(api_client.ip_multi(ip_addresses=ip_addresses))
     return results
 
 
@@ -276,6 +304,8 @@ def stats(
     output_format,
     verbose,
     query,
+    size,
+    scroll,
     offering,
 ):
     """Get aggregate stats from a given GNQL query."""

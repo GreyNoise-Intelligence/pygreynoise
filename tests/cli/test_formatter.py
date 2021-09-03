@@ -238,6 +238,7 @@ class TestGNQLQueryFormatter(object):
                     {
                         "complete": True,
                         "count": 1,
+                        "scroll": "abcdefg",
                         "data": [EXAMPLE_IP_CONTEXT],
                         "message": "ok",
                         "query": "<ip_address>",
@@ -251,6 +252,7 @@ class TestGNQLQueryFormatter(object):
                         ╚═══════════════════════════╝
                         Query: <ip_address>
                         Count of IPs Returned: 1
+                        Scroll Token: abcdefg
 
 
                         ┌───────────────────────────┐

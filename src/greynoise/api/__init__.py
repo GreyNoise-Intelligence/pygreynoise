@@ -45,6 +45,7 @@ class GreyNoise(object):
     EP_INTERESTING = "interesting/{ip_address}"
     EP_NOISE_MULTI = "noise/multi/quick"
     EP_NOISE_CONTEXT = "noise/context/{ip_address}"
+    EP_NOISE_CONTEXT_MULTI = "noise/multi/context"
     EP_COMMUNITY_IP = "v3/community/{ip_address}"
     EP_META_METADATA = "meta/metadata"
     EP_PING = "ping"
@@ -412,16 +413,106 @@ class GreyNoise(object):
                         results.append(result)
 
             [
-                results.append({"ip": ip, "noise": False, "code": "404"})
+                results.append({"ip": ip, "noise": False, "riot": False, "code": "404"})
                 for ip in ip_addresses
                 if ip not in valid_ip_addresses and include_invalid
             ]
-
             for result in results:
                 code = result["code"]
                 result["code_message"] = self.CODE_MESSAGES.get(
                     code, self.UNKNOWN_CODE_MESSAGE.format(code)
                 )
+            return results
+
+    def ip_multi(self, ip_addresses, include_invalid=False):  # noqa: C901
+        """Get activity associated with one or more IP addresses.
+
+        :param ip_addresses: One or more IP addresses to use in the look-up.
+        :type ip_addresses: str | list
+        :return: Bulk status information for IP addresses.
+        :rtype: dict
+
+        :param include_invalid: True or False
+        :type include_invalid: bool
+
+        """
+        if self.offering == "community":
+            response = [
+                {"message": "IP Multi Lookup not supported with Community offering"}
+            ]
+            return response
+        else:
+            if isinstance(ip_addresses, str):
+                ip_addresses = ip_addresses.split(",")
+
+            LOGGER.debug("Getting noise context...", ip_addresses=ip_addresses)
+
+            valid_ip_addresses = [
+                ip_address
+                for ip_address in ip_addresses
+                if validate_ip(ip_address, strict=False)
+            ]
+
+            if self.use_cache:
+                cache = self.ip_context_cache
+                # Keep the same ordering as in the input
+                ordered_results = OrderedDict(
+                    (ip_address, cache.get(ip_address))
+                    for ip_address in valid_ip_addresses
+                )
+                api_ip_addresses = [
+                    ip_address
+                    for ip_address, result in ordered_results.items()
+                    if result is None
+                ]
+                if api_ip_addresses:
+                    api_results = []
+                    chunks = more_itertools.chunked(
+                        api_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                    )
+                    for chunk in chunks:
+                        api_result = self._request(
+                            self.EP_NOISE_CONTEXT_MULTI,
+                            method="post",
+                            json={"ips": chunk},
+                        )
+
+                        api_result = api_result["data"]
+
+                        if isinstance(api_result, list):
+                            api_results.extend(api_result)
+                        else:
+                            api_results.append(api_result)
+
+                    for api_result in api_results:
+                        ip_address = api_result["ip"]
+
+                        ordered_results[ip_address] = cache.setdefault(
+                            ip_address, api_result
+                        )
+
+                results = list(ordered_results.values())
+
+            else:
+                results = []
+                chunks = more_itertools.chunked(
+                    valid_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
+                )
+                for chunk in chunks:
+                    result = self._request(
+                        self.EP_NOISE_CONTEXT_MULTI, json={"ips": chunk}
+                    )
+                    if isinstance(result, list):
+                        results.extend(result)
+                    else:
+                        results.append(result)
+
+            [
+                results.append({"ip": ip, "seen": False})
+                for ip in ip_addresses
+                if ip not in valid_ip_addresses and include_invalid
+            ]
+
             return results
 
     def stats(self, query, count=None):
