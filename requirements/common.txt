@@ -11,4 +11,4 @@ more-itertools==8.8.0;python_version>='3'
 requests==2.25.1
 six==1.16.0
 structlog==20.1.0;python_version=='3.5' # pyup: ignore
-structlog==21.1.0;python_version>='3.6'
+structlog==21.2.0;python_version>='3.6'
