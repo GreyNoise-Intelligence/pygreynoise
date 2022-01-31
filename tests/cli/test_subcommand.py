@@ -81,7 +81,7 @@ class TestAnalyze(object):
         },
     }
     DEFAULT_OUTPUT = textwrap.dedent(
-        u"""\
+        """\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
