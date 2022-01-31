@@ -20,8 +20,12 @@ Version `1.2.0`_
 * Dependencies:
 
   * Added colorama dependency
-  * Updated more-itertools to 8.9.0
-  * Updated requests to 2.26.0
+  * Update Click to 8.0.3
+  * Updated cachetools to 5.0.0
+  * Updated jinja to 3.0.3
+  * Updated more-itertools to 8.12.0
+  * Updated requests to 2.27.1
+  * Updated structlog to 21.5.0
 
 Version `1.1.0`_
 ================

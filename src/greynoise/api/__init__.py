@@ -484,11 +484,15 @@ class GreyNoise(object):
                         else:
                             api_results.append(api_result)
 
-                    for api_result in api_results:
-                        ip_address = api_result["ip"]
+                        for ip in valid_ip_addresses:
+                            if ip not in api_results:
+                                api_results.append({"ip": ip, "seen": False})
+
+                    for result in api_results:
+                        ip_address = result["ip"]
 
                         ordered_results[ip_address] = cache.setdefault(
-                            ip_address, api_result
+                            ip_address, result
                         )
 
                 results = list(ordered_results.values())
