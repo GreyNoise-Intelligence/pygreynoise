@@ -65,6 +65,6 @@
 {%- elif ip_multi_context.error %}
 {{ ip_multi_context.error }}
 {% else %}
-{{ ip_multi_context.ip }} has not been seen in scans in the past 30 days.
-{% endif %}
+<not-noise>{{ ip_multi_context.ip }}</not-noise> is classified as <bold>NOT NOISE</bold>.
+{%- endif %}
 {%- endfor %}
