@@ -963,7 +963,7 @@ class TestIPMulti(object):
             (
                 "8.8.8.8",
                 "txt",
-                "8.8.8.8 has not been seen in scans in the past 30 days.",
+                "8.8.8.8 is classified as NOT NOISE.",
             ),
         ),
     )
