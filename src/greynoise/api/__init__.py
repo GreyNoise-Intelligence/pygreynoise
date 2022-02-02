@@ -154,9 +154,11 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if params is None:
             params = {}
 
-        user_agent_parts = [f"GreyNoise/{__version__}"]
+        user_agent_parts = ["GreyNoise/{}".format(__version__)]  # pylint: disable=C0209
         if self.integration_name:
-            user_agent_parts.append(f"({self.integration_name})")
+            user_agent_parts.append(
+                "({})".format(self.integration_name)
+            )  # pylint: disable=C0209
         headers = {
             "User-Agent": " ".join(user_agent_parts),
             "key": self.api_key,
@@ -339,9 +341,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def quick(
-        self, ip_addresses, include_invalid=False
-    ):  # pylint: disable=R0912,R0914
+    def quick(self, ip_addresses, include_invalid=False):  # pylint: disable=R0912,R0914
         """Get activity associated with one or more IP addresses.
 
         :param ip_addresses: One or more IP addresses to use in the look-up.
@@ -435,9 +435,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def ip_multi(
-        self, ip_addresses, include_invalid=False
-    ):  # pylint: disable=R0912
+    def ip_multi(self, ip_addresses, include_invalid=False):  # pylint: disable=R0912
         """Get activity associated with one or more IP addresses.
 
         :param ip_addresses: One or more IP addresses to use in the look-up.
