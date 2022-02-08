@@ -366,7 +366,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             valid_ip_addresses = [
                 ip_address
                 for ip_address in ip_addresses
-                if validate_ip(ip_address, strict=False)
+                if validate_ip(ip_address, strict=False, print_warning=False)
             ]
 
             if self.use_cache:
@@ -460,7 +460,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             valid_ip_addresses = [
                 ip_address
                 for ip_address in ip_addresses
-                if validate_ip(ip_address, strict=False)
+                if validate_ip(ip_address, strict=False, print_warning=False)
             ]
 
             if self.use_cache:

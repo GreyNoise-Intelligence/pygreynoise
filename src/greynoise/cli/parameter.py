@@ -19,7 +19,7 @@ def ip_addresses_parameter(_context, _parameter, values):
             if "," in value:
                 split_value = value.split(",")
                 for item in split_value:
-                    validate_ip(item)
+                    validate_ip(item, strict=False)
                     valid_ips.append(item)
             else:
                 validate_ip(value)
