@@ -16,6 +16,7 @@ Version `1.2.0`_
   * Add ip-multi command to support bulk IP Context lookups
   * Add support for comma separated IP lists for ip-multi and quick commands
   * Add size and scroll arguments for query and stats command
+  * Update quick command to not error completely when non-routable IP is passed as an input in a list
 
 * Dependencies:
 
