@@ -90,6 +90,8 @@ venv/
 venv_py2/
 venv3/
 ENV/
+bin/
+pyvenv.cfg
 
 # Spyder project settings
 .spyderproject

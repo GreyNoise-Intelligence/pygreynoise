@@ -15,4 +15,6 @@ In particular, it will allow you to:
 
 - get a list of noise IP address found in a given date.
 
-.. _GreyNoise API: https://developer.greynoise.io/reference
+- check if an IP address belongs to a common business service
+
+.. _GreyNoise API: https://docs.greynoise.io/reference

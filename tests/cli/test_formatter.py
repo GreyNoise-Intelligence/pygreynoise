@@ -162,7 +162,7 @@ class TestIPContextFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
@@ -174,7 +174,7 @@ class TestIPContextFormatter(object):
                 + EXAMPLE_IP_CONTEXT_OUTPUT
                 + ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""
+                        """
 
 
                         ╔═══════════════════════════╗
@@ -238,6 +238,7 @@ class TestGNQLQueryFormatter(object):
                     {
                         "complete": True,
                         "count": 1,
+                        "scroll": "abcdefg",
                         "data": [EXAMPLE_IP_CONTEXT],
                         "message": "ok",
                         "query": "<ip_address>",
@@ -245,12 +246,13 @@ class TestGNQLQueryFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
                         Query: <ip_address>
                         Count of IPs Returned: 1
+                        Scroll Token: abcdefg
 
 
                         ┌───────────────────────────┐
@@ -318,7 +320,7 @@ class TestGNQLStatsFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -421,7 +423,7 @@ class TestRIOTFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                     <riot>0.0.0.0</riot> is in RIOT dataset.
 
                               <header>OVERVIEW</header>

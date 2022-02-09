@@ -2,6 +2,32 @@
 Changelog
 =========
 
+Version `1.2.0`_
+================
+**Date**: September 03, 2021
+
+* API client:
+
+  * Add ip_multi command to support bulk IP Context lookups
+  * Fix issue with "include_invalid" option on quick command failing with "riot" key missing
+
+* CLI:
+
+  * Add ip-multi command to support bulk IP Context lookups
+  * Add support for comma separated IP lists for ip-multi and quick commands
+  * Add size and scroll arguments for query and stats command
+  * Update quick command to not error completely when non-routable IP is passed as an input in a list
+
+* Dependencies:
+
+  * Added colorama dependency
+  * Update Click to 8.0.3
+  * Updated cachetools to 5.0.0
+  * Updated jinja to 3.0.3
+  * Updated more-itertools to 8.12.0
+  * Updated requests to 2.27.1
+  * Updated structlog to 21.5.0
+
 Version `1.1.0`_
 ================
 **Date**: June 23, 2021
@@ -238,3 +264,4 @@ Version `0.2.0`_
 .. _`0.9.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.0...0.9.1
 .. _`1.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.1...1.0.0
 .. _`1.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.0.0...1.1.0
+.. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0

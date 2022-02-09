@@ -136,21 +136,89 @@ Detailed context information for any given IP address is also available::
       }
     }
 
+When there's a list of IP addresses to get full context from, they can be checked all at once like
+this (this method also supports the include_invalid flag::
+
+    >>> api_client.ip_multi(['8.8.8.8', '58.220.219.247'])
+      [
+    {
+      'ip': '8.8.8.8',
+      'first_seen': '',
+      'last_seen': '',
+      'seen': False,
+      'tags': None,
+      'actor': '',
+      'spoofable': False,
+      'classification': '',
+      'cve': None,
+      'bot': False,
+      'vpn': False,
+      'vpn_service': '',
+      'metadata': {
+        'asn': '',
+        'city': '',
+        'country': '',
+        'country_code': '',
+        'organization': '',
+        'category': '',
+        'tor': False,
+        'rdns': '',
+        'os': ''
+      },
+      'raw_data': {
+        'scan': [],
+        'web': {},
+        'ja3': [],
+        'hassh': []
+      }
+    },
+    {
+      'ip': '58.220.219.247',
+      'first_seen': '',
+      'last_seen': '',
+      'seen': False,
+      'tags': None,
+      'actor': '',
+      'spoofable': False,
+      'classification': '',
+      'cve': None,
+      'bot': False,
+      'vpn': False,
+      'vpn_service': '',
+      'metadata': {
+        'asn': '',
+        'city': '',
+        'country': '',
+        'country_code': '',
+        'organization': '',
+        'category': '',
+        'tor': False,
+        'rdns': '',
+        'os': ''
+      },
+      'raw_data': {
+        'scan': [],
+        'web': {},
+        'ja3': [],
+        'hassh': []
+      }
+    }
+  ]
+
 Any IP can also be checked to see if it exists within the RIOT dataset::
 
-    >>> api_client.riot('58.220.219.247')
+    >>> api_client.riot('8.8.8.8')
     {
-        'ip': '8.8.8.8',
-        'riot': True,
-        'category': 'public_dns',
-        'name': 'Google Public DNS',
-        'description': "Google's global domain name system (DNS) resolution service.",
-        'explanation': "Public DNS services are used as alternatives to ISP's name servers. You may
-        see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP
-        to resolve DNS lookups.",
-        'last_updated': '2021-01-06T01:56:45Z',
-        'logo_url': 'https://www.gstatic.com/devrel-devsite/prod/v9d82702993bc22f782b7874a0f933b5e39c1f0889acab7d1fce0d6deb8e0f63d/cloud/images/cloud-logo.svg',
-        'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative'
+      'ip': '8.8.8.8',
+      'riot': True,
+      'category': 'public_dns',
+      'name': 'Google Public DNS',
+      'description': "Google's global domain name system (DNS) resolution service.",
+      'explanation': "Public DNS services are used as alternatives to ISP's name servers. You may see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP to resolve DNS lookups.",
+      'last_updated': '2022-02-08T18:58:27Z',
+      'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+      'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative',
+      'trust_level': '1'
     }
 
 .. note::
@@ -505,7 +573,7 @@ Internet as follows::
    58.220.219.247 is classified as NOISE.
 
 When there's a list of IP addresses to verify, they can be checked all at once like
-this::
+this (a comma seperated list is also supported::
 
    $ greynoise quick 8.8.8.8 58.220.219.247
    8.8.8.8 is classified as NOT NOISE.
@@ -547,6 +615,44 @@ Detailed context information for any given IP address is also available::
    - Port/Proto: 1433/TCP
    - Port/Proto: 3389/TCP
    - Port/Proto: 65529/TCP
+
+When there's a list of IP addresses to verify, they can be checked all at once like
+this (a comma seperated list is also supported::
+
+   $ greynoise ip-multi 8.8.8.8 58.220.219.247
+          OVERVIEW
+    ----------------------------
+    Actor: unknown
+    Classification: malicious
+    First seen: 2020-12-21
+    IP: 42.230.170.174
+    Last seen: 2022-02-08
+    Tags:
+    - Mirai
+
+              METADATA
+    ----------------------------
+    ASN: AS4837
+    Category: isp
+    Location:
+    Region: Heilongjiang
+    Organization: CHINA UNICOM China169 Backbone
+    OS: Linux 2.2-3.x
+    rDNS: hn.kd.ny.adsl
+    Spoofable: False
+    Tor: False
+
+              RAW DATA
+    ----------------------------
+    [Scan]
+    - Port/Proto: 23/TCP
+    - Port/Proto: 8080/TCP
+
+    [Paths]
+    - /setup.cgi
+
+    8.8.8.8 is classified as NOT NOISE.
+
 
 
 GNQL

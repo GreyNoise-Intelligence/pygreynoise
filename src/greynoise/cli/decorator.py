@@ -136,6 +136,8 @@ def gnql_command(function):
 
     @click.command()
     @click.argument("query", required=False)
+    @click.option("--size", "size", help="Max number of results to return")
+    @click.option("--scroll", "scroll", help="Scroll token for pagination")
     @click.option("-k", "--api-key", help="Key to include in API requests")
     @click.option(
         "-O",

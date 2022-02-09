@@ -6,6 +6,7 @@
 {% call macros.header(loop) %}Query{% endcall -%}
 Query: {{ result.query }}
 Count of IPs Returned: {{ result.count }}
+Scroll Token: {{ result.scroll }}
 {% if result.count > 10 %}
 {{ space }}
 This output format is limited to 10 results, for all results use -f json for JSON output.
