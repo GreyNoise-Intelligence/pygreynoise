@@ -4,7 +4,7 @@ cachetools==5.0.0;python_version>='3'
 colorama==0.4.4
 click-default-group==1.2.2
 click-repl==0.2.0
-dict2xml==1.7.0;python_version>='3'
+dict2xml==1.7.1;python_version>='3'
 ipaddress==1.0.23
 jinja2==2.11.3;python_version=='3.5' # pyup: ignore
 jinja2==3.0.3;python_version>='3.6'
