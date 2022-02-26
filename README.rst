@@ -85,7 +85,6 @@ Usage
       help         Show this message and exit.
       interesting  Report an IP as "interesting".
       ip           Query GreyNoise for all information on a given IP.
-      pcap         Get PCAP for a given IP address.
       quick        Quickly check whether or not one or many IPs are "noise".
       repl         Start an interactive shell.
       setup        Configure API key.
