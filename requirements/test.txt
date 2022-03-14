@@ -10,7 +10,7 @@ pylint==2.12.2;python_version>='3.6' # pyup: ignore  ## remove once pyup is fixe
 pytest-cov==2.12.1;python_version=='3.5' # pyup: ignore
 pytest-cov==3.0.0;python_version>='3.6'
 pytest==6.1.2;python_version=='3.5' # pyup: ignore
-pytest==7.0.1;python_version>='3.6'
+pytest==7.1.0;python_version>='3.6'
 restructuredtext-lint==1.4.0
 twine==3.8.0;python_version>='3.6'
 yamllint==1.26.3;python_version>='3'
