@@ -13,5 +13,5 @@ pytest==6.1.2;python_version=='3.5' # pyup: ignore
 pytest==7.0.1;python_version=='3.6' # pyup: ignore
 pytest==7.1.1;python_version>='3.7'
 restructuredtext-lint==1.4.0
-twine==3.8.0;python_version>='3.6'
+twine==4.0.0;python_version>='3.6'
 yamllint==1.26.3;python_version>='3'
