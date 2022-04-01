@@ -1,4 +1,4 @@
-Click==8.0.3
+Click==8.1.2
 ansimarkup==1.4.0
 cachetools==5.0.0;python_version>='3'
 colorama==0.4.4
