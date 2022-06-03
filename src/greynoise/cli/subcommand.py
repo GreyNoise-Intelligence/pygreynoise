@@ -180,11 +180,6 @@ def riot(
     return results
 
 
-@not_implemented_command
-def pcap():
-    """Get PCAP for a given IP address."""
-
-
 @gnql_command
 def query(
     context,

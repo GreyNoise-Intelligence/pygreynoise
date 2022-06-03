@@ -38,9 +38,9 @@ EXAMPLE_IP_CONTEXT = {
     },
     "raw_data": {
         "hassh": [
-            {"hassh": "<hassh#1>", "port": 123456},
-            {"hassh": "<hassh#2>", "port": 123456},
-            {"hassh": "<hassh#3>", "port": 123456},
+            {"fingerprint": "<hassh#1>", "port": 123456},
+            {"fingerprint": "<hassh#2>", "port": 123456},
+            {"fingerprint": "<hassh#3>", "port": 123456},
         ],
         "ja3": [
             {"fingerprint": "<fingerprint#1>", "port": 123456},
@@ -116,7 +116,12 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         [JA3]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#1></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#2></value>
-        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>"""  # noqa
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>
+
+        [HASSH]
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#1></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#2></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""  # noqa
     )
 )
 
@@ -177,12 +182,16 @@ class TestIPContextFormatter(object):
                         """
 
 
+
+
                         ╔═══════════════════════════╗
                         ║ <header>     Context 2 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address#2>
 
                         commonly spoofed ip
+
+
 
 
                         ╔═══════════════════════════╗

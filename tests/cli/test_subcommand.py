@@ -635,21 +635,6 @@ class TestIP(object):
             assert "Error: API key not found" in result.output
 
 
-class TestPCAP(object):
-    """PCAP subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'pcap' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.pcap)
-        api_client.not_implemented.assert_called_with("pcap")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
 class TestQuery(object):
     """Query subcommand tests."""
 

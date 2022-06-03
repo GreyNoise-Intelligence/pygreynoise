@@ -2,6 +2,27 @@
 Changelog
 =========
 
+Version `dev`_
+================
+**Date**: unreleased
+
+* API client:
+
+  * None
+
+* CLI:
+
+  * Add missing HASSH values to output for IP and QUERY commands
+  * Remove unused PCAP command
+
+* Dependencies:
+
+  * Update jinja to 3.1.0
+  * Update dict2xml to 1.7.1
+  * Update Click to 8.1.2
+  * Update more-itertools to 8.13.0
+  * Update cachetools to 5.2.0
+
 Version `1.2.0`_
 ================
 **Date**: September 03, 2021
@@ -265,3 +286,4 @@ Version `0.2.0`_
 .. _`1.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.1...1.0.0
 .. _`1.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.0.0...1.1.0
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...HEAD

@@ -61,6 +61,14 @@
 - <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
 {% endcall -%}
 {% endif %}
+
+{%- if ip_context.raw_data.hassh %}
+[HASSH]
+{%- call(hassh) macros.verbose_list(ip_context.raw_data.hassh) -%}
+- <key>Port</key>: <value>{{ hassh.port }}</value>, <key>Fingerprint</key>: <value>{{ hassh.fingerprint }}</value>
+{% endcall -%}
+{% endif %}
+
 {%- elif ip_context.error %}
 {{ ip_context.error }}
 {% else %}
