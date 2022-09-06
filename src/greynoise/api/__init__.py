@@ -4,19 +4,17 @@ import re
 from collections import OrderedDict
 
 import cachetools
+import logging
 import more_itertools
 import requests
-import structlog
 
 from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
-from greynoise.util import configure_logging, load_config, validate_ip
+from greynoise.util import load_config, validate_ip
 
-if not structlog.is_configured():
-    configure_logging()
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 def initialize_cache(cache_max_size, cache_ttl):
@@ -388,7 +386,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     )
                     for chunk in chunks:
                         api_result = self._request(
-                            self.EP_NOISE_MULTI, json={"ips": chunk}
+                            self.EP_NOISE_MULTI, method="post", json={"ips": chunk}
                         )
                         if isinstance(api_result, list):
                             api_results.extend(api_result)
@@ -408,7 +406,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     valid_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
                 )
                 for chunk in chunks:
-                    result = self._request(self.EP_NOISE_MULTI, json={"ips": chunk})
+                    result = self._request(self.EP_NOISE_MULTI, method="post", json={"ips": chunk})
                     if isinstance(result, list):
                         results.extend(result)
                     else:
@@ -514,7 +512,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                 )
                 for chunk in chunks:
                     result = self._request(
-                        self.EP_NOISE_CONTEXT_MULTI, json={"ips": chunk}
+                        self.EP_NOISE_CONTEXT_MULTI, method="post", json={"ips": chunk}
                     )
                     if isinstance(result, list):
                         results.extend(result)

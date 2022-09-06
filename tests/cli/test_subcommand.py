@@ -168,7 +168,7 @@ class TestAnalyze(object):
         api_client.analyze.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.analyze, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert result.stdout == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
