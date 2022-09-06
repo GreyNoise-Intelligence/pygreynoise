@@ -2,7 +2,6 @@
 import ipaddress
 import logging
 import os
-import sys
 
 from six.moves.configparser import ConfigParser
 
@@ -40,18 +39,13 @@ def load_config():
 
     if "GREYNOISE_API_KEY" in os.environ:
         api_key = os.environ["GREYNOISE_API_KEY"]
-        LOGGER.debug(
-            "API key found in environment variable: %s", api_key
-        )
+        LOGGER.debug("API key found in environment variable: %s", api_key)
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_key", api_key)
 
     if "GREYNOISE_API_SERVER" in os.environ:
         api_server = os.environ["GREYNOISE_API_SERVER"]
-        LOGGER.debug(
-            "API server found in environment variable: %s",
-            api_server
-        )
+        LOGGER.debug("API server found in environment variable: %s", api_server)
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "api_server", api_server)
 
@@ -63,30 +57,22 @@ def load_config():
             LOGGER.error(
                 "GREYNOISE_TIMEOUT environment variable "
                 "cannot be converted to an integer: %r",
-                timeout
+                timeout,
             )
         else:
-            LOGGER.debug(
-                "Timeout found in environment variable: %s", timeout
-            )
+            LOGGER.debug("Timeout found in environment variable: %s", timeout)
             # Environment variable takes precedence over configuration file content
             config_parser.set("greynoise", "timeout", timeout)
 
     if "GREYNOISE_PROXY" in os.environ:
         proxy = os.environ["GREYNOISE_PROXY"]
-        LOGGER.debug(
-            "Proxy found in environment variable: %s",
-            proxy
-        )
+        LOGGER.debug("Proxy found in environment variable: %s", proxy)
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "proxy", proxy)
 
     if "GREYNOISE_OFFERING" in os.environ:
         offering = os.environ["GREYNOISE_OFFERING"]
-        LOGGER.debug(
-            "Offering found in environment variable: %s",
-            offering
-        )
+        LOGGER.debug("Offering found in environment variable: %s", offering)
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "offering", offering)
 

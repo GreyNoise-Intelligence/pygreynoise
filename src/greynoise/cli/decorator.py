@@ -4,9 +4,9 @@ Decorators used to add common functionality to subcommands.
 
 """
 import functools
+import logging
 
 import click
-import logging
 from requests.exceptions import RequestException
 
 from greynoise.api import GreyNoise
@@ -62,7 +62,6 @@ def handle_exceptions(function):
         try:
             return function(*args, **kwargs)
         except RequestFailure as exception:
-            LOGGER.error("RequestFailure")
             body = exception.args[1]
             if "message" in body:
                 error_message = "API error: {}".format(body["message"])
@@ -73,7 +72,6 @@ def handle_exceptions(function):
             LOGGER.error(error_message)
             click.get_current_context().exit(-1)
         except RequestException as exception:
-            LOGGER.error("RequestException")
             error_message = "API error: {}".format(exception)
             LOGGER.error(error_message)
             click.get_current_context().exit(-1)

@@ -449,7 +449,11 @@ class TestQuick(object):
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
+                call(
+                    "noise/multi/quick",
+                    method="post",
+                    json={"ips": ["8.8.8.8", "123.123.123.123"]},
+                ),
                 [
                     {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                     {"code": "0x99", "ip": "123.123.123.123", "noise": False},
@@ -538,7 +542,11 @@ class TestQuick(object):
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
+                call(
+                    "noise/multi/quick",
+                    method="post",
+                    json={"ips": ["8.8.8.8", "123.123.123.123"]},
+                ),
                 [
                     {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                     {"code": "0x99", "ip": "123.123.123.123", "noise": False},
@@ -586,7 +594,11 @@ class TestQuick(object):
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8", "123.123.123.123"]}),
+                call(
+                    "noise/multi/quick",
+                    method="post",
+                    json={"ips": ["8.8.8.8", "123.123.123.123"]},
+                ),
                 [
                     {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                     {"code": "0x99", "ip": "123.123.123.123", "noise": False},

@@ -1,10 +1,10 @@
 """GreyNoise API client."""
 
+import logging
 import re
 from collections import OrderedDict
 
 import cachetools
-import logging
 import more_itertools
 import requests
 
@@ -406,7 +406,9 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     valid_ip_addresses, self.IP_QUICK_CHECK_CHUNK_SIZE
                 )
                 for chunk in chunks:
-                    result = self._request(self.EP_NOISE_MULTI, method="post", json={"ips": chunk})
+                    result = self._request(
+                        self.EP_NOISE_MULTI, method="post", json={"ips": chunk}
+                    )
                     if isinstance(result, list):
                         results.extend(result)
                     else:
