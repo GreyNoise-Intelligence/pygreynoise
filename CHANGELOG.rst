@@ -4,19 +4,25 @@ Changelog
 
 Version `1.3.0`_
 ================
-**Date**: September 02, 2022
+**Date**: September 07, 2022
 
 * API client:
 
-  *
+  * Rework logging to remove structlog predefined logging to follow best practices
+  * Update the `quick` command to use a POST API request instead of a GET API request
 
 * CLI:
 
-  *
+  * None
 
 * Dependencies:
 
-  *
+  * Updated Click to 8.1.3
+  * Updated colorama to 0.4.5
+  * Updated jinja2 to 3.1.2
+  * Updated more-itertools to 8.14.0
+  * Update requests to 2.28.1
+  * Removed structlog
 
 Version `1.2.1`_
 ================
