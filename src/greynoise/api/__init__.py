@@ -168,12 +168,12 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         else:
             url = "/".join([self.api_server, self.API_VERSION, endpoint])
 
-        LOGGER.debug("Sending API request...URL: {}", url)
-        LOGGER.debug("Sending API request...method: {}", method)
-        LOGGER.debug("Sending API request...headers: {}", headers)
-        LOGGER.debug("Sending API request...params: {}", params)
-        LOGGER.debug("Sending API request...json: {}", json)
-        LOGGER.debug("Sending API request...proxy: {}", self.proxy)
+        LOGGER.debug("Sending API request...URL: %s", url)
+        LOGGER.debug("Sending API request...method: %s", method)
+        LOGGER.debug("Sending API request...headers: %s", headers)
+        LOGGER.debug("Sending API request...params: %s", params)
+        LOGGER.debug("Sending API request...json: %s", json)
+        LOGGER.debug("Sending API request...proxy: %s", self.proxy)
 
         request_method = getattr(self.session, method)
         if self.proxy:
@@ -196,7 +196,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         else:
             body = response.text
 
-        LOGGER.debug("API response received {} {}", response.status_code, body)
+        LOGGER.debug("API response received %s %s", response.status_code, body)
 
         if response.status_code == 429:
             raise RateLimitError()
@@ -259,7 +259,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                 "message": "Interesting report not supported with Community offering"
             }
         else:
-            LOGGER.debug("Reporting interesting IP: {}...", ip_address)
+            LOGGER.debug("Reporting interesting IP: %s...", ip_address)
             validate_ip(ip_address)
 
             endpoint = self.EP_INTERESTING.format(ip_address=ip_address)
@@ -276,7 +276,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         :rtype: dict
 
         """
-        LOGGER.debug("Getting context for {}...", ip_address)
+        LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
 
         if self.offering.lower() == "community":
@@ -314,7 +314,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
         else:
-            LOGGER.debug("Running GNQL query: {} {} {}...", query, size, scroll)
+            LOGGER.debug("Running GNQL query: %s % s %s...", query, size, scroll)
             params = {"query": query}
             if size is not None:
                 params["size"] = size
@@ -344,7 +344,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if isinstance(ip_addresses, str):
                 ip_addresses = ip_addresses.split(",")
 
-            LOGGER.debug("Getting noise status for {}...", ip_addresses)
+            LOGGER.debug("Getting noise status for %s...", ip_addresses)
 
             valid_ip_addresses = [
                 ip_address
@@ -440,7 +440,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if isinstance(ip_addresses, str):
                 ip_addresses = ip_addresses.split(",")
 
-            LOGGER.debug("Getting noise context for IPs: {}", ip_addresses)
+            LOGGER.debug("Getting noise context for IPs: %s", ip_addresses)
 
             valid_ip_addresses = [
                 ip_address
@@ -510,7 +510,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "Stats Query not supported with Community offering"}
         else:
-            LOGGER.debug("Running GNQL stats query: {}...", query)
+            LOGGER.debug("Running GNQL stats query: %s...", query)
             params = {"query": query}
             if count is not None:
                 params["count"] = count
@@ -548,7 +548,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "RIOT lookup not supported with Community offering"}
         else:
-            LOGGER.debug("Checking RIOT for {}...", ip_address)
+            LOGGER.debug("Checking RIOT for %s...", ip_address)
             validate_ip(ip_address)
 
             endpoint = self.EP_RIOT.format(ip_address=ip_address)
