@@ -503,6 +503,16 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     else:
                         results.append(result)
 
+            if include_invalid:
+                for ip_address in ip_addresses:
+                    if ip_address not in valid_ip_addresses:
+                        results.append(
+                            {
+                                "ip": ip_address,
+                                "noise": False,
+                            }
+                        )
+
         return results
 
     def stats(self, query, count=None):
