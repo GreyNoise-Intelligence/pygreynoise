@@ -196,9 +196,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         else:
             body = response.text
 
-        LOGGER.debug(
-            "API response received {} {} {}", response.status_code, content_type, body
-        )
+        LOGGER.debug("API response received {} {}", response.status_code, body)
 
         if response.status_code == 429:
             raise RateLimitError()
