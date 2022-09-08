@@ -10,6 +10,8 @@ Version `1.3.0`_
 
   * Rework logging to remove structlog predefined logging to follow best practices
   * Update the `quick` command to use a POST API request instead of a GET API request
+  * Fix bug with `ip_multi` preventing lists of more than 1000 entries from returning correct data
+  * Fix bug with `ip_multi` when cache is disabled not returning correct values
 
 * CLI:
 

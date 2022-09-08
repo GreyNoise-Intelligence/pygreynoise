@@ -169,13 +169,13 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             url = "/".join([self.api_server, self.API_VERSION, endpoint])
 
         LOGGER.debug(
-            "Sending API request...",
-            url=url,
-            method=method,
-            headers=headers,
-            params=params,
-            json=json,
-            proxy=self.proxy,
+            f"Sending API request..."
+            f"{url}"
+            f"{method}"
+            f"{headers}"
+            f"{params}"
+            f"{json}"
+            f"{self.proxy}"
         )
         request_method = getattr(self.session, method)
         if self.proxy:
@@ -199,10 +199,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             body = response.text
 
         LOGGER.debug(
-            "API response received",
-            status_code=response.status_code,
-            content_type=content_type,
-            body=body,
+            f"API response received {response.status_code} {content_type} {body}"
         )
 
         if response.status_code == 429:
@@ -266,9 +263,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                 "message": "Interesting report not supported with Community offering"
             }
         else:
-            LOGGER.debug(
-                "Reporting interesting IP: %s...", ip_address, ip_address=ip_address
-            )
+            LOGGER.debug(f"Reporting interesting IP: {ip_address}...")
             validate_ip(ip_address)
 
             endpoint = self.EP_INTERESTING.format(ip_address=ip_address)
@@ -285,7 +280,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         :rtype: dict
 
         """
-        LOGGER.debug("Getting context for %s...", ip_address, ip_address=ip_address)
+        LOGGER.debug(f"Getting context for {ip_address}...")
         validate_ip(ip_address)
 
         if self.offering.lower() == "community":
@@ -323,13 +318,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
         else:
-            LOGGER.debug(
-                "Running GNQL query: %s...",
-                query,
-                query=query,
-                size=size,
-                scroll=scroll,
-            )
+            LOGGER.debug(f"Running GNQL query: {query} {size} {scroll}...")
             params = {"query": query}
             if size is not None:
                 params["size"] = size
@@ -359,7 +348,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if isinstance(ip_addresses, str):
                 ip_addresses = ip_addresses.split(",")
 
-            LOGGER.debug("Getting noise status...", ip_addresses=ip_addresses)
+            LOGGER.debug(f"Getting noise status for {ip_addresses}...")
 
             valid_ip_addresses = [
                 ip_address
@@ -455,7 +444,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if isinstance(ip_addresses, str):
                 ip_addresses = ip_addresses.split(",")
 
-            LOGGER.debug("Getting noise context...", ip_addresses=ip_addresses)
+            LOGGER.debug(f"Getting noise context for IPs: {ip_addresses}")
 
             valid_ip_addresses = [
                 ip_address
@@ -494,10 +483,6 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                         else:
                             api_results.append(api_result)
 
-                        for ip_address in valid_ip_addresses:
-                            if ip_address not in api_results:
-                                api_results.append({"ip": ip_address, "seen": False})
-
                     for result in api_results:
                         ip_address = result["ip"]
 
@@ -516,15 +501,11 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     result = self._request(
                         self.EP_NOISE_CONTEXT_MULTI, method="post", json={"ips": chunk}
                     )
+                    result = result["data"]
                     if isinstance(result, list):
                         results.extend(result)
                     else:
                         results.append(result)
-
-            if include_invalid:
-                for ip_address in ip_addresses:
-                    if ip_address not in valid_ip_addresses:
-                        results.append({"ip": ip_address, "seen": False})
 
         return results
 
@@ -533,7 +514,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "Stats Query not supported with Community offering"}
         else:
-            LOGGER.debug("Running GNQL stats query: %s...", query, query=query)
+            LOGGER.debug(f"Running GNQL stats query: {query}...")
             params = {"query": query}
             if count is not None:
                 params["count"] = count
@@ -571,7 +552,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "RIOT lookup not supported with Community offering"}
         else:
-            LOGGER.debug("Checking RIOT for %s...", ip_address, ip_address=ip_address)
+            LOGGER.debug(f"Checking RIOT for {ip_address}...")
             validate_ip(ip_address)
 
             endpoint = self.EP_RIOT.format(ip_address=ip_address)
