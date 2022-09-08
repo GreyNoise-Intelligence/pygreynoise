@@ -168,15 +168,13 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         else:
             url = "/".join([self.api_server, self.API_VERSION, endpoint])
 
-        LOGGER.debug(
-            f"Sending API request..."
-            f"{url}"
-            f"{method}"
-            f"{headers}"
-            f"{params}"
-            f"{json}"
-            f"{self.proxy}"
-        )
+        LOGGER.debug(f"Sending API request...URL: {url}")
+        LOGGER.debug(f"Sending API request...method: {method}")
+        LOGGER.debug(f"Sending API request...headers: {headers}")
+        LOGGER.debug(f"Sending API request...params: {params}")
+        LOGGER.debug(f"Sending API request...json: {json}")
+        LOGGER.debug(f"Sending API request...proxy: {self.proxy}")
+
         request_method = getattr(self.session, method)
         if self.proxy:
             proxies = {protocol: self.proxy for protocol in ("http", "https")}
