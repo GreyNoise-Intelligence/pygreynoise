@@ -314,7 +314,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
         else:
-            LOGGER.debug("Running GNQL query: %s % s %s...", query, size, scroll)
+            LOGGER.debug("Running GNQL query: %s %s %s...", query, size, scroll)
             params = {"query": query}
             if size is not None:
                 params["size"] = size
