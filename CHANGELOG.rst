@@ -2,6 +2,31 @@
 Changelog
 =========
 
+Version `1.3.0`_
+================
+**Date**: September 07, 2022
+
+* API client:
+
+  * Rework logging to remove structlog predefined logging to follow best practices
+  * Update the `quick` command to use a POST API request instead of a GET API request
+  * Fix bug with `ip_multi` preventing lists of more than 1000 entries from returning correct data
+  * Fix bug with `ip_multi` when cache is disabled not returning correct values
+  * Fix bug with `ip_multi` where `include_invalid` parameter was not working
+
+* CLI:
+
+  * None
+
+* Dependencies:
+
+  * Updated Click to 8.1.3
+  * Updated colorama to 0.4.5
+  * Updated jinja2 to 3.1.2
+  * Updated more-itertools to 8.14.0
+  * Update requests to 2.28.1
+  * Removed structlog
+
 Version `1.2.1`_
 ================
 **Date**: June 03, 2022
@@ -287,3 +312,4 @@ Version `0.2.0`_
 .. _`1.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.0.0...1.1.0
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
+.. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0

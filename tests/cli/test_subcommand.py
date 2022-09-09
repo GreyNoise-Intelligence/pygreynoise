@@ -160,15 +160,15 @@ class TestAnalyze(object):
         assert result.output == self.DEFAULT_OUTPUT
         assert api_client.analyze.call_args[0][0].read() == text
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.analyze.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.analyze, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -334,28 +334,28 @@ class TestFilter(object):
             "riot_only": False,
         }
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.filter.side_effect = RequestFailure(
             401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.filter, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.filter.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.filter, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -470,28 +470,28 @@ class TestInteresting(object):
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.interesting.side_effect = RequestFailure(
             401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.interesting.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -599,28 +599,28 @@ class TestIP(object):
         assert expected in result.output
         api_client.ip.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.ip.side_effect = RequestFailure(
             401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.ip.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -709,7 +709,7 @@ class TestQuery(object):
         assert expected in result.output
         api_client.query.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
@@ -720,7 +720,7 @@ class TestQuery(object):
 
         result = runner.invoke(subcommand.query, ["<query>"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -890,7 +890,7 @@ class TestQuick(object):
         assert expected in result.output
         api_client.quick.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
@@ -901,7 +901,7 @@ class TestQuick(object):
 
         result = runner.invoke(subcommand.quick, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -1075,7 +1075,7 @@ class TestIPMulti(object):
         assert expected in result.output
         api_client.ip_multi.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
@@ -1086,7 +1086,7 @@ class TestIPMulti(object):
 
         result = runner.invoke(subcommand.ip_multi, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -1270,7 +1270,7 @@ class TestStats(object):
         assert expected in result.output
         api_client.query.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
@@ -1279,9 +1279,9 @@ class TestStats(object):
         )
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.stats, ["<query>"])
+        result = runner.invoke(subcommand.stats, ["-f", "json", "some query"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""

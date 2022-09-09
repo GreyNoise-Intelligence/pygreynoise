@@ -1,12 +1,10 @@
 """GreyNoise command line Interface."""
 
 import click
-import structlog
 from click_default_group import DefaultGroup
 from click_repl import register_repl
 
 from greynoise.cli import subcommand
-from greynoise.util import configure_logging
 
 
 @click.group(
@@ -16,8 +14,6 @@ from greynoise.util import configure_logging
 )
 def main():
     """GreyNoise CLI."""
-    if not structlog.is_configured():
-        configure_logging()
 
 
 SUBCOMMAND_FUNCTIONS = [

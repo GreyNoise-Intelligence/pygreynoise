@@ -1,5 +1,5 @@
 # Github codeowners file to improve our lives when selecting users for PR's
 
-* @bradchiappetta @elliottminns @Obsecurus @superducktoes @nathanqthai
+* @bradchiappetta @elliottminns @Obsecurus @superducktoes @nathanqthai @ianling
 
 /requirements/ @bradchiappetta
