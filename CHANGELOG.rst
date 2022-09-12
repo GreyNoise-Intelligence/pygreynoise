@@ -8,6 +8,16 @@ Version `dev`_
 
 * API client:
 
+  * None
+
+* CLI:
+
+  * None
+
+* Dependencies:
+
+  * None
+
 Version `1.3.0`_
 ================
 **Date**: September 07, 2022
