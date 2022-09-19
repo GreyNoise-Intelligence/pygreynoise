@@ -145,3 +145,46 @@ def validate_ip(ip_address, strict=True, print_warning=True):
             if strict:
                 raise ValueError(error_message)
             return False
+
+
+def valid_noise_ip_keys(keys: list):
+    """Check if the list of keys are currently valid for the Noise endpoint.
+
+    :param keys: list of keys to validate.
+    :type keys: list
+
+    """
+    valid_keys = [
+        "first_seen",
+        "last_seen",
+        "seen",
+        "tags",
+        "actor",
+        "spoofable",
+        "classification",
+        "cve",
+        "bot",
+        "vpn",
+        "vpn_service",
+        "asn",
+        "city",
+        "country",
+        "country_code",
+        "organization",
+        "category",
+        "tor",
+        "rdns",
+        "os",
+        "region",
+        "scan",
+        "web",
+        "ja3",
+        "hassh",
+    ]
+
+    for item in keys:
+        if item not in valid_keys:
+            return []
+            LOGGER.error["Provided key filter list contains invalid option"]
+
+    return True

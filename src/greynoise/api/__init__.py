@@ -12,7 +12,7 @@ from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
-from greynoise.util import load_config, validate_ip
+from greynoise.util import load_config, valid_noise_ip_keys, validate_ip
 
 LOGGER = logging.getLogger(__name__)
 
@@ -267,17 +267,28 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def ip(self, ip_address):  # pylint: disable=C0103
+    def ip(self, ip_address, limit=None):  # pylint: disable=C0103
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
         :type ip_address: str
+        :param limit: list of fields to limit output returned for each ip
+        :type limit: list
         :return: Context for the IP address.
         :rtype: dict
 
         """
         LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
+
+        key_filter_list = []
+
+        if limit and not isinstance(limit, list):
+            limit.strip(" ")
+            limit = limit.split(",")
+
+        if limit and valid_noise_ip_keys(limit):
+            key_filter_list = limit
 
         if self.offering.lower() == "community":
             endpoint = self.EP_COMMUNITY_IP.format(ip_address=ip_address)
@@ -295,6 +306,14 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         if "ip" not in response:
             response["ip"] = ip_address
+
+        if key_filter_list:
+            filtered_response = {}
+            key_filter_list.append("ip")
+            key_filter_list.append("seen")
+            for key in set(key_filter_list):
+                filtered_response[key] = response[key]
+            response = filtered_response
 
         return response
 

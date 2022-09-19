@@ -99,8 +99,9 @@ def ip_context_formatter(results, verbose):
     for ip_context in results:
         if "seen" in ip_context:
             if ip_context["seen"]:
-                metadata = ip_context["metadata"]
-                metadata["location"] = get_location(metadata)
+                if "metadata" in ip_context:
+                    metadata = ip_context["metadata"]
+                    metadata["location"] = get_location(metadata)
                 template = JINJA2_ENV.get_template("ip_context.txt.j2")
             else:
                 template = JINJA2_ENV.get_template("ip_context.txt.j2")

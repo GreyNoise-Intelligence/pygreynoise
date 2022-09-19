@@ -2,41 +2,44 @@
 {%- if ip_context.seen %}
           <header>OVERVIEW</header>
 ----------------------------
-<key>Actor</key>: <value>{{ ip_context.actor }}</value>
-<key>Classification</key>: {{ macros.classification(ip_context.classification) }}
-<key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
-<key>IP</key>: <value>{{ ip_context.ip }}</value>
-<key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
-<key>Spoofable</key>: <value>{{ ip_context.spoofable }}</value>
-<key>BOT</key>: <value>{{ ip_context.bot }}</value>
-<key>VPN</key>: <value>{{ ip_context.vpn }}</value>
-<key>VPN Service</key>: <value>{{ ip_context.vpn_service }}</value>
+{% if 'actor' in ip_context %}<key>Actor</key>: <value>{{ ip_context.actor }}</value>{% endif %}
+{% if 'classification' in ip_context %}<key>Classification</key>: {{ macros.classification(ip_context.classification) }}{% endif %}
+{% if 'first_seen' in ip_context %}<key>First Seen</key>: <value>{{ ip_context.first_seen }}</value>{% endif %}
+{% if 'ip' in ip_context %}<key>IP</key>: <value>{{ ip_context.ip }}</value>{% endif %}
+{% if 'last_seen' in ip_context %}<key>Last Seen</key>: <value>{{ ip_context.last_seen }}</value>{% endif %}
+{% if 'spoofable' in ip_context %}<key>Spoofable</key>: <value>{{ ip_context.spoofable }}</value>{% endif %}
+{% if 'bot' in ip_context %}<key>BOT</key>: <value>{{ ip_context.bot }}</value>{% endif %}
+{% if 'vpn' in ip_context %}<key>VPN</key>: <value>{{ ip_context.vpn }}</value>{% endif %}
+{% if 'vpn_service' in ip_context %}<key>VPN Service</key>: <value>{{ ip_context.vpn_service }}</value>{% endif %}
 {% if ip_context.tags -%}
 <key>Tags</key>:
 {%- call(tag) macros.verbose_list(ip_context.tags) -%}
 - <value>{{ tag }}</value>
 {% endcall -%}
 {% endif %}
+{%- if 'metadata' in ip_context %}
           <header>METADATA</header>
 ----------------------------
-<key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
-<key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
-<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>
-<key>Region</key>: <value>{{ ip_context.metadata.region }}</value>
-<key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
-<key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
-<key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>
-<key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>
-
+{% if 'asn' in ip_context.metadata %}<key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>{% endif %}
+{% if 'category' in ip_context.metadata %}<key>Category</key>: <value>{{ ip_context.metadata.category }}</value>{% endif %}
+{% if 'location' in ip_context.metadata %}<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>{% endif %}
+{% if 'region' in ip_context.metadata %}<key>Region</key>: <value>{{ ip_context.metadata.region }}</value>{% endif %}
+{% if 'organization' in ip_context.metadata %}<key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>{% endif %}
+{% if 'os' in ip_context.metadata %}<key>OS</key>: <value>{{ ip_context.metadata.os }}</value>{% endif %}
+{% if 'rdns' in ip_context.metadata %}<key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>{% endif %}
+{% if 'tor' in ip_context.metadata %}<key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>{% endif %}
+{%- endif %}
+{%- if 'raw_data' in ip_context or 'cve' in ip_context %}
           <header>RAW DATA</header>
 ----------------------------
+{% endif %}
 {%- if ip_context.cve %}
 [CVE]
 {%- call(cve) macros.verbose_list(ip_context.cve) -%}
 - <key>CVE</key>: <value>{{ cve }}</value>
 {% endcall -%}
 {% endif %}
-
+{%- if 'raw_data' in ip_context %}
 {%- if ip_context.raw_data.scan %}
 [Scan]
 {%- call(scan) macros.verbose_list(ip_context.raw_data.scan) -%}
@@ -70,6 +73,7 @@
 {%- call(hassh) macros.verbose_list(ip_context.raw_data.hassh) -%}
 - <key>Port</key>: <value>{{ hassh.port }}</value>, <key>Fingerprint</key>: <value>{{ hassh.fingerprint }}</value>
 {% endcall -%}
+{% endif %}
 {% endif %}
 
 {%- elif ip_context.error %}
