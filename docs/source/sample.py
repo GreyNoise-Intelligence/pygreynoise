@@ -1,8 +1,10 @@
 from greynoise import GreyNoise
 
-api_key = '<enter-api-key-here>'
-ip_addresses = ['108.168.3.151', '8.8.8.8', '318.1.1.1']
-api_client = GreyNoise(api_key=api_key, integration_name="greynoise-sampleapp-v1.0.0-beta")
+api_key = "<enter-api-key-here>"
+ip_addresses = ["108.168.3.151", "8.8.8.8", "318.1.1.1"]
+api_client = GreyNoise(
+    api_key=api_key, integration_name="greynoise-sampleapp-v1.0.0-beta"
+)
 
 for ip_address in ip_addresses:
     try:
