@@ -5,9 +5,9 @@ from __future__ import print_function
 
 import functools
 import json
+import shutil
 
 import ansimarkup
-import click
 import colorama
 from dict2xml import dict2xml
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -26,7 +26,7 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "value": ansimarkup.parse("<green>"),
         "noise": ansimarkup.parse("<light-yellow>"),
         "not-noise": ansimarkup.parse(DIM),
-        "riot": ansimarkup.parse("<light-yellow>"),
+        "riot": ansimarkup.parse("<magenta>"),
         "not-riot": ansimarkup.parse(DIM),
         "malicious": ansimarkup.parse("<light-red>"),
         "unknown": ansimarkup.parse(DIM),
@@ -97,11 +97,16 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if "seen" in ip_context and ip_context["seen"]:
-            metadata = ip_context["metadata"]
-            metadata["location"] = get_location(metadata)
+        if "seen" in ip_context:
+            if ip_context["seen"]:
+                metadata = ip_context["metadata"]
+                metadata["location"] = get_location(metadata)
+                template = JINJA2_ENV.get_template("ip_context.txt.j2")
+            else:
+                template = JINJA2_ENV.get_template("ip_context.txt.j2")
+        elif "noise" in ip_context or "riot" in ip_context:
+            template = JINJA2_ENV.get_template("ip_community.txt.j2")
 
-    template = JINJA2_ENV.get_template("ip_context.txt.j2")
     return template.render(results=results, verbose=verbose)
 
 
@@ -109,6 +114,13 @@ def ip_context_formatter(results, verbose):
 def ip_quick_check_formatter(results, verbose):
     """Convert IP quick check result into human-readable text."""
     template = JINJA2_ENV.get_template("ip_quick_check.txt.j2")
+    return template.render(results=results, verbose=verbose)
+
+
+@colored_output
+def ip_multi_context_formatter(results, verbose):
+    """Convert IP multi context result into human-readable text."""
+    template = JINJA2_ENV.get_template("ip_multi_context.txt.j2")
     return template.render(results=results, verbose=verbose)
 
 
@@ -130,7 +142,7 @@ def gnql_query_formatter(results, verbose):
 def gnql_stats_formatter(results, verbose):
     """Convert GNQL stats result into human-readable text."""
     template = JINJA2_ENV.get_template("gnql_stats.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
@@ -138,7 +150,7 @@ def gnql_stats_formatter(results, verbose):
 def analyze_formatter(result, verbose):
     """Conver analyze result into human-readable text."""
     template = JINJA2_ENV.get_template("analyze.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
     return template.render(result=result, verbose=verbose, max_width=max_width)
 
 
@@ -146,7 +158,15 @@ def analyze_formatter(result, verbose):
 def riot_formatter(results, verbose):
     """Convert RIOT to human-readable text."""
     template = JINJA2_ENV.get_template("riot.txt.j2")
-    max_width, _ = click.get_terminal_size()
+    max_width, _ = shutil.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
+
+@colored_output
+def interesting_formatter(results, verbose):
+    """Convert RIOT to human-readable text."""
+    template = JINJA2_ENV.get_template("interesting.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
@@ -160,5 +180,7 @@ FORMATTERS = {
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
         "riot": riot_formatter,
+        "interesting": interesting_formatter,
+        "ip-multi": ip_multi_context_formatter,
     },
 }

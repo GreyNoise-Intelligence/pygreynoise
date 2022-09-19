@@ -56,11 +56,11 @@ This python package follows semantic versioning. According to this:
 As such, we recommend you pin the dependency on this SDK to only allow minor version changes at most:
 
 ::
-    
+
     # allow patch version increments
     greynoise~=1.4.0
-    
-    # allow minor verison increments
+
+    # allow minor version increments
     greynoise~=1.4
 
 
@@ -85,7 +85,6 @@ Usage
       help         Show this message and exit.
       interesting  Report an IP as "interesting".
       ip           Query GreyNoise for all information on a given IP.
-      pcap         Get PCAP for a given IP address.
       quick        Quickly check whether or not one or many IPs are "noise".
       repl         Start an interactive shell.
       setup        Configure API key.

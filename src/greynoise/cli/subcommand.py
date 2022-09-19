@@ -87,10 +87,15 @@ def feedback():
 @click.option(
     "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
 )
+@click.option(
+    "--riot-only", is_flag=True, help="Select lines containing RIOT addresses"
+)
 @pass_api_client
 @click.pass_context
 @handle_exceptions
-def filter(context, api_client, api_key, input_file, output_file, noise_only):
+def filter(
+    context, api_client, api_key, input_file, output_file, noise_only, riot_only
+):
     """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
@@ -108,7 +113,9 @@ def filter(context, api_client, api_key, input_file, output_file, noise_only):
     if output_file is None:
         output_file = click.open_file("-", mode="w")
 
-    for chunk in api_client.filter(input_file, noise_only=noise_only):
+    for chunk in api_client.filter(
+        input_file, noise_only=noise_only, riot_only=riot_only
+    ):
         output_file.write(ANSI_MARKUP(chunk))
 
 
@@ -146,6 +153,7 @@ def ip(
     output_format,
     verbose,
     ip_address,
+    offering,
 ):
     """Query GreyNoise for all information on a given IP."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -164,6 +172,7 @@ def riot(
     output_format,
     verbose,
     ip_address,
+    offering,
 ):
     """Query GreyNoise IP to see if it is in the RIOT dataset."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -171,24 +180,38 @@ def riot(
     return results
 
 
-@not_implemented_command
-def pcap():
-    """Get PCAP for a given IP address."""
-
-
 @gnql_command
 def query(
-    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    query,
+    size,
+    scroll,
+    offering,
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
-    results = [api_client.query(query=query) for query in queries]
+    results = [
+        api_client.query(query=item, size=size, scroll=scroll) for item in queries
+    ]
     return results
 
 
 @ip_lookup_command
 def quick(
-    context, api_client, api_key, input_file, output_file, output_format, ip_address
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    ip_address,
+    offering,
 ):
     """Quickly check whether or not one or many IPs are "noise"."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
@@ -198,12 +221,42 @@ def quick(
     return results
 
 
+@ip_lookup_command
+def ip_multi(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    ip_address,
+    offering,
+):
+    """
+    Perform Context lookup for multiple IPs at once.\n
+    Example: greynoise ip-multi 1.1.1.1 2.2.2.2 3.3.3.3\n
+    Example: greynoise ip-multi 1.1.1.1,2.2.2.2,3.3.3.3\n
+    Example: greynoise ip-multi -i <filename>
+    """
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = []
+    if ip_addresses:
+        results.extend(api_client.ip_multi(ip_addresses=ip_addresses))
+    return results
+
+
 @click.command()
 @click.option("-k", "--api-key", required=True, help="Key to include in API requests")
+@click.option(
+    "-O",
+    "--offering",
+    help="Which API offering to use, enterprise or community, "
+    "defaults to enterprise",
+)
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 @click.option("-s", "--api-server", help="API server")
 @click.option("-p", "--proxy", help="Proxy URL")
-def setup(api_key, timeout, api_server, proxy):
+def setup(api_key, timeout, api_server, proxy, offering):
     """Configure API key."""
     config = {"api_key": api_key}
 
@@ -222,6 +275,11 @@ def setup(api_key, timeout, api_server, proxy):
     else:
         config["proxy"] = proxy
 
+    if offering is None:
+        config["offering"] = DEFAULT_CONFIG["offering"]
+    else:
+        config["offering"] = offering
+
     save_config(config)
     click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
 
@@ -233,7 +291,17 @@ def signature():
 
 @gnql_command
 def stats(
-    context, api_client, api_key, input_file, output_file, output_format, verbose, query
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    query,
+    size,
+    scroll,
+    offering,
 ):
     """Get aggregate stats from a given GNQL query."""
     queries = get_queries(context, input_file, query)

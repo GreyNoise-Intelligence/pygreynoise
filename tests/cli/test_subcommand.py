@@ -27,6 +27,7 @@ def api_client():
             "api_key": "<api_key>",
             "api_server": "<api_server>",
             "timeout": DEFAULT_CONFIG["timeout"],
+            "offering": "enterprise",
         }
         with api_client_cls_patcher as api_client_cls:
             api_client = api_client_cls()
@@ -73,12 +74,14 @@ class TestAnalyze(object):
         "summary": {
             "ip_count": 0,
             "noise_ip_count": 0,
+            "riot_ip_count": 0,
             "not_noise_ip_count": 0,
             "noise_ip_ratio": 0,
+            "riot_ip_ratio": 0,
         },
     }
     DEFAULT_OUTPUT = textwrap.dedent(
-        u"""\
+        """\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
@@ -86,7 +89,9 @@ class TestAnalyze(object):
         - IP count: 0
         - Noise IP count: 0
         - Not noise IP count: 0
+        - RIOT IP count: 0
         - Noise IP ratio: 0.00
+        - RIOT IP ratio: 0.00
 
         Queries:
         - <ip_address_1>
@@ -155,15 +160,15 @@ class TestAnalyze(object):
         assert result.output == self.DEFAULT_OUTPUT
         assert api_client.analyze.call_args[0][0].read() == text
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.analyze.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.analyze, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -237,7 +242,9 @@ class TestFilter(object):
         result = runner.invoke(subcommand.filter, ["-i", input_text])
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
-        api_client.filter.assert_called_with(input_text, noise_only=False)
+        api_client.filter.assert_called_with(
+            input_text, noise_only=False, riot_only=False
+        )
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -256,7 +263,10 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": False}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": False,
+        }
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -275,7 +285,32 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": True}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": True,
+            "riot_only": False,
+        }
+
+    @pytest.mark.parametrize(
+        "text, expected_output",
+        [
+            ("<input_text>", "<output_text>"),
+            ("<input_text>", ("<chunk_1>\n", "<chunk_2>\n")),
+        ],
+    )
+    def test_riot_only(self, api_client, text, expected_output):
+        """Filter text with IP addresses from stdin using riot only flag."""
+        runner = CliRunner()
+
+        api_client.filter.return_value = expected_output
+
+        result = runner.invoke(subcommand.filter, ["--riot-only"], input=text)
+        assert result.exit_code == 0
+        assert result.output == "".join(expected_output)
+        assert api_client.filter.call_args[0][0].read() == text
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": True,
+        }
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -294,30 +329,33 @@ class TestFilter(object):
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
         assert api_client.filter.call_args[0][0].read() == text
-        assert api_client.filter.call_args[1] == {"noise_only": False}
+        assert api_client.filter.call_args[1] == {
+            "noise_only": False,
+            "riot_only": False,
+        }
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.filter.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.filter, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.filter.side_effect = RequestException("<error message>")
         result = runner.invoke(subcommand.filter, input="some text")
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -352,7 +390,7 @@ class TestHelp(object):
 class TestInteresting(object):
     """Interesting subcommand test cases."""
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_interesting(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting"."""
         runner = CliRunner()
@@ -364,7 +402,7 @@ class TestInteresting(object):
         assert result.output == ""
         api_client.interesting.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_input_file(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting" from input file."""
         runner = CliRunner()
@@ -376,7 +414,7 @@ class TestInteresting(object):
         assert result.output == ""
         api_client.interesting.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_stdin_input(self, api_client, ip_address, expected_response):
         """Report IP address as "interesting" from stdin."""
         runner = CliRunner()
@@ -432,28 +470,28 @@ class TestInteresting(object):
         assert expected in result.output
         api_client.interesting.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.interesting.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.interesting.side_effect = RequestException("<error message>")
-        result = runner.invoke(subcommand.interesting, ["0.0.0.0"])
+        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -463,7 +501,7 @@ class TestInteresting(object):
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
                 subcommand.interesting,
-                ["0.0.0.0"],
+                ["8.8.8.8"],
                 parent=Context(main, info_name="greynoise"),
             )
             assert result.exit_code == -1
@@ -473,7 +511,7 @@ class TestInteresting(object):
 class TestIP(object):
     """IP subcommand tests."""
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_ip(self, api_client, ip_address, expected_response):
         """Get IP address information."""
         runner = CliRunner()
@@ -487,7 +525,7 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_input_file(self, api_client, ip_address, expected_response):
         """Get IP address information from input file."""
         runner = CliRunner()
@@ -503,7 +541,7 @@ class TestIP(object):
         )
         api_client.ip.assert_called_with(ip_address=ip_address)
 
-    @pytest.mark.parametrize("ip_address, expected_response", [("0.0.0.0", {})])
+    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_stdin_input(self, api_client, ip_address, expected_response):
         """Get IP address information from stdin."""
         runner = CliRunner()
@@ -561,28 +599,28 @@ class TestIP(object):
         assert expected in result.output
         api_client.ip.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.ip.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
-        expected = "API error: forbidden\n"
+        expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
+        result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
-    def test_requests_exception(self, api_client):
+    def test_requests_exception(self, api_client, caplog):
         """Error is displayed on requests library exception."""
         runner = CliRunner()
-        expected = "API error: <error message>\n"
+        expected = "API error: <error message>"
 
         api_client.ip.side_effect = RequestException("<error message>")
-        result = runner.invoke(subcommand.ip, ["0.0.0.0"])
+        result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert result.output == expected
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -591,29 +629,14 @@ class TestIP(object):
         with patch("greynoise.cli.decorator.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
-                subcommand.ip, ["0.0.0.0"], parent=Context(main, info_name="greynoise")
+                subcommand.ip, ["8.8.8.8"], parent=Context(main, info_name="greynoise")
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
 
 
-class TestPCAP(object):
-    """PCAP subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'pcap' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.pcap)
-        api_client.not_implemented.assert_called_with("pcap")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
 class TestQuery(object):
-    """"Query subcommand tests."""
+    """Query subcommand tests."""
 
     def test_query(self, api_client):
         """Run query."""
@@ -626,7 +649,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", query])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query)
+        api_client.query.assert_called_with(query=query, size=None, scroll=None)
 
     def test_input_file(self, api_client):
         """Run query from input file."""
@@ -639,7 +662,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", "-i", StringIO(query)])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query)
+        api_client.query.assert_called_with(query=query, size=None, scroll=None)
 
     def test_stdin_input(self, api_client):
         """Run query from stdin."""
@@ -652,7 +675,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json"], input=query)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query)
+        api_client.query.assert_called_with(query=query, size=None, scroll=None)
 
     def test_no_query_passed(self, api_client):
         """Usage is returned if no query or input file is passed."""
@@ -686,18 +709,18 @@ class TestQuery(object):
         assert expected in result.output
         api_client.query.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.query.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.query, ["<query>"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -721,27 +744,27 @@ class TestQuick(object):
         "ip_address, output_format, expected",
         (
             (
-                "0.0.0.0",
+                "8.8.8.8",
                 "json",
                 json.dumps(
-                    [{"ip": "0.0.0.0", "noise": True}], indent=4, sort_keys=True
+                    [{"ip": "8.8.8.8", "noise": True}], indent=4, sort_keys=True
                 ),
             ),
             (
-                "0.0.0.0",
+                "8.8.8.8",
                 "xml",
                 textwrap.dedent(
                     """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
-                    \t\t<ip>0.0.0.0</ip>
+                    \t\t<ip>8.8.8.8</ip>
                     \t\t<noise>True</noise>
                     \t</item>
                     </root>"""
                 ),
             ),
-            ("0.0.0.0", "txt", "0.0.0.0 is classified as NOISE."),
+            ("8.8.8.8", "txt", "8.8.8.8 is classified as NOISE."),
         ),
     )
     def test_quick(self, api_client, ip_address, output_format, expected):
@@ -761,15 +784,15 @@ class TestQuick(object):
         "ip_addresses, mock_response, expected",
         (
             (
-                ["0.0.0.0", "0.0.0.1"],
+                ["8.8.8.8", "8.8.8.9"],
                 [
-                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
-                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
                 ],
                 json.dumps(
                     [
-                        {"ip": "0.0.0.0", "noise": True},
-                        {"ip": "0.0.0.1", "noise": False},
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
                     ],
                     indent=4,
                     sort_keys=True,
@@ -794,15 +817,15 @@ class TestQuick(object):
         "ip_addresses, mock_response, expected",
         (
             (
-                ["0.0.0.0", "0.0.0.1"],
+                ["8.8.8.8", "8.8.8.9"],
                 [
-                    OrderedDict([("ip", "0.0.0.0"), ("noise", True)]),
-                    OrderedDict([("ip", "0.0.0.1"), ("noise", False)]),
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
                 ],
                 json.dumps(
                     [
-                        {"ip": "0.0.0.0", "noise": True},
-                        {"ip": "0.0.0.1", "noise": False},
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
                     ],
                     indent=4,
                     sort_keys=True,
@@ -836,7 +859,7 @@ class TestQuick(object):
         assert "Usage: greynoise quick" in result.output
         api_client.quick.assert_not_called()
 
-    def test_input_file_invalid_ip_addresses_passsed(self, api_client):
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
         """Error returned if only invalid IP addresses are passed in input file."""
         runner = CliRunner()
 
@@ -867,18 +890,18 @@ class TestQuick(object):
         assert expected in result.output
         api_client.quick.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.quick.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.quick, ["0.0.0.0"])
+        result = runner.invoke(subcommand.quick, ["8.8.8.8"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""
@@ -888,7 +911,192 @@ class TestQuick(object):
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
                 subcommand.quick,
-                ["0.0.0.0"],
+                ["8.8.8.8"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
+
+class TestIPMulti(object):
+    """IP-Multi subcommand tests."""
+
+    @pytest.mark.parametrize(
+        "ip_address, output_format, expected",
+        (
+            (
+                "8.8.8.8",
+                "json",
+                json.dumps(
+                    [{"ip": "8.8.8.8", "noise": True}], indent=4, sort_keys=True
+                ),
+            ),
+            (
+                "8.8.8.8",
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<item>
+                    \t\t<ip>8.8.8.8</ip>
+                    \t\t<noise>True</noise>
+                    \t</item>
+                    </root>"""
+                ),
+            ),
+            (
+                "8.8.8.8",
+                "txt",
+                "8.8.8.8 is classified as NOT NOISE.",
+            ),
+        ),
+    )
+    def test_ip_multi(self, api_client, ip_address, output_format, expected):
+        """Quickly check IP address."""
+        runner = CliRunner()
+
+        api_client.ip_multi.return_value = [
+            OrderedDict((("ip", ip_address), ("noise", True)))
+        ]
+
+        result = runner.invoke(subcommand.ip_multi, ["-f", output_format, ip_address])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.ip_multi.assert_called_with(ip_addresses=[ip_address])
+
+    @pytest.mark.parametrize(
+        "ip_addresses, mock_response, expected",
+        (
+            (
+                ["8.8.8.8", "8.8.8.9"],
+                [
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
+                ],
+                json.dumps(
+                    [
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
+                    ],
+                    indent=4,
+                    sort_keys=True,
+                ),
+            ),
+        ),
+    )
+    def test_input_file(self, api_client, ip_addresses, mock_response, expected):
+        """Quickly check IP address from input file."""
+        runner = CliRunner()
+
+        api_client.ip_multi.return_value = mock_response
+
+        result = runner.invoke(
+            subcommand.ip_multi, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
+
+    @pytest.mark.parametrize(
+        "ip_addresses, mock_response, expected",
+        (
+            (
+                ["8.8.8.8", "8.8.8.9"],
+                [
+                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
+                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
+                ],
+                json.dumps(
+                    [
+                        {"ip": "8.8.8.8", "noise": True},
+                        {"ip": "8.8.8.9", "noise": False},
+                    ],
+                    indent=4,
+                    sort_keys=True,
+                ),
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_addresses, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.ip_multi.return_value = mock_response
+
+        result = runner.invoke(
+            subcommand.ip_multi, ["-f", "json"], input="\n".join(ip_addresses)
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.ip_multi, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise ip-multi" in result.output
+        api_client.ip_multi.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.ip_multi,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise ip-multi" in result.output
+        assert expected in result.output
+        api_client.ip_multi.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Quick subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+
+        result = runner.invoke(subcommand.ip_multi, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert "Usage: ip-multi [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert expected in result.output
+        api_client.ip_multi.assert_not_called()
+
+    def test_request_failure(self, api_client, caplog):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.ip_multi.side_effect = RequestFailure(
+            401, {"message": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.ip_multi, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.ip_multi,
+                ["8.8.8.8"],
                 parent=Context(main, info_name="greynoise"),
             )
             assert result.exit_code == -1
@@ -923,6 +1131,7 @@ class TestSetup(object):
             "api_server": DEFAULT_CONFIG["api_server"],
             "timeout": DEFAULT_CONFIG["timeout"],
             "proxy": DEFAULT_CONFIG["proxy"],
+            "offering": DEFAULT_CONFIG["offering"],
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -936,8 +1145,9 @@ class TestSetup(object):
     @pytest.mark.parametrize("server_option", ["-s", "--api-server"])
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
     @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
+    @pytest.mark.parametrize("offering_option", ["-O", "--offering"])
     def test_save_api_key_and_timeout(
-        self, key_option, server_option, timeout_option, proxy_option
+        self, key_option, server_option, timeout_option, proxy_option, offering_option
     ):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
@@ -945,11 +1155,13 @@ class TestSetup(object):
         api_server = "<api_server>"
         timeout = 123456
         proxy = "<proxy>"
+        offering = "<offering>"
         expected_config = {
             "api_key": api_key,
             "api_server": api_server,
             "timeout": timeout,
             "proxy": proxy,
+            "offering": offering,
         }
         expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
 
@@ -965,6 +1177,8 @@ class TestSetup(object):
                     timeout,
                     proxy_option,
                     proxy,
+                    offering_option,
+                    offering,
                 ],
             )
         assert result.exit_code == 0
@@ -983,7 +1197,7 @@ class TestSetup(object):
 
 
 class TestStats(object):
-    """"Stats subcommand tests."""
+    """Stats subcommand tests."""
 
     def test_stats(self, api_client):
         """Run stats query."""
@@ -1056,18 +1270,18 @@ class TestStats(object):
         assert expected in result.output
         api_client.query.assert_not_called()
 
-    def test_request_failure(self, api_client):
+    def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
         api_client.stats.side_effect = RequestFailure(
-            401, {"error": "forbidden", "status": "error"}
+            401, {"message": "forbidden", "status": "error"}
         )
         expected = "API error: forbidden"
 
-        result = runner.invoke(subcommand.stats, ["<query>"])
+        result = runner.invoke(subcommand.stats, ["-f", "json", "some query"])
         assert result.exit_code == -1
-        assert expected in result.output
+        assert caplog.records[0].message == expected
 
     def test_api_key_not_found(self):
         """Error is displayed if API key is not found."""

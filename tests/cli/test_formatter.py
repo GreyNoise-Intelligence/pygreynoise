@@ -18,6 +18,7 @@ from greynoise.cli.formatter import (
 
 EXAMPLE_IP_CONTEXT = {
     "actor": "<actor>",
+    "bot": False,
     "classification": "<classification>",
     "cve": ["<cve#1>", "<cve#2>"],
     "first_seen": "<first_seen>",
@@ -34,11 +35,13 @@ EXAMPLE_IP_CONTEXT = {
         "region": "<region>",
         "rdns": "<rdns>",
         "tor": False,
-        "spoofable": False,
-        "vpn": False,
-        "vpn_service": "<vpn_service>",
     },
     "raw_data": {
+        "hassh": [
+            {"fingerprint": "<hassh#1>", "port": 123456},
+            {"fingerprint": "<hassh#2>", "port": 123456},
+            {"fingerprint": "<hassh#3>", "port": 123456},
+        ],
         "ja3": [
             {"fingerprint": "<fingerprint#1>", "port": 123456},
             {"fingerprint": "<fingerprint#2>", "port": 123456},
@@ -56,6 +59,8 @@ EXAMPLE_IP_CONTEXT = {
     "seen": True,
     "spoofable": False,
     "tags": ["<tag#1>", "<tag#2>", "<tag#3>"],
+    "vpn": False,
+    "vpn_service": "",
 }
 
 EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
@@ -68,6 +73,10 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         <key>First seen</key>: <value><first_seen></value>
         <key>IP</key>: <value><ip_address></value>
         <key>Last seen</key>: <value><last_seen></value>
+        <key>Spoofable</key>: <value>False</value>
+        <key>BOT</key>: <value>False</value>
+        <key>VPN</key>: <value>False</value>
+        <key>VPN Service</key>: <value></value>
         <key>Tags</key>:
         - <value><tag#1></value>
         - <value><tag#2></value>
@@ -82,7 +91,6 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         <key>Organization</key>: <value><organization></value>
         <key>OS</key>: <value><os></value>
         <key>rDNS</key>: <value><rdns></value>
-        <key>Spoofable</key>: <value>False</value>
         <key>Tor</key>: <value>False</value>
 
                   <header>RAW DATA</header>
@@ -108,7 +116,12 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         [JA3]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#1></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#2></value>
-        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>"""  # noqa
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>
+
+        [HASSH]
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#1></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#2></value>
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""  # noqa
     )
 )
 
@@ -154,7 +167,7 @@ class TestIPContextFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
@@ -166,7 +179,9 @@ class TestIPContextFormatter(object):
                 + EXAMPLE_IP_CONTEXT_OUTPUT
                 + ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""
+                        """
+
+
 
 
                         ╔═══════════════════════════╗
@@ -177,12 +192,14 @@ class TestIPContextFormatter(object):
                         commonly spoofed ip
 
 
+
+
                         ╔═══════════════════════════╗
                         ║ <header>     Context 3 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address#3>
 
-                        <ip_address#3> has not been seen in scans in the past 30 days."""  # noqa
+                        <ip_address#3> has not been seen in scans in the past 90 days."""  # noqa
                     )
                 ),
             ),
@@ -230,6 +247,7 @@ class TestGNQLQueryFormatter(object):
                     {
                         "complete": True,
                         "count": 1,
+                        "scroll": "abcdefg",
                         "data": [EXAMPLE_IP_CONTEXT],
                         "message": "ok",
                         "query": "<ip_address>",
@@ -237,11 +255,14 @@ class TestGNQLQueryFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
                         Query: <ip_address>
+                        Count of IPs Returned: 1
+                        Scroll Token: abcdefg
+
 
                         ┌───────────────────────────┐
                         │       Result 1 of 1       │
@@ -308,7 +329,7 @@ class TestGNQLStatsFormatter(object):
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -368,12 +389,14 @@ class TestRIOTFormatter(object):
                         "explanation": "<explanation>",
                         "last_updated": "<last_updated>",
                         "reference": "<reference>",
+                        "trust_level": "<trust_level>",
                     }
                 ],
                 ANSI_MARKUP.parse(
                     "<riot>0.0.0.0</riot> is in RIOT dataset. "
                     "Name: <value><name></value> "
                     "Category: <value><category></value> "
+                    "Trust Level: <value><trust_level></value> "
                     "Last Updated: <value><last_updated></value>"
                 ),
             ),
@@ -404,11 +427,12 @@ class TestRIOTFormatter(object):
                         "explanation": "<explanation>",
                         "last_updated": "<last_updated>",
                         "reference": "<reference>",
+                        "trust_level": "<trust_level>",
                     }
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
-                        u"""\
+                        """\
                     <riot>0.0.0.0</riot> is in RIOT dataset.
 
                               <header>OVERVIEW</header>
@@ -416,6 +440,7 @@ class TestRIOTFormatter(object):
                     <key>IP</key>: <value>0.0.0.0</value>
                     <key>RIOT</key>: <value>True</value>
                     <key>Category</key>: <value><category></value>
+                    <key>Trust Level</key>: <value><trust_level></value>
                     <key>Name</key>: <value><name></value>
                     <key>Description</key>: <value><description></value>
                     <key>Explanation</key>: <value><explanation></value>

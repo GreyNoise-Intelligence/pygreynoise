@@ -11,7 +11,8 @@ Create client object
 To interact with the API, a client object needs to be created::
 
    >>> from greynoise import GreyNoise
-   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>, use_cache=True, cache_max_size=1000, cache_ttl=3600, integration_name=<integration_name>)
+   >>> api_client = GreyNoise(api_key=<api_key>, timeout=<timeout_in_seconds>, proxy=<proxy_url>,
+       use_cache=True, cache_max_size=1000, cache_ttl=3600, integration_name=<name_of_integration>)
 
 where:
 
@@ -21,7 +22,8 @@ where:
 - *use_cache* is used to disable (enabled by default) use of local cache for lookups.
 - *cache_max_size* is used to define the max size of the cache, if enabled.
 - *cache_ttl* is used to define the TTL of the data in the cache, if enabled.
-- *integration_name* is used to define the name an version number of an integration that is embedding the SDK (example: greynoise-appname-v1.0.0)
+- *integration_name* is used to define the name an version number of an integration that is embedding the SDK (example: greynoise-appname-v1.0.0), if needed
+
 
 .. note::
 
@@ -140,21 +142,89 @@ Detailed context information for any given IP address is also available::
       }
     }
 
+When there's a list of IP addresses to get full context from, they can be checked all at once like
+this (this method also supports the include_invalid flag::
+
+    >>> api_client.ip_multi(['8.8.8.8', '58.220.219.247'])
+      [
+    {
+      'ip': '8.8.8.8',
+      'first_seen': '',
+      'last_seen': '',
+      'seen': False,
+      'tags': None,
+      'actor': '',
+      'spoofable': False,
+      'classification': '',
+      'cve': None,
+      'bot': False,
+      'vpn': False,
+      'vpn_service': '',
+      'metadata': {
+        'asn': '',
+        'city': '',
+        'country': '',
+        'country_code': '',
+        'organization': '',
+        'category': '',
+        'tor': False,
+        'rdns': '',
+        'os': ''
+      },
+      'raw_data': {
+        'scan': [],
+        'web': {},
+        'ja3': [],
+        'hassh': []
+      }
+    },
+    {
+      'ip': '58.220.219.247',
+      'first_seen': '',
+      'last_seen': '',
+      'seen': False,
+      'tags': None,
+      'actor': '',
+      'spoofable': False,
+      'classification': '',
+      'cve': None,
+      'bot': False,
+      'vpn': False,
+      'vpn_service': '',
+      'metadata': {
+        'asn': '',
+        'city': '',
+        'country': '',
+        'country_code': '',
+        'organization': '',
+        'category': '',
+        'tor': False,
+        'rdns': '',
+        'os': ''
+      },
+      'raw_data': {
+        'scan': [],
+        'web': {},
+        'ja3': [],
+        'hassh': []
+      }
+    }
+  ]
+
 Any IP can also be checked to see if it exists within the RIOT dataset::
 
-    >>> api_client.riot('58.220.219.247')
+    >>> api_client.riot('8.8.8.8')
     {
-        'ip': '8.8.8.8',
-        'riot': True,
-        'category': 'public_dns',
-        'name': 'Google Public DNS',
-        'description': "Google's global domain name system (DNS) resolution service.",
-        'explanation': "Public DNS services are used as alternatives to ISP's name servers. You may
-        see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP
-        to resolve DNS lookups.",
-        'last_updated': '2021-01-06T01:56:45Z',
-        'logo_url': 'https://www.gstatic.com/devrel-devsite/prod/v9d82702993bc22f782b7874a0f933b5e39c1f0889acab7d1fce0d6deb8e0f63d/cloud/images/cloud-logo.svg',
-        'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative'
+      'ip': '8.8.8.8',
+      'riot': True,
+      'category': 'public_dns',
+      'name': 'Google Public DNS',
+      'description': "Google's global domain name system (DNS) resolution service.",
+      'explanation': "Public DNS services are used as alternatives to ISP's name servers. You may see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP to resolve DNS lookups.",
+      'last_updated': '2022-02-08T18:58:27Z',
+      'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+      'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative',
+      'trust_level': '1'
     }
 
 .. note::
@@ -513,7 +583,7 @@ Internet as follows::
    58.220.219.247 is classified as NOISE.
 
 When there's a list of IP addresses to verify, they can be checked all at once like
-this::
+this (a comma seperated list is also supported::
 
    $ greynoise quick 8.8.8.8 58.220.219.247
    8.8.8.8 is classified as NOT NOISE.
@@ -555,6 +625,44 @@ Detailed context information for any given IP address is also available::
    - Port/Proto: 1433/TCP
    - Port/Proto: 3389/TCP
    - Port/Proto: 65529/TCP
+
+When there's a list of IP addresses to verify, they can be checked all at once like
+this (a comma seperated list is also supported::
+
+   $ greynoise ip-multi 8.8.8.8 58.220.219.247
+          OVERVIEW
+    ----------------------------
+    Actor: unknown
+    Classification: malicious
+    First seen: 2020-12-21
+    IP: 42.230.170.174
+    Last seen: 2022-02-08
+    Tags:
+    - Mirai
+
+              METADATA
+    ----------------------------
+    ASN: AS4837
+    Category: isp
+    Location:
+    Region: Heilongjiang
+    Organization: CHINA UNICOM China169 Backbone
+    OS: Linux 2.2-3.x
+    rDNS: hn.kd.ny.adsl
+    Spoofable: False
+    Tor: False
+
+              RAW DATA
+    ----------------------------
+    [Scan]
+    - Port/Proto: 23/TCP
+    - Port/Proto: 8080/TCP
+
+    [Paths]
+    - /setup.cgi
+
+    8.8.8.8 is classified as NOT NOISE.
+
 
 
 GNQL
@@ -712,3 +820,60 @@ operating system, etc.::
     - IOT MQTT Scanner              2
     Showing results 1 - 20. Run again with -v for full output
 
+Community API Users
+====================
+
+The GreyNoise API and CLI components can both be used with the [GreyNoise Community API](https://developer.greynoise.io/reference/community-api).
+
+The Community API only includes a single IP lookup endpoint, so only the IP lookup command in both the API and CLI components will work if enabled.
+
+To enable Community API usage, do the following:
+
+CLI Config File
+---------------
+
+::
+
+    $ greynoise setup --api-key "<api_key>" --offering community
+    Configuration saved to '/home/username/.config/greynoise/config'
+
+    $ greynoise ip 192.223.30.35
+
+    ╔═══════════════════════════╗
+    ║     Community 1 of 1      ║
+    ╚═══════════════════════════╝
+
+    IP: 192.223.30.35
+    NOISE: True
+    RIOT: False
+    Name: unknown
+    Classification: unknown
+    Last seen: 2021-03-18
+    Link: https://viz.greynoise.io/ip/192.223.30.35
+
+
+CLI IP Command
+--------------
+
+::
+
+   $ greynoise ip <ip_address> --api-key "<api_key>" --offering community
+
+API Client
+----------
+
+::
+
+    $ api_client = GreyNoise(api_key=<api_key>, offering="community")
+    $ api_client.ip('192.223.30.35')
+
+    {
+        'ip': '192.223.30.35',
+        'noise': True,
+        'riot': False,
+        'classification': 'unknown',
+        'name': 'unknown',
+        'link': 'https://viz.greynoise.io/ip/192.223.30.35',
+        'last_seen': '2021-03-18',
+        'message': 'Success'
+    }

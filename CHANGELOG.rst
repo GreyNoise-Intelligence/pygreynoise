@@ -8,15 +8,179 @@ Version `dev`_
 
 * API client:
 
-  *
+  * None
 
 * CLI:
 
-  *
+  * None
+
+* Dependencies:
+
+  * None
+
+Version `1.3.0`_
+================
+**Date**: September 07, 2022
+
+* API client:
+
+  * Rework logging to remove structlog predefined logging to follow best practices
+  * Update the `quick` command to use a POST API request instead of a GET API request
+  * Fix bug with `ip_multi` preventing lists of more than 1000 entries from returning correct data
+  * Fix bug with `ip_multi` when cache is disabled not returning correct values
+  * Fix bug with `ip_multi` where `include_invalid` parameter was not working
+
+* CLI:
+
+  * None
+
+* Dependencies:
+
+  * Updated Click to 8.1.3
+  * Updated colorama to 0.4.5
+  * Updated jinja2 to 3.1.2
+  * Updated more-itertools to 8.14.0
+  * Update requests to 2.28.1
+  * Removed structlog
+
+Version `1.2.1`_
+================
+**Date**: June 03, 2022
+
+* API client:
+
+  * None
+
+* CLI:
+
+  * Add missing HASSH values to output for IP and QUERY commands
+  * Remove unused PCAP command
+
+* Dependencies:
+
+  * Update jinja to 3.1.0
+  * Update dict2xml to 1.7.1
+  * Update Click to 8.1.2
+  * Update more-itertools to 8.13.0
+  * Update cachetools to 5.2.0
+
+Version `1.2.0`_
+================
+**Date**: September 03, 2021
+
+* API client:
+
+  * Add ip_multi command to support bulk IP Context lookups
+  * Fix issue with "include_invalid" option on quick command failing with "riot" key missing
+
+* CLI:
+
+  * Add ip-multi command to support bulk IP Context lookups
+  * Add support for comma separated IP lists for ip-multi and quick commands
+  * Add size and scroll arguments for query and stats command
+  * Update quick command to not error completely when non-routable IP is passed as an input in a list
+
+* Dependencies:
+
+  * Added colorama dependency
+  * Update Click to 8.0.3
+  * Updated cachetools to 5.0.0
+  * Updated jinja to 3.0.3
+  * Updated more-itertools to 8.12.0
+  * Updated requests to 2.27.1
+  * Updated structlog to 21.5.0
+
+Version `1.1.0`_
+================
+**Date**: June 23, 2021
+
+* API client:
+
+  * Update filter command to use new quick endpoint with noise/riot updates
+  * Update analyze command to use new quick endpoint with noise/riot updates
+
+* CLI:
+
+  * Update quick command to handle quick endpoint noise/riot updates
+  * Add support for RIOT trust_level output
+
+* Dependencies:
+
+  * Updated Click to 8.0.1
+
+Version `1.0.0`_
+================
+**Date**: June 02, 2021
+
+*** Removed Support for Python2 - BREAKING CHANGE ***
+
+* API client:
+
+  * Fixed error handling for both `error` and `message` responses
+  * Implemented ipaddress package for IP validation to prevent non-routable IP addresses from being
+    sent for query to the API
+
+* CLI:
+
+  * Updated warning messages to help identify invalid vs non-routable IPs
+
+* Dependencies:
+
+  * Updated cachetools to 4.2.2
+  * Updated six to 1.16.0
+  * Updated jinja2 to 3.0.1 for py36 and py37
+  * Updated click-repl to 0.2.0
+  * Updated more-itertools to 8.8.0
+
+Version `0.9.1`_
+================
+**Date**: May 05, 2021
+
+* CLI:
+
+  * #465: Fixed error handling on expired API key
+
+* Dependencies:
+
+  * Updated cachetools to 4.2.2
+
+Version `0.9.0`_
+================
+**Date**: April 21, 2021
+
+* API client:
+
+  * Removed rouge debug statement from analysis command
+
+* CLI:
+
+  * Fixed query command to display text output for queries with more than 10k results
+    * Query now limits results to 10 on the text output
+
+Version `0.8.0`_
+================
+**Date**: March 26, 2021
+
+* API client:
+
+  * Added support for Community API
+  * Added information about "integration_name" parameter to docs
+  * **BREAKING CHANGE** Updated test_connection() to use /ping endpoint and return API response
+    message and exception instead of string values
+
+* CLI:
+
+  * Added support for Community API
+  * Updated Analyze command to include RIOT
+  * Changed default behavior to no longer use `query`.  Invalid commands return error now
 
 * Dependencies:
 
   * Updated cachetools to 4.2.1
+  * Updated jinja2 to 2.11.3
+  * Updated more-itertools to 8.7.0
+  * Update structlog to 21.1.0
+
 
 Version `0.7.0`_
 ================
@@ -157,4 +321,12 @@ Version `0.2.0`_
 .. _`0.5.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.4.1...0.5.0
 .. _`0.6.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.5.0...0.6.0
 .. _`0.7.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.6.0...0.7.0
-.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...HEAD
+.. _`0.8.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.7.0...0.8.0
+.. _`0.9.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.8.0...0.9.0
+.. _`0.9.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.0...0.9.1
+.. _`1.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v0.9.1...1.0.0
+.. _`1.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.0.0...1.1.0
+.. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
+.. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
+.. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
