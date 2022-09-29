@@ -114,7 +114,7 @@ jobs:
 
   sonarcloud:
     docker:
-      - image: cimg/openjdk:11
+      - image: cimg/openjdk:11.0
     steps:
       - checkout
       - attach_workspace:
