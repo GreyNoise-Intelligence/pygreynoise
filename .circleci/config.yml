@@ -55,17 +55,17 @@ DEFAULT_STEPS: &DEFAULT_STEPS
 jobs:
   py35:
     docker:
-      - image: circleci/python:3.5
+      - image: cimg/python:3.5
     steps: *DEFAULT_STEPS
 
   py36:
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
     steps: *DEFAULT_STEPS
 
   py37:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
     steps:
       - checkout
       - run: *CREATE_VIRTUALENV_STEP
@@ -114,7 +114,7 @@ jobs:
 
   sonarcloud:
     docker:
-      - image: circleci/openjdk:11
+      - image: cimg/openjdk:11
     steps:
       - checkout
       - attach_workspace:
@@ -148,7 +148,7 @@ jobs:
 
   pypi:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
     steps:
       - checkout
       - run: *CREATE_VIRTUALENV_STEP
