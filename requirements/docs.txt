@@ -2,4 +2,4 @@
 -r common.txt
 Sphinx==5.2.2
 sphinx-click==4.3.0
-sphinx-rtd-theme==1.0.0
+sphinx-rtd-theme==1.1.0
