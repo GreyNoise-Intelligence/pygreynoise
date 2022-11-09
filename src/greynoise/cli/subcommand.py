@@ -317,3 +317,21 @@ def version():
         "  Python {}\n"
         "  {}\n".format(__version__, platform.python_version(), platform.platform())
     )
+
+@ip_lookup_command
+@click.option("-v", "--verbose", count=True, help="Verbose output")
+def similar(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    ip_address,
+    offering,
+):
+    """Query GreyNoise IP to identify Similar IPs."""
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = [api_client.similar(ip_address=ip_address) for ip_address in ip_addresses]
+    return results

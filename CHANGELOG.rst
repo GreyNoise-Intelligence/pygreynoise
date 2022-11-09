@@ -2,9 +2,9 @@
 Changelog
 =========
 
-Version `dev`_
+Version `1.4.0`_
 ================
-**Date**: unreleased
+**Date**: November 09, 2022
 
 * API client:
 
@@ -329,4 +329,4 @@ Version `0.2.0`_
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
-.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
+.. _`1.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...1.4.0
