@@ -16,17 +16,14 @@
 <key>Organization</key>: <value>{{ ip_context.ip.organization }}</value>
 <key>Total</key>: {{ ip_context.total }}
 
-          <header>IP Similarity - Top 5 Results</header>
+          <header>IP Similarity - Top 25 Results</header>
           -----------------------------
-{% for ip_sim in ip_context.similar_ips[:5] %}
-<key>IP</key>: <value>{{ ip_sim.ip }}</value>
-<key>Score</key>: <value>{{ ip_sim.score }}</value>
-{%- if ip_sim.features %}
-<key>Feature Matches</key>:
-{%- call(feature) macros.verbose_list(ip_sim.features) -%}
-<value>- {{ feature }}</value>
-{% endcall -%}
+<key>{{ '%-15s' | format('IP') }}</key><key>{{ '%-15s' | format('Score') }}</key><key>{{ '%-25s' | format('Actor') }}</key><key>{{ '%-20s' | format('Features Matched') }}</key>
+{%- for item in ip_context.similar_ips[:25] %}
+{{ '%-15s' | format(item.ip) }}{{ '%-15s' | format(item.score) }}{{ '%-25s' | format(item.actor) }}{{ '%-20s' | format(item.features|join(', ')) }}
+
+{%- endfor %}
+
+
 {% endif %}
-{%- endfor %}
-{%- endif %}
-{%- endfor %}
+{% endfor %}
