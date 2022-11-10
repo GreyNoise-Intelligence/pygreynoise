@@ -6,7 +6,7 @@ click-default-group==1.2.2
 click-repl==0.2.0
 dict2xml==1.7.1;python_version>='3'
 ipaddress==1.0.23
-jinja2==2.11.3;python_version=='3.5' # pyup: ignore
+jinja2==3.1.2;python_version=='3.5' # pyup: ignore
 jinja2==3.1.2;python_version>='3.6'
 more-itertools==8.14.0;python_version>='3'
 requests==2.28.1
