@@ -8,11 +8,11 @@ Version `1.4.0`_
 
 * API client:
 
-  * None
+  * Add `similar` command to support IP Similarity lookups
 
 * CLI:
 
-  * None
+  * Add `similar` command to support IP Similarity lookups
 
 * Dependencies:
 

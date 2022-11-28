@@ -145,3 +145,53 @@ def validate_ip(ip_address, strict=True, print_warning=True):
             if strict:
                 raise ValueError(error_message)
             return False
+
+
+def validate_timeline_field_value(field):
+    """Check if the Timeline Field value is valid.
+
+    :param field: field value to validate.
+    :type field: str
+
+    """
+    valid_field_names = ["destination_port", "http_path", "http_user_agent", "source_asn",
+                         "source_org", "source_rdns", "tag_ids", "classification"]
+
+    if field in valid_field_names:
+        return True
+    else:
+        raise ValueError(f"Field must be one of the following values: {valid_field_names}")
+        return False
+
+
+def validate_timeline_days(days):
+    """Check if the Timeline Days value is valid.
+
+    :param days: field value to validate.
+    :type days: str
+
+    """
+    if isinstance(days, str):
+        raise ValueError("Days must be a valid integer between 1 and 30.  Current input is a "
+                         "string.")
+        return False
+    if isinstance(days, int) and 1 <= int(days) <= 30:
+        return True
+    else:
+        raise ValueError("Days must be a valid integer between 1 and 30")
+        return False
+
+
+def validate_timeline_granularity(granularity):
+    """Check if the Timeline granularity value is valid.
+
+    :param granularity: field value to validate.
+    :type granularity: str
+
+    """
+    if granularity != "1h" and granularity != "1d":
+        raise ValueError("Granularity currently only supports a value of 1d or 1h")
+        return False
+    else:
+        return True
+

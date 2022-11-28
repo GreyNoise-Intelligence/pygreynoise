@@ -146,70 +146,86 @@ When there's a list of IP addresses to get full context from, they can be checke
 this (this method also supports the include_invalid flag::
 
     >>> api_client.ip_multi(['8.8.8.8', '58.220.219.247'])
-      [
-    {
-      'ip': '8.8.8.8',
-      'first_seen': '',
-      'last_seen': '',
-      'seen': False,
-      'tags': None,
-      'actor': '',
-      'spoofable': False,
-      'classification': '',
-      'cve': None,
-      'bot': False,
-      'vpn': False,
-      'vpn_service': '',
-      'metadata': {
-        'asn': '',
-        'city': '',
-        'country': '',
-        'country_code': '',
-        'organization': '',
-        'category': '',
-        'tor': False,
-        'rdns': '',
-        'os': ''
-      },
-      'raw_data': {
-        'scan': [],
-        'web': {},
-        'ja3': [],
-        'hassh': []
-      }
-    },
-    {
-      'ip': '58.220.219.247',
-      'first_seen': '',
-      'last_seen': '',
-      'seen': False,
-      'tags': None,
-      'actor': '',
-      'spoofable': False,
-      'classification': '',
-      'cve': None,
-      'bot': False,
-      'vpn': False,
-      'vpn_service': '',
-      'metadata': {
-        'asn': '',
-        'city': '',
-        'country': '',
-        'country_code': '',
-        'organization': '',
-        'category': '',
-        'tor': False,
-        'rdns': '',
-        'os': ''
-      },
-      'raw_data': {
-        'scan': [],
-        'web': {},
-        'ja3': [],
-        'hassh': []
-      }
-    }
-  ]
+    [
+       {
+          "ip":"8.8.8.8",
+          "first_seen":"",
+          "last_seen":"",
+          "seen":false,
+          "tags":"None",
+          "actor":"",
+          "spoofable":false,
+          "classification":"",
+          "cve":"None",
+          "bot":false,
+          "vpn":false,
+          "vpn_service":"",
+          "metadata":{
+             "asn":"",
+             "city":"",
+             "country":"",
+             "country_code":"",
+             "organization":"",
+             "category":"",
+             "tor":false,
+             "rdns":"",
+             "os":""
+          },
+          "raw_data":{
+             "scan":[
+
+             ],
+             "web":{
+
+             },
+             "ja3":[
+
+             ],
+             "hassh":[
+
+             ]
+          }
+       },
+       {
+          "ip":"58.220.219.247",
+          "first_seen":"",
+          "last_seen":"",
+          "seen":false,
+          "tags":"None",
+          "actor":"",
+          "spoofable":false,
+          "classification":"",
+          "cve":"None",
+          "bot":false,
+          "vpn":false,
+          "vpn_service":"",
+          "metadata":{
+             "asn":"",
+             "city":"",
+             "country":"",
+             "country_code":"",
+             "organization":"",
+             "category":"",
+             "tor":false,
+             "rdns":"",
+             "os":""
+          },
+          "raw_data":{
+             "scan":[
+
+             ],
+             "web":{
+
+             },
+             "ja3":[
+
+             ],
+             "hassh":[
+
+             ]
+          }
+       }
+    ]
 
 Any IP can also be checked to see if it exists within the RIOT dataset::
 
@@ -225,6 +241,48 @@ Any IP can also be checked to see if it exists within the RIOT dataset::
       'logo_url': 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
       'reference': 'https://developers.google.com/speed/public-dns/docs/isp#alternative',
       'trust_level': '1'
+    }
+
+Any IP can also be checked to see if there are any Similar IPs in the Noise Datase::
+
+    >>> api_client.similar('45.83.66.65')
+    {
+       "ip":{
+          "ip":"45.83.66.65",
+          "actor":"Alpha Strike Labs",
+          "classification":"benign",
+          "first_seen":"2019-07-12",
+          "last_seen":"2022-11-09",
+          "asn":"AS208843",
+          "city":"Berlin",
+          "country":"Germany",
+          "country_code":"DE",
+          "organization":"Alpha Strike Labs GmbH"
+       },
+       "similar_ips":[
+          {
+             "ip":"45.83.66.68",
+             "score":0.9628107,
+             "features":[
+                "ja3_fp",
+                "mass_scan_bool",
+                "os",
+                "ports",
+                "useragents",
+                "web_paths"
+             ],
+             "actor":"Alpha Strike Labs",
+             "classification":"benign",
+             "first_seen":"2019-07-12",
+             "last_seen":"2022-11-09",
+             "asn":"AS208843",
+             "city":"Berlin",
+             "country":"Germany",
+             "country_code":"DE",
+             "organization":"Alpha Strike Labs GmbH"
+          }
+       ],
+       "total":1275
     }
 
 .. note::
@@ -527,27 +585,28 @@ subcommands, use the *--help* option::
     GreyNoise CLI.
 
     Options:
-    -h, --help  Show this message and exit.
+      -h, --help  Show this message and exit.
 
     Commands:
-    query*       Run a GNQL (GreyNoise Query Language) query.
-    account      View information about your GreyNoise account.
-    alerts       List, create, delete, and manage your GreyNoise alerts.
-    analyze      Analyze the IP addresses in a log file, stdin, etc.
-    feedback     Send feedback directly to the GreyNoise team.
-    filter       "Filter the noise from a log file, stdin, etc.
-    help         Show this message and exit.
-    interesting  Report an IP as "interesting".
-    ip           Query GreyNoise for all information on a given IP.
-    pcap         Get PCAP for a given IP address.
-    quick        Quickly check whether or not one or many IPs are "noise".
-    repl         Start an interactive shell.
-    riot         Query GreyNoise IP to see if it is in the RIOT dataset.
-    setup        Configure API key.
-    signature    Submit an IDS signature to GreyNoise to be deployed to all...
-    stats        Get aggregate stats from a given GNQL query.
-    version      Get version and OS information for your GreyNoise
-                commandline...
+      account      View information about your GreyNoise account.
+      alerts       List, create, delete, and manage your GreyNoise alerts.
+      analyze      Analyze the IP addresses in a log file, stdin, etc.
+      feedback     Send feedback directly to the GreyNoise team.
+      filter       Filter the noise from a log file, stdin, etc.
+      help         Show this message and exit.
+      interesting  Report one or more IP addresses as "interesting".
+      ip           Query GreyNoise for all information on a given IP.
+      ip-multi     Perform Context lookup for multiple IPs at once.
+      query        Run a GNQL (GreyNoise Query Language) query.
+      quick        Quickly check whether or not one or many IPs are "noise".
+      repl         Start an interactive shell.
+      riot         Query GreyNoise IP to see if it is in the RIOT dataset.
+      setup        Configure API key.
+      signature    Submit an IDS signature to GreyNoise to be deployed to all...
+      similar      Query GreyNoise IP to identify Similar IPs.
+      stats        Get aggregate stats from a given GNQL query.
+      version      Get version and OS information for your GreyNoise...
+
 
 Setup
 -----
@@ -626,6 +685,27 @@ Detailed context information for any given IP address is also available::
    - Port/Proto: 3389/TCP
    - Port/Proto: 65529/TCP
 
+Detailed RIOT (common business service) details for any given IP address::
+
+    $ greynoise riot 8.8.8.8
+    8.8.8.8 is in RIOT dataset. Name: Google Public DNS Category: public_dns Trust Level: 1 Last Updated: 2022-11-10T14:58:59Z
+
+    $ greynoise riot 8.8.8.8 -v
+    8.8.8.8 is in RIOT dataset.
+
+              OVERVIEW
+    ----------------------------
+    IP: 8.8.8.8
+    RIOT: True
+    Category: public_dns
+    Trust Level: 1
+    Name: Google Public DNS
+    Description: Google's global domain name system (DNS) resolution service.
+    Explanation: Public DNS services are used as alternatives to ISP's name servers. You may see devices on your network communicating with Google Public DNS over port 53/TCP or 53/UDP to resolve DNS lookups.
+    Last Updated: 2022-11-10T14:58:59Z
+    Reference: https://developers.google.com/speed/public-dns/docs/isp#alternative
+
+
 When there's a list of IP addresses to verify, they can be checked all at once like
 this (a comma seperated list is also supported::
 
@@ -663,6 +743,51 @@ this (a comma seperated list is also supported::
 
     8.8.8.8 is classified as NOT NOISE.
 
+Check for Similar IPs to a given IP::
+
+   $ greynoise similar 45.83.66.65
+          IP Similarity Source
+          --------------------
+    IP: 45.83.66.65
+    Actor: Alpha Strike Labs
+    Classification: benign
+    First Seen: 2019-07-12
+    Last Seen: 2022-11-09
+    ASN: AS208843
+    City: Berlin
+    Country: Germany
+    Country Code: DE
+    Organization: Alpha Strike Labs GmbH
+    Total: 1275
+
+              IP Similarity - Top 25 Results
+              -------------------------------
+    IP             Score          Classification   Actor                    Last Seen      Organization             Features Matched
+    45.83.66.68    0.9628107      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.210   0.9628107      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.221   0.96202534     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.83    0.958974       benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.57    0.9548865      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.65.240   0.9548865      benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.66.169   0.9538843      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.65.31    0.9538843      benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.66.26    0.9538843      benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.65.49    0.95190924     benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.115   0.95095474     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.66.157   0.95078444     benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.143   0.95078444     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.64.254   0.95078444     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.235   0.9506148      benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.66.240   0.9506148      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.64.169   0.9500809      benign           Alpha Strike Labs        2022-11-10     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.66.203   0.9479964      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.124   0.94712734     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.64.103   0.94564474     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.228   0.9446091      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.157   0.9423011      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.65.67    0.89958984     benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.215   0.8994489      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
+    45.83.67.219   0.8994489      benign           Alpha Strike Labs        2022-11-09     Alpha Strike Labs GmbH   ja3_fp, mass_scan_bool, os, ports, useragents, web_paths
 
 
 GNQL

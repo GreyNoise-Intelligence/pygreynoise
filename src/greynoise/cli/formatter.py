@@ -176,6 +176,13 @@ def similar_formatter(results, verbose):
     max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
+@colored_output
+def timeline_formatter(results, verbose):
+    """Convert IP Sim to human-readable text."""
+    template = JINJA2_ENV.get_template("timeline.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
 
 FORMATTERS = {
     "json": json_formatter,
@@ -190,5 +197,6 @@ FORMATTERS = {
         "interesting": interesting_formatter,
         "ip-multi": ip_multi_context_formatter,
         "similar": similar_formatter,
+        "timeline": timeline_formatter,
     },
 }

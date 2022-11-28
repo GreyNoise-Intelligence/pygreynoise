@@ -14,11 +14,6 @@ Python GreyNoise
 .. image:: https://badge.fury.io/py/greynoise.svg
     :target: https://badge.fury.io/py/greynoise
 
-
-.. image:: https://pyup.io/repos/github/GreyNoise-Intelligence/pygreynoise/shield.svg
-    :target: https://pyup.io/repos/github/GreyNoise-Intelligence/pygreynoise/
-    :alt: Updates
-
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
 
