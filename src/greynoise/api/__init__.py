@@ -12,8 +12,14 @@ from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
-from greynoise.util import load_config, validate_ip, validate_timeline_field_value, \
-    validate_timeline_days, validate_timeline_granularity, validate_similar_min_score
+from greynoise.util import (
+    load_config,
+    validate_ip,
+    validate_timeline_field_value,
+    validate_timeline_days,
+    validate_timeline_granularity,
+    validate_similar_min_score,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -583,7 +589,9 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         """
         if self.offering == "community":
-            response = {"message": "Similarity lookup not supported with Community offering"}
+            response = {
+                "message": "Similarity lookup not supported with Community offering"
+            }
         else:
             LOGGER.debug("Checking IP Sim results for %s...", ip_address)
             validate_ip(ip_address)
@@ -597,7 +605,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if min_score:
                 validate_similar_min_score(min_score)
                 if min_score != 0:
-                    min_score = (min_score / 100)
+                    min_score = min_score / 100
                 endpoint = endpoint + f"&minimum_score={min_score}"
 
             print(endpoint)
@@ -625,7 +633,9 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         """
         if self.offering == "community":
-            response = {"message": "Similarity lookup not supported with Community offering"}
+            response = {
+                "message": "Similarity lookup not supported with Community offering"
+            }
         else:
             LOGGER.debug("Checking IP Sim results for %s...", ip_address)
             validate_ip(ip_address)
@@ -667,7 +677,9 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         """
         if self.offering == "community":
-            response = {"message": "Similarity lookup not supported with Community offering"}
+            response = {
+                "message": "Similarity lookup not supported with Community offering"
+            }
         else:
             LOGGER.debug("Checking IP Sim results for %s...", ip_address)
             validate_ip(ip_address)

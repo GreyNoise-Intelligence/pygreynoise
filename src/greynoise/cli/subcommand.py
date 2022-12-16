@@ -318,6 +318,7 @@ def version():
         "  {}\n".format(__version__, platform.python_version(), platform.platform())
     )
 
+
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 def similar(
@@ -352,13 +353,16 @@ def timeline(
     ip_address,
     offering,
     field_name,
-    days
+    days,
 ):
     """Query GreyNoise IP to identify Similar IPs."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [api_client.timeline(ip_address=ip_address, days=days, field=field_name) for
-               ip_address in ip_addresses]
+    results = [
+        api_client.timeline(ip_address=ip_address, days=days, field=field_name)
+        for ip_address in ip_addresses
+    ]
     return results
+
 
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
@@ -375,10 +379,12 @@ def timelinehourly(
     ip_address,
     offering,
     field_name,
-    days
+    days,
 ):
     """Query GreyNoise IP to identify Similar IPs."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [api_client.timelinehourly(ip_address=ip_address, days=days) for
-               ip_address in ip_addresses]
+    results = [
+        api_client.timelinehourly(ip_address=ip_address, days=days)
+        for ip_address in ip_addresses
+    ]
     return results

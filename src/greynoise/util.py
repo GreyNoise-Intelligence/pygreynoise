@@ -154,13 +154,23 @@ def validate_timeline_field_value(field):
     :type field: str
 
     """
-    valid_field_names = ["destination_port", "http_path", "http_user_agent", "source_asn",
-                         "source_org", "source_rdns", "tag_ids", "classification"]
+    valid_field_names = [
+        "destination_port",
+        "http_path",
+        "http_user_agent",
+        "source_asn",
+        "source_org",
+        "source_rdns",
+        "tag_ids",
+        "classification",
+    ]
 
     if field in valid_field_names:
         return True
     else:
-        raise ValueError(f"Field must be one of the following values: {valid_field_names}")
+        raise ValueError(
+            f"Field must be one of the following values: {valid_field_names}"
+        )
         return False
 
 
@@ -172,8 +182,10 @@ def validate_timeline_days(days):
 
     """
     if isinstance(days, str):
-        raise ValueError("Days must be a valid integer between 1 and 30.  Current input is a "
-                         "string.")
+        raise ValueError(
+            "Days must be a valid integer between 1 and 30.  Current input is a "
+            "string."
+        )
         return False
     if isinstance(days, int) and 1 <= int(days) <= 30:
         return True
@@ -204,8 +216,10 @@ def validate_similar_min_score(min_score):
 
     """
     if isinstance(min_score, str):
-        raise ValueError("Min Score must be a valid integer between 0 and 100.  Current input is a "
-                         "string.")
+        raise ValueError(
+            "Min Score must be a valid integer between 0 and 100.  Current input is a "
+            "string."
+        )
         return False
     if isinstance(min_score, int) and 0 <= int(min_score) <= 100:
         return True

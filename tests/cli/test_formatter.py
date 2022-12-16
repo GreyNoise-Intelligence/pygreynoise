@@ -30,6 +30,10 @@ EXAMPLE_IP_CONTEXT = {
         "city": "<city>",
         "country": "<country>",
         "country_code": "<country_code>",
+        "source_country": "<source_country>",
+        "source_country_code": "<source_country_code>",
+        "destination_countries": ["<dest_country_1>", "<dest_country_2>"],
+        "destination_country_codes": ["<dest_country_code_1>", "<dest_country_code_2>"],
         "organization": "<organization>",
         "os": "<os>",
         "region": "<region>",
@@ -68,10 +72,10 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         """\
                   <header>OVERVIEW</header>
         ----------------------------
+        <key>IP</key>: <value><ip_address></value>
         <key>Actor</key>: <value><actor></value>
         <key>Classification</key>: <value><classification></value>
         <key>First seen</key>: <value><first_seen></value>
-        <key>IP</key>: <value><ip_address></value>
         <key>Last seen</key>: <value><last_seen></value>
         <key>Spoofable</key>: <value>False</value>
         <key>BOT</key>: <value>False</value>
@@ -86,7 +90,8 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         ----------------------------
         <key>ASN</key>: <value><asn></value>
         <key>Category</key>: <value><category></value>
-        <key>Location</key>: <value><city>, <country> (<country_code>)</value>
+        <key>Source Location</key>: <value><city>, <country> (<country_code>)</value>
+        <key>Destination Countries</key>: <value><dest_country_1>, <dest_country_2></value>
         <key>Region</key>: <value><region></value>
         <key>Organization</key>: <value><organization></value>
         <key>OS</key>: <value><os></value>

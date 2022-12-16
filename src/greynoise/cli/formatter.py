@@ -208,6 +208,6 @@ FORMATTERS = {
         "ip-multi": ip_multi_context_formatter,
         "similar": similar_formatter,
         "timeline": timeline_formatter,
-        "timelinehourly": timelinehourly_formatter
+        "timelinehourly": timelinehourly_formatter,
     },
 }

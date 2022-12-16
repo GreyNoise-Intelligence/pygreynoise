@@ -21,11 +21,10 @@
 ----------------------------
 <key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
 <key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
-<key>Source Country</key>: <value>{{ ip_context.metadata.country }}</value>
+<key>Source Location</key>: <value>{{ ip_context.metadata.location }}</value>
 {% if ip_context.metadata.destination_countries -%}
 <key>Destination Countries</key>: <value>{{ ip_context.metadata.destination_countries | join(', ') }}</value>
 {% endif -%}
-<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>
 <key>Region</key>: <value>{{ ip_context.metadata.region }}</value>
 <key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
 <key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
