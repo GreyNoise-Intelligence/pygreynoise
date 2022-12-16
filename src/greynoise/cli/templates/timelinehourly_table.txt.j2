@@ -1,0 +1,21 @@
+{% import "macros.txt.j2" as macros with context %}
+{% for ip_context in results -%}
+{% if ip_context.ip %}
+
+          <header>IP Timeline - Hourly Summary</header>
+          ------------------------------
+<key>IP</key>: <value>{{ ip_context.metadata.ip }}</value>
+<key>Start</key>: <value>{{ ip_context.metadata.start_time.replace("T", " ").replace("Z", "") }}</value>
+<key>End</key>: <value>{{ ip_context.metadata.end_time.replace("T", " ").replace("Z", "") }}</value>
+
+          <header>Timeline</header>
+          --------
+<key>{{ '%-25s' | format('Timestamp') }}</key><key>{{ '%-17s' | format('Classification') }}</key><key>{{ '%-35s' | format('rDNS') }}</key><key>{{ '%-25s' | format('Organization') }}</key><key>{{ '%-10s' | format('ASN') }}</key><key>{{ '%-75s' | format('Ports(s)') }}</key><key>{{ '%-50s' | format('Tags(s)') }}</key>
+
+{%- for item in ip_context.activity %}
+{{ '%-25s' | format(item.timestamp.replace("T", " ").replace("Z", "")) }}{{ '%-17s' | format(item.classification) }}{{ '%-35s' | format(item.rdns) }}{{ '%-25s' | format(item.organization) }}{{ '%-10s' | format(item.asn) }}{{ macros.ports_list(item.protocols) }}{{ macros.tag_list(item.tags) }}
+{%- endfor %}
+
+
+{% endif %}
+{% endfor %}

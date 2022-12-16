@@ -195,3 +195,20 @@ def validate_timeline_granularity(granularity):
     else:
         return True
 
+
+def validate_similar_min_score(min_score):
+    """Check if the Similarity min_score value is valid.
+
+    :param min_score: field value to validate.
+    :type min_score: str
+
+    """
+    if isinstance(min_score, str):
+        raise ValueError("Min Score must be a valid integer between 0 and 100.  Current input is a "
+                         "string.")
+        return False
+    if isinstance(min_score, int) and 0 <= int(min_score) <= 100:
+        return True
+    else:
+        raise ValueError("Days must be a valid integer between 0 and 100")
+        return False

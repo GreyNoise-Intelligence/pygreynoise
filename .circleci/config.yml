@@ -9,13 +9,19 @@ workflows:
   version: 2
   build:
     jobs:
-      - py35:
-          filters:
-            <<: *TAGS_FILTER
       - py36:
           filters:
             <<: *TAGS_FILTER
       - py37:
+          filters:
+            <<: *TAGS_FILTER
+      - py38:
+          filters:
+            <<: *TAGS_FILTER
+      - py39:
+          filters:
+            <<: *TAGS_FILTER
+      - py310:
           filters:
             <<: *TAGS_FILTER
       - sonarcloud:
@@ -26,9 +32,11 @@ workflows:
       - pypi:
           requires:
             # release to pypi only when test cases pass in all python versions
-            - py35
             - py36
             - py37
+            - py38
+            - py39
+            - py310
           filters:
             <<: *TAGS_FILTER
             branches:
@@ -53,11 +61,6 @@ DEFAULT_STEPS: &DEFAULT_STEPS
       path: workspace/test_results
 
 jobs:
-  py35:
-    docker:
-      - image: cimg/python:3.5
-    steps: *DEFAULT_STEPS
-
   py36:
     docker:
       - image: cimg/python:3.6
@@ -111,6 +114,21 @@ jobs:
             - test_results/pytest.xml
       - store_test_results:
           path: workspace/test_results
+
+  py38:
+    docker:
+      - image: cimg/python:3.8
+    steps: *DEFAULT_STEPS
+
+  py39:
+    docker:
+      - image: cimg/python:3.9
+    steps: *DEFAULT_STEPS
+
+  py310:
+    docker:
+      - image: cimg/python:3.10
+    steps: *DEFAULT_STEPS
 
   sonarcloud:
     docker:

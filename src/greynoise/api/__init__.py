@@ -13,7 +13,7 @@ from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config, validate_ip, validate_timeline_field_value, \
-    validate_timeline_days, validate_timeline_granularity
+    validate_timeline_days, validate_timeline_granularity, validate_similar_min_score
 
 LOGGER = logging.getLogger(__name__)
 
@@ -568,11 +568,13 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def similar(self, ip_address, limit=None):
+    def similar(self, ip_address, limit=None, min_score=None):
         """Query IP on the IP Similarity API
 
         :param ip_address: IP address to use in the look-up.
         :type ip_address: str
+        :param limit: Limit the number of matches returned by the endpoint
+        :type limit: str
         :param limit: Limit the number of matches returned by the endpoint
         :type limit: str
         :return: Context for the IP address.
@@ -587,10 +589,18 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             validate_ip(ip_address)
 
             if limit is None:
-                endpoint = self.EP_SIMILARITY_IP.format(ip_address=ip_address)
-            else:
-                endpoint = self.EP_SIMILARITY_IP.format(ip_address=ip_address)
+                limit = 50
 
+            endpoint = self.EP_SIMILARITY_IP.format(ip_address=ip_address)
+            endpoint = endpoint + f"?limit={limit}"
+
+            if min_score:
+                validate_similar_min_score(min_score)
+                if min_score != 0:
+                    min_score = (min_score / 100)
+                endpoint = endpoint + f"&minimum_score={min_score}"
+
+            print(endpoint)
             response = self._request(endpoint)
 
             if "ip" not in response:
@@ -640,7 +650,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def timelinedetails(self, ip_address, days=None, cursor=None, limit=100):
+    def timelinehourly(self, ip_address, days=None, cursor=None, limit=100):
         """Query IP on the IP TimeSeries API
 
         :param ip_address: IP address to use in the look-up.
@@ -670,7 +680,6 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                 endpoint = endpoint + f"&days={days}"
             if cursor:
                 endpoint = endpoint + f"&cursor={cursor}"
-            print(endpoint)
             response = self._request(endpoint)
 
             if "ip" not in response:

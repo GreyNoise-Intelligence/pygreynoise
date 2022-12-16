@@ -6,15 +6,15 @@
           ------------------------------
 <key>IP</key>: <value>{{ ip_context.metadata.ip }}</value>
 <key>Field</key>: <value>{{ ip_context.metadata.field }}</value>
-<key>Start</key>: <value>{{ ip_context.metadata.start }}</value>
-<key>End</key>: <value>{{ ip_context.metadata.end }}</value>
+<key>Start</key>: <value>{{ ip_context.metadata.start.split('T')[0] }}</value>
+<key>End</key>: <value>{{ ip_context.metadata.end.split('T')[0] }}</value>
 <key>Granularity</key>: <value>{{ ip_context.metadata.granularity }}</value>
 
           <header>Timeline</header>
           --------
-<key>{{ '%-25s' | format('Timestamp') }}</key><key>{{ '%-15s' | format('Event Count') }}</key><key>{{ '%-15s' | format('Label') }}</key>
+<key>{{ '%-15s' | format('Timestamp') }}</key><key>{{ '%-15s' | format('Event Count') }}</key><key>{{ '%-15s' | format(ip_context.metadata.field ) | replace("_", " " ) | title }}</key>
 {%- for item in ip_context.results %}
-{{ '%-25s' | format(item.timestamp) }}{{ '%-15s' | format(item.data) }}{{ '%-15s' | format(item.label) }}
+{{ '%-15s' | format(item.timestamp.split('T')[0]) }}{{ '%-15s' | format(item.data) }}{{ '%-15s' | format(item.label) }}
 {%- endfor %}
 
 {% endif %}

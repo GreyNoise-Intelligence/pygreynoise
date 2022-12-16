@@ -8,15 +8,23 @@ Version `1.4.0`_
 
 * API client:
 
-  * Add `similar` command to support IP Similarity lookups
+  * Removed official support for python 3.5
+  * Added `similar` command to support IP Similarity lookups
+  * Added `timeline` command to support IP Time Series Single Attribute lookups
+  * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
+
 
 * CLI:
 
-  * Add `similar` command to support IP Similarity lookups
+  * Added `similar` command to support IP Similarity lookups
+  * Added `timeline` command to support IP Time Series Single Attribute lookups
+  * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
 
 * Dependencies:
 
-  * None
+  * Updated dict2xml to version 1.7.2
+  * Updated colorama to version 0.4.6
+  * Update structlog to version 22.3.0
 
 Version `1.3.0`_
 ================
