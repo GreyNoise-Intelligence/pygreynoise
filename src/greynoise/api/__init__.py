@@ -15,10 +15,10 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import (
     load_config,
     validate_ip,
-    validate_timeline_field_value,
-    validate_timeline_days,
-    validate_timeline_granularity,
     validate_similar_min_score,
+    validate_timeline_days,
+    validate_timeline_field_value,
+    validate_timeline_granularity,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -665,7 +665,9 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         :param ip_address: IP address to use in the look-up.
         :type ip_address: str
-        :param cursor: The cursor is a pointer from which to start returning results up to the limit
+        :param cursor:
+            The cursor is a pointer from which to start returning
+            results up to the limit
         :type cursor: str
         :param days: Number of days to show data for
         :type days: int
