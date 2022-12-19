@@ -171,7 +171,6 @@ def validate_timeline_field_value(field):
         raise ValueError(
             f"Field must be one of the following values: {valid_field_names}"
         )
-        return False
 
 
 def validate_timeline_days(days):
@@ -186,12 +185,10 @@ def validate_timeline_days(days):
             "Days must be a valid integer between 1 and 30.  Current input is a "
             "string."
         )
-        return False
     if isinstance(days, int) and 1 <= int(days) <= 30:
         return True
     else:
         raise ValueError("Days must be a valid integer between 1 and 30")
-        return False
 
 
 def validate_timeline_granularity(granularity):
@@ -203,7 +200,6 @@ def validate_timeline_granularity(granularity):
     """
     if granularity != "1h" and granularity != "1d":
         raise ValueError("Granularity currently only supports a value of 1d or 1h")
-        return False
     else:
         return True
 
@@ -220,9 +216,7 @@ def validate_similar_min_score(min_score):
             "Min Score must be a valid integer between 0 and 100.  Current input is a "
             "string."
         )
-        return False
     if isinstance(min_score, int) and 0 <= int(min_score) <= 100:
         return True
     else:
         raise ValueError("Days must be a valid integer between 0 and 100")
-        return False

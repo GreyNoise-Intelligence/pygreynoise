@@ -1,6 +1,6 @@
 {% import "macros.txt.j2" as macros with context %}
 {% for ip_context in results -%}
-{% if ip_context.ip %}
+{% if ip_context.similar_ips %}
 
           <header>IP Similarity Source</header>
           --------------------
@@ -21,9 +21,8 @@
 <key>{{ '%-15s' | format('IP') }}</key><key>{{ '%-15s' | format('Score') }}</key><key>{{ '%-17s' | format('Classification') }}</key><key>{{ '%-25s' | format('Actor') }}</key><key>{{ '%-15s' | format('Last Seen') }}</key><key>{{ '%-25s' | format('Organization') }}</key><key>{{ '%-20s' | format('Features Matched') }}</key>
 {%- for item in ip_context.similar_ips[:25] %}
 {{ '%-15s' | format(item.ip) }}{{ '%-15s' | format(item.score) }}{{ '%-17s' | format(item.classification) }}{{ '%-25s' | format(item.actor) }}{{ '%-15s' | format(item.last_seen) }}{{ '%-25s' | format(item.organization) }}{{ '%-20s' | format(item.features|join(', ')) }}
-
 {%- endfor %}
-
-
+{% else %}
+{{ ip_context.ip }} has not been seen in scans in the past 90 days.
 {% endif %}
 {% endfor %}

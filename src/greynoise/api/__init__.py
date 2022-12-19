@@ -608,7 +608,6 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                     min_score = min_score / 100
                 endpoint = endpoint + f"&minimum_score={min_score}"
 
-            print(endpoint)
             response = self._request(endpoint)
 
             if "ip" not in response:

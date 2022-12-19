@@ -2,13 +2,16 @@
 Changelog
 =========
 
-Version `1.4.0`_
+Version `2.0.0`_
 ================
-**Date**: November 09, 2022
+**Date**: December 19, 2022
+
+* BREAKING CHANGE:
+
+  * Removed support for python 3.5
 
 * API client:
 
-  * Removed official support for python 3.5
   * Added `similar` command to support IP Similarity lookups
   * Added `timeline` command to support IP Time Series Single Attribute lookups
   * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
@@ -337,4 +340,4 @@ Version `0.2.0`_
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
-.. _`1.4.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...1.4.0
+.. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...2.0.0
