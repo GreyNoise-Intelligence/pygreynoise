@@ -640,7 +640,9 @@ class TestQuery(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.query(query)
-        client._request.assert_called_with("v2/experimental/gnql", params={"query": query})
+        client._request.assert_called_with(
+            "v2/experimental/gnql", params={"query": query}
+        )
         assert response == expected_response
 
     def test_query_with_size_and_scroll(self, client):
@@ -651,7 +653,8 @@ class TestQuery(object):
         client._request = Mock(return_value=expected_response)
         response = client.query(query, size=5, scroll="scroll")
         client._request.assert_called_with(
-            "v2/experimental/gnql", params={"query": query, "size": 5, "scroll": "scroll"}
+            "v2/experimental/gnql",
+            params={"query": query, "size": 5, "scroll": "scroll"},
         )
         assert response == expected_response
 
