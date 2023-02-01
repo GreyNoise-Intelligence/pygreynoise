@@ -209,5 +209,6 @@ FORMATTERS = {
         "similar": similar_formatter,
         "timeline": timeline_formatter,
         "timelinehourly": timelinehourly_formatter,
+        "timelinedaily": timelinehourly_formatter,
     },
 }

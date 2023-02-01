@@ -699,3 +699,84 @@ class TestPing(object):
         response = client.test_connection()
         client._request.assert_called_with("ping")
         assert response == expected_response
+
+
+class TestSimilar(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_similar(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.similar(ip_address)
+        client._request.assert_called_with(
+            "v3/similarity/ips/{}?limit=50".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.similar(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()
+
+
+class TestTimeline(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_timeline(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.timeline(ip_address)
+        client._request.assert_called_with(
+            "v3/noise/ips/{}/timeline?field=classification".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.timeline(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()
+
+
+class TestTimelineHourly(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_timelinehourly(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.timelinehourly(ip_address)
+        client._request.assert_called_with(
+            "v3/noise/ips/{}/hourly-summary?limit=100".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.timelinehourly(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()

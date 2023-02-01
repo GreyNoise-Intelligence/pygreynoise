@@ -25,6 +25,8 @@ class Analyzer(object):
         "organizations": "organization",
         "tags": "tag",
         "spoofable": "spoofable",
+        "source_countries": "country",
+        "destination_countries": "country",
     }
 
     def __init__(self, api):

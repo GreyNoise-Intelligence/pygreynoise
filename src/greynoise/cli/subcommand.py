@@ -321,6 +321,10 @@ def version():
 
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
+@click.option("-l", "--limit", help="Limit the number of results")
+@click.option(
+    "-s", "--min_score", type=int, help="Return results where score is above min"
+)
 def similar(
     context,
     api_client,
@@ -331,10 +335,15 @@ def similar(
     verbose,
     ip_address,
     offering,
+    limit,
+    min_score,
 ):
     """Query GreyNoise IP to identify Similar IPs."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [api_client.similar(ip_address=ip_address) for ip_address in ip_addresses]
+    results = [
+        api_client.similar(ip_address=ip_address, limit=limit, min_score=min_score)
+        for ip_address in ip_addresses
+    ]
     return results
 
 
@@ -385,6 +394,32 @@ def timelinehourly(
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [
         api_client.timelinehourly(ip_address=ip_address, days=days)
+        for ip_address in ip_addresses
+    ]
+    return results
+
+
+@ip_lookup_command
+@click.option("-v", "--verbose", count=True, help="Verbose output")
+@click.option("-d", "--days", type=int, help="Number of Days to display")
+@click.option("-F", "--field_name", help="Field name to display data for")
+def timelinedaily(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    ip_address,
+    offering,
+    field_name,
+    days,
+):
+    """Query GreyNoise IP to identify Similar IPs."""
+    ip_addresses = get_ip_addresses(context, input_file, ip_address)
+    results = [
+        api_client.timelinedaily(ip_address=ip_address, days=days)
         for ip_address in ip_addresses
     ]
     return results

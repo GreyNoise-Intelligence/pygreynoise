@@ -1,15 +1,15 @@
 black==22.8.0;python_version=='3.6' # pyup: ignore
-black==22.12.0;python_version>='3.7'
+black==23.1.0;python_version>='3.7'
 flake8==5.0.4;python_version>='3.6'
 isort==5.10.1;python_version=='3.6'
-isort==5.11.3;python_version>='3.7'
-mock==4.0.3;python_version>='3.6'
+isort==5.12.0;python_version>='3.7'
+mock==5.0.1;python_version>='3.6'
 pylint==2.13.9;python_version=='3.6' # pyup: ignore
-pylint==2.15.9;python_version>='3.7'
+pylint==2.16.0;python_version>='3.7'
 pytest-cov==4.0.0;python_version>='3.6'
 pytest==7.0.1;python_version=='3.6' # pyup: ignore
 pytest==7.1.2;python_version>='3.7'
 restructuredtext-lint==1.4.0
 twine==3.8.0;python_version=='3.6' # pyup: ignore
 twine==4.0.2;python_version>='3.7'
-yamllint==1.28.0;python_version>='3.6'
+yamllint==1.29.0;python_version>='3.6'

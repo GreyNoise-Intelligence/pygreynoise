@@ -297,7 +297,10 @@ class TestGNQLStatsFormatter(object):
                         "count": 2,
                         "query": "<ip_address>",
                         "stats": {
-                            "actors": None,
+                            "actors": [
+                                {"actor": "<actor>", "count": 1},
+                                {"actor": "<long_actor>", "count": 1},
+                            ],
                             "asns": [
                                 {"asn": "<asn>", "count": 1},
                                 {"asn": "<long_asn>", "count": 1},
@@ -314,6 +317,10 @@ class TestGNQLStatsFormatter(object):
                                 {"country": "<country>", "count": 1},
                                 {"country": "<long_country>", "count": 1},
                             ],
+                            "destination_countries": [
+                                {"country": "<country>", "count": 1},
+                                {"country": "<long_country>", "count": 1},
+                            ],
                             "operating_systems": [
                                 {"operating_system": "<operating_system>", "count": 1},
                                 {
@@ -324,6 +331,14 @@ class TestGNQLStatsFormatter(object):
                             "organizations": [
                                 {"organization": "<organization>", "count": 1},
                                 {"organization": "<long_organization>", "count": 1},
+                            ],
+                            "source_countries": [
+                                {"country": "<country>", "count": 1},
+                                {"country": "<long_country>", "count": 1},
+                            ],
+                            "spoofable": [
+                                {"spoofable": "<spoofable>", "count": 1},
+                                {"spoofable": "<spoofable>", "count": 1},
                             ],
                             "tags": [
                                 {"tag": "<tag>", "count": 1},
@@ -340,6 +355,10 @@ class TestGNQLStatsFormatter(object):
                         ╚═══════════════════════════╝
                         Query: <ip_address>
 
+                        <header>Actors</header>:
+                        - <key><actor>     </key> <value>1</value>
+                        - <key><long_actor></key> <value>1</value>
+
                         <header>ASNs</header>:
                         - <key><asn>     </key> <value>1</value>
                         - <key><long_asn></key> <value>1</value>
@@ -352,7 +371,11 @@ class TestGNQLStatsFormatter(object):
                         - <key><classification>     </key> <value>1</value>
                         - <key><long_classification></key> <value>1</value>
 
-                        <header>Countries</header>:
+                        <header>Source Countries</header>:
+                        - <key><country>     </key> <value>1</value>
+                        - <key><long_country></key> <value>1</value>
+
+                        <header>Destination Countries</header>:
                         - <key><country>     </key> <value>1</value>
                         - <key><long_country></key> <value>1</value>
 
@@ -363,6 +386,10 @@ class TestGNQLStatsFormatter(object):
                         <header>Organizations</header>:
                         - <key><organization>     </key> <value>1</value>
                         - <key><long_organization></key> <value>1</value>
+
+                        <header>Spoofable</header>:
+                        - <key><spoofable></key> <value>     1</value>
+                        - <key><spoofable></key> <value>     1</value>
 
                         <header>Tags</header>:
                         - <key><tag>     </key> <value>1</value>
