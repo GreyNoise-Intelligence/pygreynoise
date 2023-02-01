@@ -6,5 +6,4 @@ rules:
   line-length:
     max: 88
 
-ignore:
-  - ./venv/
+ignore-from-file: .gitignore
