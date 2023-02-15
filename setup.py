@@ -23,8 +23,7 @@ INSTALL_REQUIRES = [
     "jinja2",
     "more-itertools",
     "requests",
-    "six",
-    "structlog>=18.1.0",
+    "six"
 ]
 
 setup(
