@@ -4,7 +4,7 @@ Changelog
 
 Version `2.0.0`_
 ================
-**Date**: December 19, 2022
+**Date**: February 15, 2023
 
 * BREAKING CHANGE:
 
@@ -29,8 +29,7 @@ Version `2.0.0`_
 
   * Updated dict2xml to version 1.7.2
   * Updated colorama to version 0.4.6
-  * Update structlog to version 22.3.0
-  * Update cachetools to version 5.3.0
+  * Updated cachetools to version 5.3.0
 
 Version `1.3.0`_
 ================
