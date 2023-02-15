@@ -23,7 +23,7 @@ INSTALL_REQUIRES = [
     "jinja2",
     "more-itertools",
     "requests",
-    "six"
+    "six",
 ]
 
 setup(
