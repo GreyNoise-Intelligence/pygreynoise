@@ -315,7 +315,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         response = self._request(endpoint)
         return response
 
-    def query(self, query, size=None, scroll=None):
+    def query(self, query, size=None, scroll=None, exclude_raw=False):
         """Run GNQL query."""
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
@@ -327,6 +327,11 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if scroll is not None:
                 params["scroll"] = scroll
             response = self._request(self.EP_GNQL, params=params)
+
+        if exclude_raw:
+            if "data" in response:
+                for ip_data in response["data"]:
+                    ip_data.pop("raw_data")
 
         return response
 

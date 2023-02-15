@@ -16,7 +16,7 @@ Version `2.0.0`_
   * Added `timeline` command to support IP Time Series Single Attribute lookups
   * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
   * Added `timelinedaily` command to support IP Time Series Daily Summary lookups
-
+  * Added `exclude_raw` parameter to query command to reduce issues with default behavior in integrations
 
 * CLI:
 
