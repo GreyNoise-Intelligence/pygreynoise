@@ -12,17 +12,19 @@ def read(fname):
 
 
 INSTALL_REQUIRES = [
-    "Click>=7.1.2",
+    "Click>=8.1.3",
     "ansimarkup",
     "cachetools",
+    "colorama",
     "click-default-group",
     "click-repl",
     "dict2xml",
+    "ipaddress",
     "jinja2",
     "more-itertools",
     "requests",
     "six",
-    "structlog",
+    "structlog>=18.1.0",
 ]
 
 setup(
