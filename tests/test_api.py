@@ -121,7 +121,7 @@ class TestRequest(object):
         response = client._request("endpoint")
         assert response == expected_response
         client.session.get.assert_called_with(
-            "{}/{}/{}".format(client.api_server, client.API_VERSION, "endpoint"),
+            "{}/{}".format(client.api_server, "endpoint"),
             headers={
                 "User-Agent": "GreyNoise/{} (test)".format(__version__),
                 "key": "<api_key>",
@@ -336,7 +336,7 @@ class TestInteresting(object):
         client._request = Mock(return_value=expected_response)
         response = client.interesting(ip_address)
         client._request.assert_called_with(
-            "interesting/{}".format(ip_address), method="post"
+            "v2/interesting/{}".format(ip_address), method="post"
         )
         assert response == expected_response
 
@@ -362,7 +362,7 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.ip(ip_address)
-        client._request.assert_called_with("noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
         assert response == expected_response
 
     def test_ip_with_cache(self, client):
@@ -372,7 +372,7 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
         client.ip(ip_address)
@@ -386,11 +386,11 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
 
         client._request.reset_mock()
         client.ip(ip_address)
-        client._request.assert_called_with("noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
 
     def test_invalid_ip(self, client):
         """Get invalid IP address information."""
@@ -413,7 +413,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
@@ -450,7 +450,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
@@ -477,7 +477,7 @@ class TestQuick(object):
             ),
             (
                 "8.8.8.8",
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                 [
                     {
@@ -492,7 +492,7 @@ class TestQuick(object):
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                 [
                     {
@@ -530,7 +530,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
@@ -543,7 +543,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
@@ -554,12 +554,12 @@ class TestQuick(object):
             ),
             (
                 "8.8.8.8",
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
         ),
@@ -582,7 +582,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
@@ -595,7 +595,7 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "noise/multi/quick",
+                    "v2/noise/multi/quick",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
@@ -606,12 +606,12 @@ class TestQuick(object):
             ),
             (
                 "8.8.8.8",
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
+                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
                 {"code": "0x00", "ip": "8.8.8.8", "noise": False},
             ),
         ),
@@ -640,7 +640,9 @@ class TestQuery(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.query(query)
-        client._request.assert_called_with("experimental/gnql", params={"query": query})
+        client._request.assert_called_with(
+            "v2/experimental/gnql", params={"query": query}
+        )
         assert response == expected_response
 
     def test_query_with_size_and_scroll(self, client):
@@ -651,7 +653,8 @@ class TestQuery(object):
         client._request = Mock(return_value=expected_response)
         response = client.query(query, size=5, scroll="scroll")
         client._request.assert_called_with(
-            "experimental/gnql", params={"query": query, "size": 5, "scroll": "scroll"}
+            "v2/experimental/gnql",
+            params={"query": query, "size": 5, "scroll": "scroll"},
         )
         assert response == expected_response
 
@@ -667,7 +670,7 @@ class TestStats(object):
         client._request = Mock(return_value=expected_response)
         response = client.stats(query)
         client._request.assert_called_with(
-            "experimental/gnql/stats", params={"query": query}
+            "v2/experimental/gnql/stats", params={"query": query}
         )
         assert response == expected_response
 
@@ -681,7 +684,7 @@ class TestMeta(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.metadata()
-        client._request.assert_called_with("meta/metadata")
+        client._request.assert_called_with("v2/meta/metadata")
         assert response == expected_response
 
 
@@ -696,3 +699,84 @@ class TestPing(object):
         response = client.test_connection()
         client._request.assert_called_with("ping")
         assert response == expected_response
+
+
+class TestSimilar(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_similar(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.similar(ip_address)
+        client._request.assert_called_with(
+            "v3/similarity/ips/{}?limit=50".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.similar(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()
+
+
+class TestTimeline(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_timeline(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.timeline(ip_address)
+        client._request.assert_called_with(
+            "v3/noise/ips/{}/timeline?field=classification".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.timeline(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()
+
+
+class TestTimelineHourly(object):
+    """GreyNoise client Similar context test cases."""
+
+    def test_timelinehourly(self, client):
+        """Get IP address information."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.timelinehourly(ip_address)
+        client._request.assert_called_with(
+            "v3/noise/ips/{}/hourly-summary?limit=100".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_invalid_ip(self, client):
+        """Get invalid IP address information."""
+        invalid_ip = "not an ip address"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.timelinehourly(invalid_ip)
+        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
+
+        client._request.assert_not_called()

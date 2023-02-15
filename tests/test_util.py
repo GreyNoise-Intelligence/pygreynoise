@@ -6,7 +6,16 @@ import pytest
 from mock import patch
 from six import StringIO
 
-from greynoise.util import CONFIG_FILE, load_config, save_config, validate_ip
+from greynoise.util import (
+    CONFIG_FILE,
+    load_config,
+    save_config,
+    validate_ip,
+    validate_similar_min_score,
+    validate_timeline_days,
+    validate_timeline_field_value,
+    validate_timeline_granularity,
+)
 
 
 class TestLoadConfig(object):
@@ -317,3 +326,101 @@ class TestValidateIP(object):
         with pytest.raises(ValueError) as exception:
             validate_ip(ip)
         assert str(exception.value) == "Non-Routable IP address: {!r}".format(ip)
+
+
+class TestValidateSimilarMinScore(object):
+    """Similarity min score utility validation test cases."""
+
+    @pytest.mark.parametrize("min_score", (0, 50, 100))
+    def test_valid(self, min_score):
+        """Test valid values."""
+        validate_similar_min_score(min_score)
+
+    @pytest.mark.parametrize("min_score", (-1, 500))
+    def test_invalid(self, min_score):
+        """Test invalid values."""
+        with pytest.raises(ValueError) as exception:
+            validate_similar_min_score(min_score)
+        assert (
+            str(exception.value)
+            == "Min Score must be a valid integer between 0 and 100."
+        )
+
+    @pytest.mark.parametrize("min_score", ("0", "5", "100"))
+    def test_string(self, min_score):
+        """Test string input values."""
+        with pytest.raises(ValueError) as exception:
+            validate_similar_min_score(min_score)
+        assert (
+            str(exception.value)
+            == "Min Score must be a valid integer between 0 and 100.  "
+            "Current input is a string."
+        )
+
+
+class TestValidateTimelineGranularity(object):
+    """Timeline granularity utility validation test cases."""
+
+    @pytest.mark.parametrize("granularity", ("1h", "1d"))
+    def test_valid(self, granularity):
+        """Test valid values."""
+        validate_timeline_granularity(granularity)
+
+    @pytest.mark.parametrize("granularity", (-1, 500))
+    def test_invalid(self, granularity):
+        """Test invalid values."""
+        with pytest.raises(ValueError) as exception:
+            validate_timeline_granularity(granularity)
+        assert (
+            str(exception.value)
+            == "Granularity currently only supports a value of 1d or 1h"
+        )
+
+
+class TestValidateTimelineDays(object):
+    """Timeline days utility validation test cases."""
+
+    @pytest.mark.parametrize("days", (1, 15, 30))
+    def test_valid(self, days):
+        """Test valid values."""
+        validate_timeline_days(days)
+
+    @pytest.mark.parametrize("days", (-1, 500))
+    def test_invalid(self, days):
+        """Test invalid values."""
+        with pytest.raises(ValueError) as exception:
+            validate_timeline_days(days)
+        assert str(exception.value) == "Days must be a valid integer between 1 and 30."
+
+    @pytest.mark.parametrize("days", ("0", "5", "100"))
+    def test_string(self, days):
+        """Test string input values."""
+        with pytest.raises(ValueError) as exception:
+            validate_timeline_days(days)
+        assert (
+            str(exception.value) == "Days must be a valid integer between 1 and 30.  "
+            "Current input is a string."
+        )
+
+
+class TestValidateTimelineField(object):
+    """Timeline field utility validation test cases."""
+
+    @pytest.mark.parametrize(
+        "field", ("destination_port", "http_path", "http_user_agent")
+    )
+    def test_valid(self, field):
+        """Test valid values."""
+        validate_timeline_field_value(field)
+
+    @pytest.mark.parametrize("field", ("http_user_agents", "invalid_field"))
+    def test_invalid(self, field):
+        """Test invalid values."""
+        with pytest.raises(ValueError) as exception:
+            validate_timeline_field_value(field)
+        assert (
+            str(exception.value)
+            == "Field must be one of the following values: ['destination_port', "
+            "'http_path', 'http_user_agent', 'source_asn', 'source_org', "
+            "'source_rdns', 'tag_ids', 'classification']"
+        )

@@ -1307,3 +1307,921 @@ class TestVersion(object):
         result = runner.invoke(subcommand.version)
         assert result.exit_code == 0
         assert result.output.startswith(expected_output)
+
+
+class TestSimilar(object):
+    """Similar subcommand tests."""
+
+    DEFAULT_SIM_RESPONSE = {
+        "ip": {
+            "actor": "Alpha Strike Labs",
+            "asn": "AS208843",
+            "city": "Berlin",
+            "classification": "benign",
+            "country": "Germany",
+            "country_code": "DE",
+            "first_seen": "2019-07-12",
+            "ip": "45.83.66.65",
+            "last_seen": "2022-12-19",
+            "organization": "Alpha Strike Labs GmbH",
+        },
+        "similar_ips": [
+            {
+                "actor": "Alpha Strike Labs",
+                "asn": "AS208843",
+                "city": "Berlin",
+                "classification": "benign",
+                "country": "Germany",
+                "country_code": "DE",
+                "features": [
+                    "ja3_fp",
+                    "mass_scan_bool",
+                    "os",
+                    "ports",
+                    "useragents",
+                    "web_paths",
+                ],
+                "first_seen": "2019-07-31",
+                "ip": "45.83.66.255",
+                "last_seen": "2022-12-19",
+                "organization": "Alpha Strike Labs GmbH",
+                "score": 0.96865726,
+            }
+        ],
+        "total": 1119,
+    }
+
+    @pytest.mark.parametrize(
+        "ip_address, output_format, expected",
+        (
+            (
+                "45.83.66.65",
+                "json",
+                json.dumps([DEFAULT_SIM_RESPONSE], indent=4, sort_keys=True),
+            ),
+            (
+                "45.83.66.65",
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<item>
+                    \t\t<ip>
+                    \t\t\t<actor>Alpha Strike Labs</actor>
+                    \t\t\t<asn>AS208843</asn>
+                    \t\t\t<city>Berlin</city>
+                    \t\t\t<classification>benign</classification>
+                    \t\t\t<country>Germany</country>
+                    \t\t\t<country_code>DE</country_code>
+                    \t\t\t<first_seen>2019-07-12</first_seen>
+                    \t\t\t<ip>45.83.66.65</ip>
+                    \t\t\t<last_seen>2022-12-19</last_seen>
+                    \t\t\t<organization>Alpha Strike Labs GmbH</organization>
+                    \t\t</ip>
+                    \t\t<similar_ips>
+                    \t\t\t<actor>Alpha Strike Labs</actor>
+                    \t\t\t<asn>AS208843</asn>
+                    \t\t\t<city>Berlin</city>
+                    \t\t\t<classification>benign</classification>
+                    \t\t\t<country>Germany</country>
+                    \t\t\t<country_code>DE</country_code>
+                    \t\t\t<features>ja3_fp</features>
+                    \t\t\t<features>mass_scan_bool</features>
+                    \t\t\t<features>os</features>
+                    \t\t\t<features>ports</features>
+                    \t\t\t<features>useragents</features>
+                    \t\t\t<features>web_paths</features>
+                    \t\t\t<first_seen>2019-07-31</first_seen>
+                    \t\t\t<ip>45.83.66.255</ip>
+                    \t\t\t<last_seen>2022-12-19</last_seen>
+                    \t\t\t<organization>Alpha Strike Labs GmbH</organization>
+                    \t\t\t<score>0.96865726</score>
+                    \t\t</similar_ips>
+                    \t\t<total>1119</total>
+                    \t</item>
+                    </root>"""
+                ),
+            ),
+        ),
+    )
+    def test_similar(self, api_client, ip_address, output_format, expected):
+        """Quickly check IP address for similar IPs"""
+        runner = CliRunner()
+
+        api_client.similar.return_value = self.DEFAULT_SIM_RESPONSE
+
+        result = runner.invoke(subcommand.similar, ["-f", output_format, ip_address])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.similar.assert_called_with(
+            ip_address=ip_address, limit=None, min_score=None
+        )
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_SIM_RESPONSE,
+                DEFAULT_SIM_RESPONSE,
+            ),
+        ),
+    )
+    def test_input_file(self, api_client, ip_address, mock_response, expected):
+        """Get IP address information from input file."""
+        runner = CliRunner()
+
+        api_client.similar.return_value = expected
+
+        result = runner.invoke(
+            subcommand.similar, ["-f", "json", "-i", StringIO(ip_address)]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.similar.assert_called_with(
+            ip_address=ip_address, limit=None, min_score=None
+        )
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_SIM_RESPONSE,
+                DEFAULT_SIM_RESPONSE,
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_address, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.similar.return_value = mock_response
+
+        result = runner.invoke(subcommand.similar, ["-f", "json"], input=ip_address)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.similar.assert_called_with(
+            ip_address=ip_address, limit=None, min_score=None
+        )
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.similar, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise similar" in result.output
+        api_client.similar.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.similar,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise similar" in result.output
+        assert expected in result.output
+        api_client.similar.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Quick subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+
+        result = runner.invoke(subcommand.similar, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert "Usage: similar [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert expected in result.output
+        api_client.similar.assert_not_called()
+
+    def test_request_failure(self, api_client, caplog):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.similar.side_effect = RequestFailure(
+            401, {"message": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.similar, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.similar,
+                ["8.8.8.8"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
+
+class TestTimeline(object):
+    """Timeline subcommand tests."""
+
+    DEFAULT_TIMELINE_RESPONSE = {
+        "ip": "45.83.66.65",
+        "metadata": {
+            "end": "2023-01-09T15:52:21.797662573Z",
+            "field": "classification",
+            "granularity": "1d",
+            "ip": "45.83.66.65",
+            "metric": "count",
+            "start": "2023-01-08T00:00:00Z",
+        },
+        "results": [],
+    }
+
+    @pytest.mark.parametrize(
+        "ip_address, output_format, expected",
+        (
+            (
+                "45.83.66.65",
+                "json",
+                json.dumps([DEFAULT_TIMELINE_RESPONSE], indent=4, sort_keys=True),
+            ),
+            (
+                "45.83.66.65",
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<item>
+                    \t\t<ip>45.83.66.65</ip>
+                    \t\t<metadata>
+                    \t\t\t<end>2023-01-09T15:52:21.797662573Z</end>
+                    \t\t\t<field>classification</field>
+                    \t\t\t<granularity>1d</granularity>
+                    \t\t\t<ip>45.83.66.65</ip>
+                    \t\t\t<metric>count</metric>
+                    \t\t\t<start>2023-01-08T00:00:00Z</start>
+                    \t\t</metadata>
+                    \t\t<results></results>
+                    \t</item>
+                    </root>"""
+                ),
+            ),
+        ),
+    )
+    def test_timeline(self, api_client, ip_address, output_format, expected):
+        """Quickly check IP address for similar IPs"""
+        runner = CliRunner()
+
+        api_client.timeline.return_value = self.DEFAULT_TIMELINE_RESPONSE
+
+        result = runner.invoke(subcommand.timeline, ["-f", output_format, ip_address])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.timeline.assert_called_with(
+            ip_address=ip_address, days=None, field=None
+        )
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINE_RESPONSE,
+                DEFAULT_TIMELINE_RESPONSE,
+            ),
+        ),
+    )
+    def test_input_file(self, api_client, ip_address, mock_response, expected):
+        """Get IP address information from input file."""
+        runner = CliRunner()
+
+        api_client.timeline.return_value = expected
+
+        result = runner.invoke(
+            subcommand.timeline, ["-f", "json", "-i", StringIO(ip_address)]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timeline.assert_called_with(
+            ip_address=ip_address, days=None, field=None
+        )
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINE_RESPONSE,
+                DEFAULT_TIMELINE_RESPONSE,
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_address, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.timeline.return_value = mock_response
+
+        result = runner.invoke(subcommand.timeline, ["-f", "json"], input=ip_address)
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timeline.assert_called_with(
+            ip_address=ip_address, days=None, field=None
+        )
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.timeline, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timeline" in result.output
+        api_client.timeline.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.timeline,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timeline" in result.output
+        assert expected in result.output
+        api_client.timeline.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Quick subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+
+        result = runner.invoke(subcommand.timeline, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert "Usage: timeline [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert expected in result.output
+        api_client.timeline.assert_not_called()
+
+    def test_request_failure(self, api_client, caplog):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.timeline.side_effect = RequestFailure(
+            401, {"message": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.timeline, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.timeline,
+                ["8.8.8.8"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
+
+class TestTimelineHourly(object):
+    """TimelineHourly subcommand tests."""
+
+    DEFAULT_TIMELINEHOURLY_RESPONSE = {
+        "activity": [
+            {
+                "asn": "AS208843",
+                "category": "business",
+                "city": "Berlin",
+                "classification": "benign",
+                "country": "Germany",
+                "country_code": "DE",
+                "destinations": [{"country": "Serbia", "country_code": "RS"}],
+                "hassh_fingerprints": [],
+                "http_paths": [],
+                "http_user_agents": [],
+                "ja3_fingerprints": [],
+                "organization": "Alpha Strike Labs GmbH",
+                "protocols": [
+                    {
+                        "port": "5985",
+                        "transport_protocol": "TCP",
+                    }
+                ],
+                "rdns": "",
+                "region": "Berlin",
+                "spoofable": "true",
+                "tags": [
+                    {
+                        "category": "actor",
+                        "description": "Tag description",
+                        "intention": "benign",
+                        "name": "Alpha Strike Labs",
+                    }
+                ],
+                "timestamp": "2023-01-09T05:00:00Z",
+                "tor": "false",
+                "vpn": "false",
+                "vpn_service": "",
+            }
+        ],
+        "ip": "45.83.66.65",
+        "metadata": {
+            "end_time": "2023-01-09T15:58:06.82558957Z",
+            "ip": "45.83.66.65",
+            "limit": "100",
+            "next_cursor": "b2Zmc2V0PTEwMA==",
+            "start_time": "2023-01-08T00:00:00Z",
+        },
+    }
+
+    @pytest.mark.parametrize(
+        "ip_address, output_format, expected",
+        (
+            (
+                "45.83.66.65",
+                "json",
+                json.dumps([DEFAULT_TIMELINEHOURLY_RESPONSE], indent=4, sort_keys=True),
+            ),
+            (
+                "45.83.66.65",
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<item>
+                    \t\t<activity>
+                    \t\t\t<asn>AS208843</asn>
+                    \t\t\t<category>business</category>
+                    \t\t\t<city>Berlin</city>
+                    \t\t\t<classification>benign</classification>
+                    \t\t\t<country>Germany</country>
+                    \t\t\t<country_code>DE</country_code>
+                    \t\t\t<destinations>
+                    \t\t\t\t<country>Serbia</country>
+                    \t\t\t\t<country_code>RS</country_code>
+                    \t\t\t</destinations>
+                    \t\t\t<hassh_fingerprints></hassh_fingerprints>
+                    \t\t\t<http_paths></http_paths>
+                    \t\t\t<http_user_agents></http_user_agents>
+                    \t\t\t<ja3_fingerprints></ja3_fingerprints>
+                    \t\t\t<organization>Alpha Strike Labs GmbH</organization>
+                    \t\t\t<protocols>
+                    \t\t\t\t<port>5985</port>
+                    \t\t\t\t<transport_protocol>TCP</transport_protocol>
+                    \t\t\t</protocols>
+                    \t\t\t<rdns></rdns>
+                    \t\t\t<region>Berlin</region>
+                    \t\t\t<spoofable>true</spoofable>
+                    \t\t\t<tags>
+                    \t\t\t\t<category>actor</category>
+                    \t\t\t\t<description>Tag description</description>
+                    \t\t\t\t<intention>benign</intention>
+                    \t\t\t\t<name>Alpha Strike Labs</name>
+                    \t\t\t</tags>
+                    \t\t\t<timestamp>2023-01-09T05:00:00Z</timestamp>
+                    \t\t\t<tor>false</tor>
+                    \t\t\t<vpn>false</vpn>
+                    \t\t\t<vpn_service></vpn_service>
+                    \t\t</activity>
+                    \t\t<ip>45.83.66.65</ip>
+                    \t\t<metadata>
+                    \t\t\t<end_time>2023-01-09T15:58:06.82558957Z</end_time>
+                    \t\t\t<ip>45.83.66.65</ip>
+                    \t\t\t<limit>100</limit>
+                    \t\t\t<next_cursor>b2Zmc2V0PTEwMA==</next_cursor>
+                    \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
+                    \t\t</metadata>
+                    \t</item>
+                    </root>"""
+                ),
+            ),
+        ),
+    )
+    def test_timelinehourly(self, api_client, ip_address, output_format, expected):
+        """Quickly check IP address for similar IPs"""
+        runner = CliRunner()
+
+        api_client.timelinehourly.return_value = self.DEFAULT_TIMELINEHOURLY_RESPONSE
+
+        result = runner.invoke(
+            subcommand.timelinehourly, ["-f", output_format, ip_address]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINEHOURLY_RESPONSE,
+                DEFAULT_TIMELINEHOURLY_RESPONSE,
+            ),
+        ),
+    )
+    def test_input_file(self, api_client, ip_address, mock_response, expected):
+        """Get IP address information from input file."""
+        runner = CliRunner()
+
+        api_client.timelinehourly.return_value = expected
+
+        result = runner.invoke(
+            subcommand.timelinehourly, ["-f", "json", "-i", StringIO(ip_address)]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINEHOURLY_RESPONSE,
+                DEFAULT_TIMELINEHOURLY_RESPONSE,
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_address, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.timelinehourly.return_value = mock_response
+
+        result = runner.invoke(
+            subcommand.timelinehourly, ["-f", "json"], input=ip_address
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.timelinehourly, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timelinehourly" in result.output
+        api_client.timelinehourly.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.timelinehourly,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timelinehourly" in result.output
+        assert expected in result.output
+        api_client.timelinehourly.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Quick subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+
+        result = runner.invoke(subcommand.timelinehourly, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert "Usage: timelinehourly [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert expected in result.output
+        api_client.timelinehourly.assert_not_called()
+
+    def test_request_failure(self, api_client, caplog):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.timelinehourly.side_effect = RequestFailure(
+            401, {"message": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.timelinehourly, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.timelinehourly,
+                ["8.8.8.8"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output
+
+
+class TestTimelineDaily(object):
+    """TimelineHourly subcommand tests."""
+
+    DEFAULT_TIMELINEDAILY_RESPONSE = {
+        "activity": [
+            {
+                "asn": "AS208843",
+                "category": "business",
+                "city": "Berlin",
+                "classification": "benign",
+                "country": "Germany",
+                "country_code": "DE",
+                "destinations": [{"country": "Serbia", "country_code": "RS"}],
+                "hassh_fingerprints": [],
+                "http_paths": [],
+                "http_user_agents": [],
+                "ja3_fingerprints": [],
+                "organization": "Alpha Strike Labs GmbH",
+                "protocols": [
+                    {
+                        "port": "5985",
+                        "transport_protocol": "TCP",
+                    }
+                ],
+                "rdns": "",
+                "region": "Berlin",
+                "spoofable": "true",
+                "tags": [
+                    {
+                        "category": "actor",
+                        "description": "Tag description",
+                        "intention": "benign",
+                        "name": "Alpha Strike Labs",
+                    }
+                ],
+                "timestamp": "2023-01-09T05:00:00Z",
+                "tor": "false",
+                "vpn": "false",
+                "vpn_service": "",
+            }
+        ],
+        "ip": "45.83.66.65",
+        "metadata": {
+            "end_time": "2023-01-09T15:58:06.82558957Z",
+            "ip": "45.83.66.65",
+            "limit": "100",
+            "next_cursor": "b2Zmc2V0PTEwMA==",
+            "start_time": "2023-01-08T00:00:00Z",
+        },
+    }
+
+    @pytest.mark.parametrize(
+        "ip_address, output_format, expected",
+        (
+            (
+                "45.83.66.65",
+                "json",
+                json.dumps([DEFAULT_TIMELINEDAILY_RESPONSE], indent=4, sort_keys=True),
+            ),
+            (
+                "45.83.66.65",
+                "xml",
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" ?>
+                    <root>
+                    \t<item>
+                    \t\t<activity>
+                    \t\t\t<asn>AS208843</asn>
+                    \t\t\t<category>business</category>
+                    \t\t\t<city>Berlin</city>
+                    \t\t\t<classification>benign</classification>
+                    \t\t\t<country>Germany</country>
+                    \t\t\t<country_code>DE</country_code>
+                    \t\t\t<destinations>
+                    \t\t\t\t<country>Serbia</country>
+                    \t\t\t\t<country_code>RS</country_code>
+                    \t\t\t</destinations>
+                    \t\t\t<hassh_fingerprints></hassh_fingerprints>
+                    \t\t\t<http_paths></http_paths>
+                    \t\t\t<http_user_agents></http_user_agents>
+                    \t\t\t<ja3_fingerprints></ja3_fingerprints>
+                    \t\t\t<organization>Alpha Strike Labs GmbH</organization>
+                    \t\t\t<protocols>
+                    \t\t\t\t<port>5985</port>
+                    \t\t\t\t<transport_protocol>TCP</transport_protocol>
+                    \t\t\t</protocols>
+                    \t\t\t<rdns></rdns>
+                    \t\t\t<region>Berlin</region>
+                    \t\t\t<spoofable>true</spoofable>
+                    \t\t\t<tags>
+                    \t\t\t\t<category>actor</category>
+                    \t\t\t\t<description>Tag description</description>
+                    \t\t\t\t<intention>benign</intention>
+                    \t\t\t\t<name>Alpha Strike Labs</name>
+                    \t\t\t</tags>
+                    \t\t\t<timestamp>2023-01-09T05:00:00Z</timestamp>
+                    \t\t\t<tor>false</tor>
+                    \t\t\t<vpn>false</vpn>
+                    \t\t\t<vpn_service></vpn_service>
+                    \t\t</activity>
+                    \t\t<ip>45.83.66.65</ip>
+                    \t\t<metadata>
+                    \t\t\t<end_time>2023-01-09T15:58:06.82558957Z</end_time>
+                    \t\t\t<ip>45.83.66.65</ip>
+                    \t\t\t<limit>100</limit>
+                    \t\t\t<next_cursor>b2Zmc2V0PTEwMA==</next_cursor>
+                    \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
+                    \t\t</metadata>
+                    \t</item>
+                    </root>"""
+                ),
+            ),
+        ),
+    )
+    def test_timelinedaily(self, api_client, ip_address, output_format, expected):
+        """Quickly check IP address for similar IPs"""
+        runner = CliRunner()
+
+        api_client.timelinedaily.return_value = self.DEFAULT_TIMELINEDAILY_RESPONSE
+
+        result = runner.invoke(
+            subcommand.timelinedaily, ["-f", output_format, ip_address]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINEDAILY_RESPONSE,
+                DEFAULT_TIMELINEDAILY_RESPONSE,
+            ),
+        ),
+    )
+    def test_input_file(self, api_client, ip_address, mock_response, expected):
+        """Get IP address information from input file."""
+        runner = CliRunner()
+
+        api_client.timelinedaily.return_value = expected
+
+        result = runner.invoke(
+            subcommand.timelinedaily, ["-f", "json", "-i", StringIO(ip_address)]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+
+    @pytest.mark.parametrize(
+        "ip_address, mock_response, expected",
+        (
+            (
+                "45.83.66.65",
+                DEFAULT_TIMELINEDAILY_RESPONSE,
+                DEFAULT_TIMELINEDAILY_RESPONSE,
+            ),
+        ),
+    )
+    def test_stdin_input(self, api_client, ip_address, mock_response, expected):
+        """Quickly check IP address from stdin."""
+        runner = CliRunner()
+
+        api_client.timelinedaily.return_value = mock_response
+
+        result = runner.invoke(
+            subcommand.timelinedaily, ["-f", "json"], input=ip_address
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected], indent=4, sort_keys=True
+        )
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+
+    def test_no_ip_address_passed(self, api_client):
+        """Usage is returned if no IP address or input file is passed."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.helper.sys") as sys:
+            sys.stdin.isatty.return_value = True
+            result = runner.invoke(
+                subcommand.timelinedaily, parent=Context(main, info_name="greynoise")
+            )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timelinedaily" in result.output
+        api_client.timelinedaily.assert_not_called()
+
+    def test_input_file_invalid_ip_addresses_passed(self, api_client):
+        """Error returned if only invalid IP addresses are passed in input file."""
+        runner = CliRunner()
+
+        expected = (
+            "Error: at least one valid IP address must be passed either as an "
+            "argument (IP_ADDRESS) or through the -i/--input_file option."
+        )
+
+        result = runner.invoke(
+            subcommand.timelinedaily,
+            ["-i", StringIO("not-an-ip")],
+            parent=Context(main, info_name="greynoise"),
+        )
+        assert result.exit_code == -1
+        assert "Usage: greynoise timelinedaily" in result.output
+        assert expected in result.output
+        api_client.timelinehourly.assert_not_called()
+
+    def test_invalid_ip_address_as_argument(self, api_client):
+        """Quick subcommand fails when ip_address is invalid."""
+        runner = CliRunner()
+
+        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
+
+        result = runner.invoke(subcommand.timelinedaily, ["not-an-ip"])
+        assert result.exit_code == 2
+        assert "Usage: timelinedaily [OPTIONS] [IP_ADDRESS]..." in result.output
+        assert expected in result.output
+        api_client.timelinedaily.assert_not_called()
+
+    def test_request_failure(self, api_client, caplog):
+        """Error is displayed on API request failure."""
+        runner = CliRunner()
+
+        api_client.timelinedaily.side_effect = RequestFailure(
+            401, {"message": "forbidden", "status": "error"}
+        )
+        expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.timelinedaily, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_api_key_not_found(self):
+        """Error is displayed if API key is not found."""
+        runner = CliRunner()
+
+        with patch("greynoise.cli.decorator.load_config") as load_config:
+            load_config.return_value = {"api_key": ""}
+            result = runner.invoke(
+                subcommand.timelinedaily,
+                ["8.8.8.8"],
+                parent=Context(main, info_name="greynoise"),
+            )
+            assert result.exit_code == -1
+            assert "Error: API key not found" in result.output

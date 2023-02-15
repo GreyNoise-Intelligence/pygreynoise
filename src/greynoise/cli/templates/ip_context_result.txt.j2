@@ -2,10 +2,10 @@
 {%- if ip_context.seen %}
           <header>OVERVIEW</header>
 ----------------------------
+<key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Actor</key>: <value>{{ ip_context.actor }}</value>
 <key>Classification</key>: {{ macros.classification(ip_context.classification) }}
 <key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
-<key>IP</key>: <value>{{ ip_context.ip }}</value>
 <key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
 <key>Spoofable</key>: <value>{{ ip_context.spoofable }}</value>
 <key>BOT</key>: <value>{{ ip_context.bot }}</value>
@@ -21,7 +21,10 @@
 ----------------------------
 <key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
 <key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
-<key>Location</key>: <value>{{ ip_context.metadata.location }}</value>
+<key>Source Location</key>: <value>{{ ip_context.metadata.location }}</value>
+{% if ip_context.metadata.destination_countries -%}
+<key>Destination Countries</key>: <value>{{ ip_context.metadata.destination_countries | join(', ') }}</value>
+{% endif -%}
 <key>Region</key>: <value>{{ ip_context.metadata.region }}</value>
 <key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
 <key>OS</key>: <value>{{ ip_context.metadata.os }}</value>

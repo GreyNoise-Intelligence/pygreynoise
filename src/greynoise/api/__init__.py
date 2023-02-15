@@ -12,7 +12,14 @@ from greynoise.__version__ import __version__
 from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
-from greynoise.util import load_config, validate_ip
+from greynoise.util import (
+    load_config,
+    validate_ip,
+    validate_similar_min_score,
+    validate_timeline_days,
+    validate_timeline_field_value,
+    validate_timeline_granularity,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,18 +44,21 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     """
 
     NAME = "GreyNoise"
-    API_VERSION = "v2"
-    EP_GNQL = "experimental/gnql"
-    EP_GNQL_STATS = "experimental/gnql/stats"
-    EP_INTERESTING = "interesting/{ip_address}"
-    EP_NOISE_MULTI = "noise/multi/quick"
-    EP_NOISE_CONTEXT = "noise/context/{ip_address}"
-    EP_NOISE_CONTEXT_MULTI = "noise/multi/context"
+    EP_GNQL = "v2/experimental/gnql"
+    EP_GNQL_STATS = "v2/experimental/gnql/stats"
+    EP_INTERESTING = "v2/interesting/{ip_address}"
+    EP_NOISE_MULTI = "v2/noise/multi/quick"
+    EP_NOISE_CONTEXT = "v2/noise/context/{ip_address}"
+    EP_NOISE_CONTEXT_MULTI = "v2/noise/multi/context"
     EP_COMMUNITY_IP = "v3/community/{ip_address}"
-    EP_META_METADATA = "meta/metadata"
+    EP_SIMILARITY_IP = "v3/similarity/ips/{ip_address}"
+    EP_TIMELINE_IP = "v3/noise/ips/{ip_address}/timeline"
+    EP_TIMELINE_HOURLY_IP = "v3/noise/ips/{ip_address}/hourly-summary"
+    EP_TIMELINE_DAILY_IP = "v3/noise/ips/{ip_address}/daily-summary"
+    EP_META_METADATA = "v2/meta/metadata"
     EP_PING = "ping"
-    EP_RIOT = "riot/{ip_address}"
-    EP_NOT_IMPLEMENTED = "request/{subcommand}"
+    EP_RIOT = "v2/riot/{ip_address}"
+    EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
         "0x00": "IP has never been observed scanning the Internet",
@@ -161,12 +171,8 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             "User-Agent": " ".join(user_agent_parts),
             "key": self.api_key,
         }
-        if self.offering.lower() == "community":
-            url = "/".join([self.api_server, endpoint])
-        elif endpoint == self.EP_PING:
-            url = "/".join([self.api_server, endpoint])
-        else:
-            url = "/".join([self.api_server, self.API_VERSION, endpoint])
+
+        url = "/".join([self.api_server, endpoint])
 
         LOGGER.debug("Sending API request...URL: %s", url)
         LOGGER.debug("Sending API request...method: %s", method)
@@ -309,7 +315,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         response = self._request(endpoint)
         return response
 
-    def query(self, query, size=None, scroll=None):
+    def query(self, query, size=None, scroll=None, exclude_raw=False):
         """Run GNQL query."""
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
@@ -321,6 +327,11 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             if scroll is not None:
                 params["scroll"] = scroll
             response = self._request(self.EP_GNQL, params=params)
+
+        if exclude_raw:
+            if "data" in response:
+                for ip_data in response["data"]:
+                    ip_data.pop("raw_data")
 
         return response
 
@@ -562,6 +573,173 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             validate_ip(ip_address)
 
             endpoint = self.EP_RIOT.format(ip_address=ip_address)
+            response = self._request(endpoint)
+
+            if "ip" not in response:
+                response["ip"] = ip_address
+
+        return response
+
+    def similar(self, ip_address, limit=None, min_score=None):
+        """Query IP on the IP Similarity API
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :param limit: Limit the number of matches returned by the endpoint
+        :type limit: str
+        :param limit: Limit the number of matches returned by the endpoint
+        :type limit: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Similarity lookup not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Checking IP Sim results for %s...", ip_address)
+            validate_ip(ip_address)
+
+            if limit is None:
+                limit = 50
+
+            endpoint = self.EP_SIMILARITY_IP.format(ip_address=ip_address)
+            endpoint = endpoint + f"?limit={limit}"
+
+            if min_score:
+                validate_similar_min_score(min_score)
+                if min_score != 0:
+                    min_score = min_score / 100
+                endpoint = endpoint + f"&minimum_score={min_score}"
+
+            response = self._request(endpoint)
+
+            if "ip" not in response:
+                response["ip"] = ip_address
+
+        return response
+
+    def timeline(self, ip_address, field="classification", days=None, granularity=None):
+        """Query IP on the IP TimeSeries API
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :param field: field name to use to retrieve timeline information
+        :type field: str
+        :param days: Number of days to show data for
+        :type days: int
+        :param granularity: Granularity of activity date ranges
+        :type granularity: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Timeline lookup not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Checking IP Timeline results for %s...", ip_address)
+            validate_ip(ip_address)
+            if not field:
+                field = "classification"
+            validate_timeline_field_value(field)
+            if days:
+                validate_timeline_days(days)
+            if granularity:
+                validate_timeline_granularity(granularity)
+
+            endpoint = self.EP_TIMELINE_IP.format(ip_address=ip_address)
+            endpoint = endpoint + f"?field={field.lower()}"
+            if days:
+                endpoint = endpoint + f"&days={days}"
+            if granularity:
+                endpoint = endpoint + f"&granularity={granularity}"
+            response = self._request(endpoint)
+
+            if "ip" not in response:
+                response["ip"] = ip_address
+
+        return response
+
+    def timelinehourly(self, ip_address, days=None, cursor=None, limit=100):
+        """Query IP on the IP TimeSeries API
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :param cursor:
+            The cursor is a pointer from which to start returning
+            results up to the limit
+        :type cursor: str
+        :param days: Number of days to show data for
+        :type days: int
+        :param limit: The total number of events to return in the response
+        :type limit: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Timeline lookup not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Checking IP Timeline results for %s...", ip_address)
+            validate_ip(ip_address)
+            if days:
+                validate_timeline_days(days)
+
+            endpoint = self.EP_TIMELINE_HOURLY_IP.format(ip_address=ip_address)
+            endpoint = endpoint + f"?limit={limit}"
+            if days:
+                endpoint = endpoint + f"&days={days}"
+            if cursor:
+                endpoint = endpoint + f"&cursor={cursor}"
+            response = self._request(endpoint)
+
+            if "ip" not in response:
+                response["ip"] = ip_address
+
+        return response
+
+    def timelinedaily(self, ip_address, days=None, cursor=None, limit=50):
+        """Query IP on the IP TimeSeries API
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :param cursor:
+            The cursor is a pointer from which to start returning
+            results up to the limit
+        :type cursor: str
+        :param days: Number of days to show data for
+        :type days: int
+        :param limit: The total number of events to return in the response
+        :type limit: str
+        :return: Context for the IP address.
+        :rtype: dict
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Timeline lookup not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Checking IP Timeline results for %s...", ip_address)
+            validate_ip(ip_address)
+            if days:
+                validate_timeline_days(days)
+
+            endpoint = self.EP_TIMELINE_DAILY_IP.format(ip_address=ip_address)
+            endpoint = endpoint + f"?limit={limit}"
+            if days:
+                endpoint = endpoint + f"&days={days}"
+            if cursor:
+                endpoint = endpoint + f"&cursor={cursor}"
             response = self._request(endpoint)
 
             if "ip" not in response:

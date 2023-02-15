@@ -14,11 +14,6 @@ Python GreyNoise
 .. image:: https://badge.fury.io/py/greynoise.svg
     :target: https://badge.fury.io/py/greynoise
 
-
-.. image:: https://pyup.io/repos/github/GreyNoise-Intelligence/pygreynoise/shield.svg
-    :target: https://pyup.io/repos/github/GreyNoise-Intelligence/pygreynoise/
-    :alt: Updates
-
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
 
@@ -76,20 +71,25 @@ Usage
       -h, --help  Show this message and exit.
 
     Commands:
-      query*       Run a GNQL (GreyNoise Query Language) query.
-      account      View information about your GreyNoise account.
-      alerts       List, create, delete, and manage your GreyNoise alerts.
-      analyze      Analyze the IP addresses in a log file, stdin, etc.
-      feedback     Send feedback directly to the GreyNoise team.
-      filter       "Filter the noise from a log file, stdin, etc.
-      help         Show this message and exit.
-      interesting  Report an IP as "interesting".
-      ip           Query GreyNoise for all information on a given IP.
-      quick        Quickly check whether or not one or many IPs are "noise".
-      repl         Start an interactive shell.
-      setup        Configure API key.
-      signature    Submit an IDS signature to GreyNoise to be deployed to all...
-      stats        Get aggregate stats from a given GNQL query.
-      version      Get version and OS information for your GreyNoise
-                   commandline...
+      account         View information about your GreyNoise account.
+      alerts          List, create, delete, and manage your GreyNoise alerts.
+      analyze         Analyze the IP addresses in a log file, stdin, etc.
+      feedback        Send feedback directly to the GreyNoise team.
+      filter          Filter the noise from a log file, stdin, etc.
+      help            Show this message and exit.
+      interesting     Report one or more IP addresses as "interesting".
+      ip              Query GreyNoise for all information on a given IP.
+      ip-multi        Perform Context lookup for multiple IPs at once.
+      query           Run a GNQL (GreyNoise Query Language) query.
+      quick           Quickly check whether or not one or many IPs are "noise".
+      repl            Start an interactive shell.
+      riot            Query GreyNoise IP to see if it is in the RIOT dataset.
+      setup           Configure API key.
+      signature       Submit an IDS signature to GreyNoise to be deployed to...
+      similar         Query GreyNoise IP to identify Similar IPs.
+      stats           Get aggregate stats from a given GNQL query.
+      timeline        Query GreyNoise IP to identify Similar IPs.
+      timelinehourly  Query GreyNoise IP to identify Similar IPs.
+      version         Get version and OS information for your GreyNoise...
+
 

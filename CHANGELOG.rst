@@ -2,21 +2,34 @@
 Changelog
 =========
 
-Version `dev`_
+Version `2.0.0`_
 ================
-**Date**: unreleased
+**Date**: February 15, 2023
+
+* BREAKING CHANGE:
+
+  * Removed support for python 3.5
 
 * API client:
 
-  * None
+  * Added `similar` command to support IP Similarity lookups
+  * Added `timeline` command to support IP Time Series Single Attribute lookups
+  * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
+  * Added `timelinedaily` command to support IP Time Series Daily Summary lookups
+  * Added `exclude_raw` parameter to query command to reduce issues with default behavior in integrations
 
 * CLI:
 
-  * None
+  * Added `similar` command to support IP Similarity lookups
+  * Added `timeline` command to support IP Time Series Single Attribute lookups
+  * Added `timelinehourly` command to support IP Time Series Hourly Summary lookups
+  * Added `timelinedaily` command to support IP Time Series Hourly Summary lookups
 
 * Dependencies:
 
-  * None
+  * Updated dict2xml to version 1.7.2
+  * Updated colorama to version 0.4.6
+  * Updated cachetools to version 5.3.0
 
 Version `1.3.0`_
 ================
@@ -329,4 +342,4 @@ Version `0.2.0`_
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
-.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
+.. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD

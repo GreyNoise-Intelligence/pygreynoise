@@ -1,7 +1,7 @@
 """Utility functions."""
-import ipaddress
 import logging
 import os
+from ipaddress import IPv6Address, ip_address
 
 from six.moves.configparser import ConfigParser
 
@@ -108,7 +108,7 @@ def save_config(config):
         config_parser.write(config_file)
 
 
-def validate_ip(ip_address, strict=True, print_warning=True):
+def validate_ip(ip, strict=True, print_warning=True):
     """Check if the IPv4 address is valid.
 
     :param ip_address: IPv4 address value to validate.
@@ -124,24 +124,107 @@ def validate_ip(ip_address, strict=True, print_warning=True):
     error_message = ""
 
     try:
-        ipaddress.ip_address(ip_address)
+        ip_address(ip)
         is_valid = True
     except ValueError:
         if print_warning:
-            error_message = "Invalid IP address: {!r}".format(ip_address)
+            error_message = "Invalid IP address: {!r}".format(ip)
             LOGGER.warning(error_message)
         if strict:
             raise ValueError(error_message)
         return False
 
     if is_valid:
-        is_routable = ipaddress.ip_address(ip_address).is_global
-        if is_routable:
-            return True
-        else:
+        if type(ip_address(ip)) is IPv6Address:
+            error_message = "IPv6 addresses are not supported: {!r}".format(ip)
             if print_warning:
-                error_message = "Non-Routable IP address: {!r}".format(ip_address)
                 LOGGER.warning(error_message)
             if strict:
                 raise ValueError(error_message)
             return False
+        else:
+            is_routable = ip_address(ip).is_global
+            if is_routable:
+                return True
+            else:
+                error_message = "Non-Routable IP address: {!r}".format(ip)
+                if print_warning:
+                    LOGGER.warning(error_message)
+                if strict:
+                    raise ValueError(error_message)
+                return False
+
+
+def validate_timeline_field_value(field):
+    """Check if the Timeline Field value is valid.
+
+    :param field: field value to validate.
+    :type field: str
+
+    """
+    valid_field_names = [
+        "destination_port",
+        "http_path",
+        "http_user_agent",
+        "source_asn",
+        "source_org",
+        "source_rdns",
+        "tag_ids",
+        "classification",
+    ]
+
+    if field in valid_field_names:
+        return True
+    else:
+        raise ValueError(
+            f"Field must be one of the following values: {valid_field_names}"
+        )
+
+
+def validate_timeline_days(days):
+    """Check if the Timeline Days value is valid.
+
+    :param days: field value to validate.
+    :type days: str
+
+    """
+    if isinstance(days, str):
+        raise ValueError(
+            "Days must be a valid integer between 1 and 30.  Current input is a "
+            "string."
+        )
+    if isinstance(days, int) and 1 <= int(days) <= 30:
+        return True
+    else:
+        raise ValueError("Days must be a valid integer between 1 and 30.")
+
+
+def validate_timeline_granularity(granularity):
+    """Check if the Timeline granularity value is valid.
+
+    :param granularity: field value to validate.
+    :type granularity: str
+
+    """
+    if granularity != "1h" and granularity != "1d":
+        raise ValueError("Granularity currently only supports a value of 1d or 1h")
+    else:
+        return True
+
+
+def validate_similar_min_score(min_score):
+    """Check if the Similarity min_score value is valid.
+
+    :param min_score: field value to validate.
+    :type min_score: str
+
+    """
+    if isinstance(min_score, str):
+        raise ValueError(
+            "Min Score must be a valid integer between 0 and 100.  Current input is a "
+            "string."
+        )
+    if isinstance(min_score, int) and 0 <= int(min_score) <= 100:
+        return True
+    else:
+        raise ValueError("Min Score must be a valid integer between 0 and 100.")

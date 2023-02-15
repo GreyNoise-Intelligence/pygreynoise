@@ -1,6 +1,6 @@
 {% if result.count > 0 %}
 {%- if result.stats.actors %}
-<header>Actors<header>:
+<header>Actors</header>:
 {{- macros.column_verbose_list(result.stats.actors, "actor") }}
 {%- endif %}
 
@@ -19,8 +19,13 @@
 {{- macros.column_verbose_list(result.stats.classifications, "classification") }}
 {%- endif %}
 
-{%- if result.stats.countries %}
-<header>Countries</header>:
+{%- if result.stats.source_countries %}
+<header>Source Countries</header>:
+{{- macros.column_verbose_list(result.stats.countries, "country") }}
+{%- endif %}
+
+{%- if result.stats.destination_countries %}
+<header>Destination Countries</header>:
 {{- macros.column_verbose_list(result.stats.countries, "country") }}
 {%- endif %}
 

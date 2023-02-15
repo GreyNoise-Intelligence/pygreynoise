@@ -68,3 +68,32 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 <value>{{ value }}</value>
 {%- endif -%}
 {% endmacro %}
+
+# Render tag name list from tag details
+{%- macro tag_list(value) %}
+{%- set tag_list = [] %}
+{%- for item in value %}
+{%- if item.name is not none %}
+{{- tag_list.append(item.name) or "" }}
+{%- endif %}
+{%- endfor %}
+{{- '%-100s' | format(tag_list | join(", ")) }}
+{%- endmacro %}
+
+# Render ports  list from port details
+{%- macro ports_list(value) %}
+{%- set ports_list = [] %}
+{%- for item in value %}
+{%- if item.app_protocol %}
+{%- if item.port|string+":"+item.app_protocol+":"+item.transport_protocol not in ports_list %}
+{{- ports_list.append(item.port|string+":"+item.app_protocol+":"+item.transport_protocol) or "" }}
+{%- endif %}
+{%- else %}
+{%- if item.port|string+":"+item.transport_protocol not in ports_list %}
+{{- ports_list.append(item.port|string+":"+item.transport_protocol) or "" }}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- set col_len = ports_list | string | length if ports_list | string | length > 25 else 25 %}
+{{- '%-*s' | format(col_len, ports_list | join(", ")) }}
+{%- endmacro %}
