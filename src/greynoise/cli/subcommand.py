@@ -364,7 +364,7 @@ def timeline(
     field_name,
     days,
 ):
-    """Query GreyNoise IP to identify Similar IPs."""
+    """Query GreyNoise IP Timeline for events based on a single field."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [
         api_client.timeline(ip_address=ip_address, days=days, field=field_name)
@@ -390,7 +390,7 @@ def timelinehourly(
     field_name,
     days,
 ):
-    """Query GreyNoise IP to identify Similar IPs."""
+    """Query GreyNoise IP Timeline to get hourly event details."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [
         api_client.timelinehourly(ip_address=ip_address, days=days)
@@ -416,7 +416,7 @@ def timelinedaily(
     field_name,
     days,
 ):
-    """Query GreyNoise IP to identify Similar IPs."""
+    """Query GreyNoise IP Timeline to get daily event details."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [
         api_client.timelinedaily(ip_address=ip_address, days=days)
