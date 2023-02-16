@@ -10,6 +10,6 @@ jobs:
     - name: post a message to slack
       uses: tokorom/action-slack-incoming-webhook@main
       env:
-        INCOMING_WEBHOOK_URL: ${{ secrets.INCOMING_WEBHOOK_URL }}
+        INCOMING_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       with:
         text: "Testing GH to Slack Webhook"
