@@ -2,8 +2,7 @@ black==22.8.0;python_version=='3.6' # pyup: ignore
 black==23.1.0;python_version>='3.7'
 flake8<5.0.4;python_version<'3.8'
 flake8==6.0.0;python_version>='3.8'
-isort==5.10.1;python_version=='3.6'
-isort==5.12.0;python_version=='3.7'
+isort<5.12.0;python_version<'3.8'
 isort==5.12.0;python_version>='3.8'
 mock==5.0.1;python_version>='3.6'
 pylint<2.16.2;python_version=='3.6' # pyup: ignore
