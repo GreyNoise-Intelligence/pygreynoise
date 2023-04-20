@@ -4,6 +4,6 @@ extends: default
 
 rules:
   line-length:
-    max: 88
+    max: 100
 
 ignore-from-file: .gitignore
