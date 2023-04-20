@@ -190,13 +190,13 @@ def validate_timeline_days(days):
     """
     if isinstance(days, str):
         raise ValueError(
-            "Days must be a valid integer between 1 and 30.  Current input is a "
+            "Days must be a valid integer between 1 and 90.  Current input is a "
             "string."
         )
-    if isinstance(days, int) and 1 <= int(days) <= 30:
+    if isinstance(days, int) and 1 <= int(days) <= 90:
         return True
     else:
-        raise ValueError("Days must be a valid integer between 1 and 30.")
+        raise ValueError("Days must be a valid integer between 1 and 90.")
 
 
 def validate_timeline_granularity(granularity):

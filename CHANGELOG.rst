@@ -2,6 +2,25 @@
 Changelog
 =========
 
+Version `2.0.1`_
+================
+**Date**: April 14, 2023
+
+* API client:
+
+  * Updated timeline commands to support 90 day lookback period
+
+* CLI:
+
+  * Updated timeline commands to support 90 day lookback period
+
+* Dependencies:
+
+  * Updated ansimarkup to version 1.5.0
+  * Updated dict2xml to version 1.7.3
+  * Updated itertools to version 9.1.0
+  * Updated requests to version 2.28.2
+
 Version `2.0.0`_
 ================
 **Date**: February 15, 2023
@@ -343,3 +362,4 @@ Version `0.2.0`_
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
 .. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
+.. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1

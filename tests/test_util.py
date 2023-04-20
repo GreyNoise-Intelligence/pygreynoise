@@ -390,7 +390,7 @@ class TestValidateTimelineDays(object):
         """Test invalid values."""
         with pytest.raises(ValueError) as exception:
             validate_timeline_days(days)
-        assert str(exception.value) == "Days must be a valid integer between 1 and 30."
+        assert str(exception.value) == "Days must be a valid integer between 1 and 90."
 
     @pytest.mark.parametrize("days", ("0", "5", "100"))
     def test_string(self, days):
@@ -398,7 +398,7 @@ class TestValidateTimelineDays(object):
         with pytest.raises(ValueError) as exception:
             validate_timeline_days(days)
         assert (
-            str(exception.value) == "Days must be a valid integer between 1 and 30.  "
+            str(exception.value) == "Days must be a valid integer between 1 and 90.  "
             "Current input is a string."
         )
 
