@@ -14,4 +14,4 @@ restructuredtext-lint==1.4.0
 twine<4.0.2;python_version<'3.7'
 twine==4.0.2;python_version>='3.7'
 yamllint==1.28.0;python_version=='3.6'
-yamllint==1.29.0;python_version>='3.7'
+yamllint==1.32.0;python_version>='3.7'
