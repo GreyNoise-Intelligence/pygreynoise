@@ -24,7 +24,6 @@ from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 def account():
     """View information about your GreyNoise account."""
 
-
 @not_implemented_command
 def alerts():
     """List, create, delete, and manage your GreyNoise alerts."""

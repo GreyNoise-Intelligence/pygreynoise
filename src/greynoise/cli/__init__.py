@@ -1,9 +1,12 @@
 """GreyNoise command line Interface."""
 
 import click
+import typer
+
 from click_default_group import DefaultGroup
 from click_repl import register_repl
 
+from greynoiselabs.cli import app
 from greynoise.cli import subcommand
 
 
@@ -24,5 +27,8 @@ SUBCOMMAND_FUNCTIONS = [
 
 for subcommand_function in SUBCOMMAND_FUNCTIONS:
     main.add_command(subcommand_function)
+
+typer_click_object = typer.main.get_command(app)
+main.add_command(typer_click_object, "labs")
 
 register_repl(main)

@@ -19,11 +19,14 @@ INSTALL_REQUIRES = [
     "click-default-group",
     "click-repl",
     "dict2xml",
+    "greynoiselabs",
     "ipaddress",
     "jinja2",
     "more-itertools",
     "requests",
     "six",
+    "typer",
+    
 ]
 
 setup(
