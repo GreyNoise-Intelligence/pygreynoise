@@ -7,6 +7,7 @@ import platform
 from click_default_group import DefaultGroup
 from click_repl import register_repl
 
+from greynoise.cli.decorator import not_implemented_command
 from greynoise.cli import subcommand
 
 
@@ -32,5 +33,11 @@ if platform.python_version() >= "3.7.2":
     from greynoiselabs.cli import app
     typer_click_object = typer.main.get_command(app)
     main.add_command(typer_click_object, "labs")
+else: 
+    @not_implemented_command
+    def labs():
+        """GreyNoise Labs CLI wrapper."""
+
+    main.add_command(labs, "labs")
 
 register_repl(main)
