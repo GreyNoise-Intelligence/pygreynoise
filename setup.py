@@ -19,7 +19,6 @@ INSTALL_REQUIRES = [
     "click-default-group",
     "click-repl",
     "dict2xml",
-    "ipaddress",
     "jinja2",
     "more-itertools",
     "requests",
