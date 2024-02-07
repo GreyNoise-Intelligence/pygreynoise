@@ -2,6 +2,25 @@
 Changelog
 =========
 
+Version `2.1.0`_
+================
+**Date**: February 07, 2024
+
+* API client:
+
+  * None
+
+* CLI:
+
+  * Fixed stats command display to show correct countries
+  * Fixed similar command to handle non-noise IP response
+
+* Dependencies:
+
+  * Updated requests to version 2.31.0
+  * Updated cachetools to version 5.3.1
+  * Removed ipaddress as a required package
+
 Version `2.0.1`_
 ================
 **Date**: April 14, 2023
@@ -363,3 +382,4 @@ Version `0.2.0`_
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
 .. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
 .. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1
+.. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
