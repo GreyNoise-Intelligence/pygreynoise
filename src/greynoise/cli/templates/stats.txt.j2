@@ -21,12 +21,12 @@
 
 {%- if result.stats.source_countries %}
 <header>Source Countries</header>:
-{{- macros.column_verbose_list(result.stats.countries, "country") }}
+{{- macros.column_verbose_list(result.stats.source_countries, "country") }}
 {%- endif %}
 
 {%- if result.stats.destination_countries %}
 <header>Destination Countries</header>:
-{{- macros.column_verbose_list(result.stats.countries, "country") }}
+{{- macros.column_verbose_list(result.stats.destination_countries, "country") }}
 {%- endif %}
 
 {%- if result.stats.operating_systems %}
