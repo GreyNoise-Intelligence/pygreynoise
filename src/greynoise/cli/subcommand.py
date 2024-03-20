@@ -179,6 +179,32 @@ def riot(
     results = [api_client.riot(ip_address=ip_address) for ip_address in ip_addresses]
     return results
 
+@sensor_activity_command
+def sensor_activity(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    workspace_id,
+    start_time,
+    end_time,
+    persona_id,
+    source_ip,
+    size,
+    scroll,
+    offering,
+):
+    """Run a GNQL (GreyNoise Query Language) query."""
+    result = api_client.sensor_activity(workspace_id=workspace_id, format=output_format,
+                                        start_time=start_time, end_time=end_time,
+                                        persona_id=persona_id,  source_ip=source_ip, size=size,
+                                        scroll=scroll)
+    return result
+
+
 
 @gnql_command
 def query(
