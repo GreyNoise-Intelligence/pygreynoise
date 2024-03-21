@@ -197,7 +197,7 @@ def sensor_activity(
     scroll,
     offering,
 ):
-    """Run a GNQL (GreyNoise Query Language) query."""
+    """Retrieve Sensor Activity."""
     result = api_client.sensor_activity(workspace_id=workspace_id, format=output_format,
                                         start_time=start_time, end_time=end_time,
                                         persona_id=persona_id,  source_ip=source_ip, size=size,

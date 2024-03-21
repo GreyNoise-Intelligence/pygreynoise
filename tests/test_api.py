@@ -630,6 +630,36 @@ class TestQuick(object):
         client._request.assert_has_calls([expected_request])
 
 
+class TestSensorActivity(object):
+    """GreyNoise client run Sensor Activity test cases."""
+
+    def test_sensor_activity(self, client):
+        """Run Sensor Activity."""
+        workspace_id = "workspace_id"
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.sensor_activity(workspace_id=workspace_id)
+        client._request.assert_called_with(
+            "v1/workspaces/workspace_id/sensors/activity", params={"format":"json"}
+        )
+        assert response == expected_response
+
+    def test_query_with_size_and_scroll(self, client):
+        """Run Sensor Activity with size and scroll parameters."""
+        workspace_id = "workspace_id"
+        expected_response = []
+
+        client._request = Mock(return_value=expected_response)
+        response = client.sensor_activity(workspace_id=workspace_id, size=5, scroll="scroll")
+        client._request.assert_called_with(
+            "v1/workspaces/workspace_id/sensors/activity",
+            params={"format":"json", "size": 5, "scroll": "scroll"},
+        )
+        assert response == expected_response
+
+
+
 class TestQuery(object):
     """GreyNoise client run GNQL query test cases."""
 

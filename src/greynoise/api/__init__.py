@@ -581,7 +581,8 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
-    def sensor_activity(self, workspace_id, format, start_time, end_time, persona_id, source_ip, size, scroll):
+    def sensor_activity(self, workspace_id, format="json", start_time=None, end_time=None,
+                        persona_id=None, source_ip=None, size=None, scroll=None):
         """Get session data from sensors
         """
         LOGGER.debug("Running Sensor Activity: %s %s %s %s %s %s %s %s...",
@@ -599,7 +600,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             params["size"] = size
         if scroll is not None:
             params["scroll"] = scroll
-        endpoint = self.EP_RIOT.format(workspace_id=workspace_id)
+        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
         response = self._request(endpoint, params=params)
 
         return response
