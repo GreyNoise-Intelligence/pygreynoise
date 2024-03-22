@@ -3,6 +3,7 @@
 Decorators used to add common functionality to subcommands.
 
 """
+
 import functools
 import logging
 
@@ -176,7 +177,9 @@ def sensor_activity_command(function):
 
     @click.command()
     @click.argument("workspace_id", required=True)
-    @click.option("--start_time", "start_time", help="Earliest session start time to return")
+    @click.option(
+        "--start_time", "start_time", help="Earliest session start time to return"
+    )
     @click.option("--end_time", "end_time", help="Latest session start time to return")
     @click.option("--persona_id", "persona_id", help="Id for the desired persona")
     @click.option("--source_ip", "source_ip", help="Ip for the desired source")
@@ -187,7 +190,7 @@ def sensor_activity_command(function):
         "-O",
         "--offering",
         help="Which API offering to use, enterprise or community, "
-             "defaults to enterprise",
+        "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
     @click.option(

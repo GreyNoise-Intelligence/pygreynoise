@@ -644,16 +644,22 @@ class TestSensorActivity(object):
 
         workspace_id = "workspace_id"
         api_client.sensor_activity.return_value = {}
-        expected = '{}'
+        expected = "{}"
 
         result = runner.invoke(subcommand.sensor_activity, ["-f", "json", workspace_id])
 
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.sensor_activity.assert_called_with(workspace_id=workspace_id, format='json',
-                                                      start_time=None, end_time=None,
-                                                      persona_id=None, source_ip=None, size=None,
-                                                      scroll=None)
+        api_client.sensor_activity.assert_called_with(
+            workspace_id=workspace_id,
+            format="json",
+            start_time=None,
+            end_time=None,
+            persona_id=None,
+            source_ip=None,
+            size=None,
+            scroll=None,
+        )
 
     def test_request_failure(self, api_client, caplog):
         """Error is displayed on API request failure."""
@@ -678,11 +684,13 @@ class TestSensorActivity(object):
         with patch("greynoise.cli.decorator.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
             result = runner.invoke(
-                subcommand.sensor_activity, ["-f", "json", workspace_id],
+                subcommand.sensor_activity,
+                ["-f", "json", workspace_id],
                 parent=Context(main, info_name="greynoise"),
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
+
 
 class TestQuery(object):
     """Query subcommand tests."""

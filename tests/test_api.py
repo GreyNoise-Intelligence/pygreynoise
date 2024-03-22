@@ -641,7 +641,7 @@ class TestSensorActivity(object):
         client._request = Mock(return_value=expected_response)
         response = client.sensor_activity(workspace_id=workspace_id)
         client._request.assert_called_with(
-            "v1/workspaces/workspace_id/sensors/activity", params={"format":"json"}
+            "v1/workspaces/workspace_id/sensors/activity", params={"format": "json"}
         )
         assert response == expected_response
 
@@ -651,13 +651,14 @@ class TestSensorActivity(object):
         expected_response = []
 
         client._request = Mock(return_value=expected_response)
-        response = client.sensor_activity(workspace_id=workspace_id, size=5, scroll="scroll")
+        response = client.sensor_activity(
+            workspace_id=workspace_id, size=5, scroll="scroll"
+        )
         client._request.assert_called_with(
             "v1/workspaces/workspace_id/sensors/activity",
-            params={"format":"json", "size": 5, "scroll": "scroll"},
+            params={"format": "json", "size": 5, "scroll": "scroll"},
         )
         assert response == expected_response
-
 
 
 class TestQuery(object):
