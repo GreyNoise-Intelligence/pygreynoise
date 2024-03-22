@@ -12,7 +12,7 @@ from greynoise.cli.decorator import (
     handle_exceptions,
     ip_lookup_command,
     not_implemented_command,
-    pass_api_client,
+    pass_api_client, sensor_activity_command,
 )
 from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
