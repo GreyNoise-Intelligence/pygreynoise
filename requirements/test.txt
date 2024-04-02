@@ -1,4 +1,4 @@
-black<23.1.0;python_version<='3.7'
+black<23.1.0;python_version<'3.7'
 black==23.3.0;python_version=='3.7'
 black==24.3.0;python_version>'3.7'
 flake8<5.0.4;python_version<'3.8'
