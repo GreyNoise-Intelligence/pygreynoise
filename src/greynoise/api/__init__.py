@@ -31,7 +31,6 @@ def initialize_cache(cache_max_size, cache_ttl):
 
 
 class GreyNoise(object):  # pylint: disable=R0205,R0902
-
     """GreyNoise API client.
 
     :param api_key: Key use to access the API.
@@ -58,6 +57,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     EP_META_METADATA = "v2/meta/metadata"
     EP_PING = "ping"
     EP_RIOT = "v2/riot/{ip_address}"
+    EP_SENSOR_ACTIVITY = "v1/workspaces/{workspace_id}/sensors/activity"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -577,6 +577,47 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
             if "ip" not in response:
                 response["ip"] = ip_address
+
+        return response
+
+    def sensor_activity(
+        self,
+        workspace_id,
+        format="json",
+        start_time=None,
+        end_time=None,
+        persona_id=None,
+        source_ip=None,
+        size=None,
+        scroll=None,
+    ):
+        """Get session data from sensors"""
+        LOGGER.debug(
+            "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
+            workspace_id,
+            format,
+            start_time,
+            end_time,
+            persona_id,
+            source_ip,
+            size,
+            scroll,
+        )
+        params = {"format": format}
+        if start_time is not None:
+            params = {"start_time": start_time}
+        if end_time is not None:
+            params = {"end_time": end_time}
+        if persona_id is not None:
+            params = {"persona_id": persona_id}
+        if source_ip is not None:
+            params = {"source_ip": source_ip}
+        if size is not None:
+            params["size"] = size
+        if scroll is not None:
+            params["scroll"] = scroll
+        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
+        response = self._request(endpoint, params=params)
 
         return response
 

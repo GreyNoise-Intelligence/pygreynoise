@@ -13,6 +13,7 @@ from greynoise.cli.decorator import (
     ip_lookup_command,
     not_implemented_command,
     pass_api_client,
+    sensor_activity_command,
 )
 from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
@@ -178,6 +179,38 @@ def riot(
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = [api_client.riot(ip_address=ip_address) for ip_address in ip_addresses]
     return results
+
+
+@sensor_activity_command
+def sensor_activity(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    workspace_id,
+    start_time,
+    end_time,
+    persona_id,
+    source_ip,
+    size,
+    scroll,
+    offering,
+):
+    """Retrieve Sensor Activity."""
+    result = api_client.sensor_activity(
+        workspace_id=workspace_id,
+        format=output_format,
+        start_time=start_time,
+        end_time=end_time,
+        persona_id=persona_id,
+        source_ip=source_ip,
+        size=size,
+        scroll=scroll,
+    )
+    return result
 
 
 @gnql_command
