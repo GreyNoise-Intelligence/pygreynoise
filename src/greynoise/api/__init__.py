@@ -606,10 +606,12 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         )
         if file_format is None or file_format == "json":
             params = {"format": "json"}
-        elif file_format == 'csv':
+        elif file_format == "csv":
             params = {"format": file_format}
         else:
-            LOGGER.error(f"Value for file_format is not valid (valid: json, csv): {file_format}")
+            LOGGER.error(
+                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            )
             sys.exit(1)
 
         if start_time is not None:
@@ -654,10 +656,12 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         )
         if file_format is None or file_format == "json":
             params = {"format": "json"}
-        elif file_format == 'csv':
+        elif file_format == "csv":
             params = {"format": file_format}
         else:
-            LOGGER.error(f"Value for file_format is not valid (valid: json, csv): {file_format}")
+            LOGGER.error(
+                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            )
             sys.exit(1)
 
         if start_time is not None:
@@ -676,7 +680,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         response = self._request(endpoint, params=params)
         ip_list = []
         for item in response:
-            ip_list.append(item.get('source_ip', ''))
+            ip_list.append(item.get("source_ip", ""))
         final_ip_list = list(set(ip_list))
 
         return final_ip_list
