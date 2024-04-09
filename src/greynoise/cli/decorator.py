@@ -184,6 +184,7 @@ def sensor_activity_command(function):
         "--start_time", "start_time", help="Earliest session start time to return"
     )
     @click.option("--end_time", "end_time", help="Latest session start time to return")
+    @click.option("--file_format", "file_format", help="Format for output file", default="json")
     @click.option("--persona_id", "persona_id", help="Id for the desired persona")
     @click.option("--source_ip", "source_ip", help="Ip for the desired source")
     @click.option("--size", "size", help="Max number of results to return")
@@ -203,8 +204,8 @@ def sensor_activity_command(function):
         "-f",
         "--format",
         "output_format",
-        type=click.Choice(["json", "csv"]),
-        default="json",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
         help="Output format",
     )
     @click.option("-v", "--verbose", count=True, help="Verbose output")

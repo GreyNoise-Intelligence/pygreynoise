@@ -193,6 +193,7 @@ def sensor_activity(
     workspace_id,
     start_time,
     end_time,
+    file_format,
     persona_id,
     source_ip,
     size,
@@ -202,9 +203,9 @@ def sensor_activity(
     """Retrieve Sensor Activity."""
     result = api_client.sensor_activity(
         workspace_id=workspace_id,
-        format=output_format,
         start_time=start_time,
         end_time=end_time,
+        file_format=file_format,
         persona_id=persona_id,
         source_ip=source_ip,
         size=size,

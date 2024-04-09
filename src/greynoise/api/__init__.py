@@ -2,6 +2,7 @@
 
 import logging
 import re
+import sys
 from collections import OrderedDict
 
 import cachetools
@@ -583,7 +584,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     def sensor_activity(
         self,
         workspace_id,
-        format="json",
+        file_format=None,
         start_time=None,
         end_time=None,
         persona_id=None,
@@ -595,7 +596,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         LOGGER.debug(
             "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
             workspace_id,
-            format,
+            file_format,
             start_time,
             end_time,
             persona_id,
@@ -603,7 +604,14 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             size,
             scroll,
         )
-        params = {"format": format}
+        if file_format is None or file_format == "json":
+            params = {"format": "json"}
+        elif file_format == 'csv':
+            params = {"format": file_format}
+        else:
+            LOGGER.error(f"Value for file_format is not valid (valid: json, csv): {file_format}")
+            sys.exit(1)
+
         if start_time is not None:
             params = {"start_time": start_time}
         if end_time is not None:
