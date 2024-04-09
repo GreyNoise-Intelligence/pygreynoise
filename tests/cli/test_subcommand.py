@@ -652,7 +652,7 @@ class TestSensorActivity(object):
         assert result.output.strip("\n") == expected
         api_client.sensor_activity.assert_called_with(
             workspace_id=workspace_id,
-            format="json",
+            file_format="json",
             start_time=None,
             end_time=None,
             persona_id=None,

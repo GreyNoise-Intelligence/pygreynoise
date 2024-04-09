@@ -629,6 +629,58 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         return response
 
+    def sensor_activity_ips(
+        self,
+        workspace_id,
+        file_format=None,
+        start_time=None,
+        end_time=None,
+        persona_id=None,
+        source_ip=None,
+        size=None,
+        scroll=None,
+    ):
+        """Get session data from sensors"""
+        LOGGER.debug(
+            "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
+            workspace_id,
+            file_format,
+            start_time,
+            end_time,
+            persona_id,
+            source_ip,
+            size,
+            scroll,
+        )
+        if file_format is None or file_format == "json":
+            params = {"format": "json"}
+        elif file_format == 'csv':
+            params = {"format": file_format}
+        else:
+            LOGGER.error(f"Value for file_format is not valid (valid: json, csv): {file_format}")
+            sys.exit(1)
+
+        if start_time is not None:
+            params = {"start_time": start_time}
+        if end_time is not None:
+            params = {"end_time": end_time}
+        if persona_id is not None:
+            params = {"persona_id": persona_id}
+        if source_ip is not None:
+            params = {"source_ip": source_ip}
+        if size is not None:
+            params["size"] = size
+        if scroll is not None:
+            params["scroll"] = scroll
+        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
+        response = self._request(endpoint, params=params)
+        ip_list = []
+        for item in response:
+            ip_list.append(item.get('source_ip', ''))
+        final_ip_list = list(set(ip_list))
+
+        return final_ip_list
+
     def similar(self, ip_address, limit=None, min_score=None):
         """Query IP on the IP Similarity API
 
