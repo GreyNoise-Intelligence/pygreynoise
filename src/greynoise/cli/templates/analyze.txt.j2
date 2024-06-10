@@ -15,6 +15,7 @@
 - <value>{{ query }}</value>
 {% endcall -%}
 
+{% if result.count > 0 %}
 {%- if result.stats.actors %}
 <header>Actors</header>:
 {{- macros.column_verbose_list(result.stats.actors, "actor") }}
@@ -39,3 +40,6 @@
 <header>Tags</header>:
 {{- macros.column_verbose_list(result.stats.tags, "tag") }}
 {%- endif %}
+{%- else %}
+No results found for this query.
+{% endif %}

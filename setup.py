@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     "click-repl",
     "dict2xml",
     "jinja2",
+    "more-itertools==9.1.0",
     "requests",
     "six",
 ]
