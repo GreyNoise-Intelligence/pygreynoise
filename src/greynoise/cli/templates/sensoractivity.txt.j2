@@ -1,5 +1,6 @@
 {% import "macros.txt.j2" as macros with context %}
 
+{% if results %}
 --------------------
 <header>Sensor Activity Feed</header>
 --------------------
@@ -8,7 +9,7 @@
 {{ '%-25s' | format('Stop Time ') -}}
 {{ '%-22s' | format('Dest IP:Port ') -}}
 {{ '%-22s' | format('Source IP:Port ') -}}
-{{ '%-12s' | format('Protocol(s)') -}}
+{{ '%-25s' | format('Protocol(s)') -}}
 {{ '%-35s' | format('HTTP URI') }}
 </key>
 {%- for result in results %}
@@ -16,6 +17,9 @@
 {{ '%-25s' | format(result.stop_time.replace("T", " ").replace("Z", "")) -}}
 {{ '%-22s' | format(result.destination_ip + ":" + result.destination_port|string) -}}
 {{ '%-22s' | format(result.source_ip + ":" + result.source_port|string) -}}
-{{ '%-12s' | format(result.protocols|join(', ')) -}}
-{{ '%-35s' | format(result.http_uri) }}
-{%- endfor %}
+{{ '%-25s' | format(result.protocols|join(', ')) -}}
+{{ '%-35s' | format(result.http_uri) -}}
+{% endfor -%}
+{% else %}
+No sensor activity found for the specified criteria.
+{% endif %}

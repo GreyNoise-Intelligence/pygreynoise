@@ -14,4 +14,28 @@
 {%- call(query) macros.verbose_list(result.query) -%}
 - <value>{{ query }}</value>
 {% endcall -%}
-{%- include "stats.txt.j2" %}
+
+{%- if result.stats.actors %}
+<header>Actors</header>:
+{{- macros.column_verbose_list(result.stats.actors, "actor") }}
+{%- endif %}
+
+{%- if result.stats.classifications %}
+<header>Classifications</header>:
+{{- macros.column_verbose_list(result.stats.classifications, "classification") }}
+{%- endif %}
+
+{%- if result.stats.countries %}
+<header>Source Countries</header>:
+{{- macros.column_verbose_list(result.stats.countries, "country") }}
+{%- endif %}
+
+{%- if result.stats.operating_systems %}
+<header>Operating systems</header>:
+{{- macros.column_verbose_list(result.stats.operating_systems, "operating_system") }}
+{%- endif %}
+
+{%- if result.stats.tags %}
+<header>Tags</header>:
+{{- macros.column_verbose_list(result.stats.tags, "tag") }}
+{%- endif %}

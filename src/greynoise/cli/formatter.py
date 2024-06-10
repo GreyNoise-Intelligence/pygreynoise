@@ -202,6 +202,22 @@ def sensoractivity_formatter(results, verbose):
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
+@colored_output
+def sensorlist_formatter(results, verbose):
+    """Convert Sensor List to human-readable text."""
+    template = JINJA2_ENV.get_template("sensorlist.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
+
+@colored_output
+def personadetails_formatter(results, verbose):
+    """Convert Persona Details to human-readable text."""
+    template = JINJA2_ENV.get_template("personadetails.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -219,5 +235,7 @@ FORMATTERS = {
         "timelinehourly": timelinehourly_formatter,
         "timelinedaily": timelinehourly_formatter,
         "sensor-activity": sensoractivity_formatter,
+        "sensor-list": sensorlist_formatter,
+        "persona-details": personadetails_formatter,
     },
 }

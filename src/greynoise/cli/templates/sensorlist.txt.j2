@@ -1,0 +1,30 @@
+{% import "macros.txt.j2" as macros with context %}
+
+{% if results %}
+------------
+<header>Sensor List</header>
+------------
+<key>
+{{ '%-40s' | format('Sensor ID ') -}}
+{{ '%-20s' | format('Public IP(s) ') -}}
+{{ '%-12s' | format('SSH Port ') -}}
+{{ '%-15s' | format('Last Seen') -}}
+{{ '%-15s' | format('Last Updated') -}}
+{{ '%-12s' | format('Status') -}}
+{{ '%-30s' | format('Sensor Name') -}}
+{{ '%-35s' | format('Persona Name') }}
+</key>
+
+{%- for sensor in results["items"] %}
+{{ '%-40s' | format(sensor.sensor_id) -}}
+{{ '%-20s' | format(sensor.public_ips|join(', ')) -}}
+{{ '%-12s' | format(sensor.access_port) -}}
+{{ '%-15s' | format(sensor.last_seen.split("T")[0]) -}}
+{{ '%-15s' | format(sensor.updated_at.split("T")[0]) -}}
+{{ '%-12s' | format(sensor.status) -}}
+{{ '%-30s' | format(sensor.name) -}}
+{{ '%-35s' | format(sensor.persona_name) -}}
+{% endfor -%}
+{% else %}
+No sensor activity found for the specified criteria.
+{% endif %}

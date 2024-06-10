@@ -175,53 +175,6 @@ def gnql_command(function):
     return wrapper
 
 
-def sensor_activity_command(function):
-    """Decorator that groups decorators common to sensor activity subcommands."""
-
-    @click.command()
-    @click.argument("workspace_id", required=True)
-    @click.option(
-        "--start_time", "start_time", help="Earliest session start time to return"
-    )
-    @click.option("--end_time", "end_time", help="Latest session start time to return")
-    @click.option(
-        "--file_format", "file_format", help="Format for output file", default="json"
-    )
-    @click.option("--persona_id", "persona_id", help="Id for the desired persona")
-    @click.option("--source_ip", "source_ip", help="Ip for the desired source")
-    @click.option("--size", "size", help="Max number of results to return")
-    @click.option("--scroll", "scroll", help="Scroll token for pagination")
-    @click.option("-k", "--api-key", help="Key to include in API requests")
-    @click.option(
-        "-O",
-        "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
-    )
-    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
-    @click.option(
-        "-f",
-        "--format",
-        "output_format",
-        type=click.Choice(["json", "txt", "xml"]),
-        default="txt",
-        help="Output format",
-    )
-    @click.option("-v", "--verbose", count=True, help="Verbose output")
-    @pass_api_client
-    @click.pass_context
-    @echo_result
-    @handle_exceptions
-    @functools.wraps(function)
-    def wrapper(*args, **kwargs):
-        return function(*args, **kwargs)
-
-    return wrapper
-
-
 def ip_lookup_command(function):
     """Decorator that groups decorators common to ip and quick subcommand."""
 
@@ -282,5 +235,124 @@ def not_implemented_command(function):
             api_client.not_implemented(command_name)
         except RequestFailure:
             raise SubcommandNotImplemented(command_name)
+
+    return wrapper
+
+
+def workspace_command(function):
+    """Decorator that groups decorators common to sensor activity subcommands."""
+
+    @click.command()
+    @click.argument("workspace_id", required=True)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", count=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def sensor_activity_command(function):
+    """Decorator that groups decorators common to sensor activity subcommands."""
+
+    @click.command()
+    @click.argument("workspace_id", required=True)
+    @click.option(
+        "--start_time", "start_time", help="Earliest session start time to return"
+    )
+    @click.option("--end_time", "end_time", help="Latest session start time to return")
+    @click.option(
+        "--file_format", "file_format", help="Format for output file", default="json"
+    )
+    @click.option("--persona_id", "persona_id", help="Id for the desired persona")
+    @click.option("--source_ip", "source_ip", help="Ip for the desired source")
+    @click.option("--size", "size", help="Max number of results to return")
+    @click.option("--scroll", "scroll", help="Scroll token for pagination")
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", count=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def persona_command(function):
+    """Decorator that groups decorators common to sensor activity subcommands."""
+
+    @click.command()
+    @click.argument("persona_id", required=True)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", count=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
 
     return wrapper
