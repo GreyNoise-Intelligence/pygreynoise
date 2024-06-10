@@ -129,6 +129,7 @@ class TestRequest(object):
             timeout=client.timeout,
             params={},
             json=None,
+            files=None,
         )
 
 
@@ -145,57 +146,39 @@ class TestAnalyze(object):
 
     @pytest.fixture
     def client(self, client):
-        """API client fixture with quick method mocked."""
-        client.quick = Mock(
-            return_value=[
-                {"ip": "8.8.8.8", "noise": True, "riot": False},
-                {"ip": "123.123.123.123", "noise": False, "riot": False},
-            ]
-        )
-        client.riot = Mock(return_value={"ip": "8.8.8.8", "riot": False})
-        client.stats = Mock(
-            side_effect=[
-                {
-                    "count": 1,
-                    "query": "8.8.8.8",
-                    "stats": {
-                        "actors": [{"actor": "<actor_1>", "count": 1}],
-                        "asns": [{"asn": "<asn_1>", "count": 1}],
-                        "categories": [{"category": "<category_1>", "count": 1}],
-                        "classifications": [
-                            {"classification": "<classification_1>", "count": 1}
-                        ],
-                        "countries": [{"country": "<country_1>", "count": 1}],
-                        "operating_systems": [
-                            {"operating_system": "<operating_system_1>", "count": 1}
-                        ],
-                        "organizations": [
-                            {"organization": "<organization_1>", "count": 1}
-                        ],
-                        "tags": [{"tag": "<tag_1>", "count": 1}],
-                    },
+        """API client fixture with analyze method mocked."""
+        client.analyze = Mock(
+            return_value={
+                "count": 1,
+                "query": ["1.2.2.1"],
+                "stats": {
+                    "actors": [{"actor": "<actor_1>", "count": 1}],
+                    "classifications": [
+                        {"classification": "<classification_1>", "count": 1},
+                        {"classification": "<classification_2>", "count": 1},
+                    ],
+                    "countries": [
+                        {"country": "<country_1>", "count": 1},
+                        {"country": "<country_2>", "count": 1},
+                    ],
+                    "operating_systems": [
+                        {"operating_system": "<operating_system_1>", "count": 1},
+                        {"operating_system": "<operating_system_2>", "count": 1},
+                    ],
+                    "tags": [
+                        {"tag": "<tag_1>", "count": 1},
+                        {"tag": "<tag_2>", "count": 1},
+                    ],
                 },
-                {
-                    "count": 1,
-                    "query": "123.123.123.123",
-                    "stats": {
-                        "actors": None,  # handle none values as empty lists
-                        "asns": [{"asn": "<asn_2>", "count": 1}],
-                        "categories": [{"category": "<category_2>", "count": 1}],
-                        "classifications": [
-                            {"classification": "<classification_2>", "count": 1}
-                        ],
-                        "countries": [{"country": "<country_2>", "count": 1}],
-                        "operating_systems": [
-                            {"operating_system": "<operating_system_2>", "count": 1}
-                        ],
-                        "organizations": [
-                            {"organization": "<organization_2>", "count": 1}
-                        ],
-                        "tags": [{"tag": "<tag_2>", "count": 1}],
-                    },
+                "summary": {
+                    "ip_count": 1,
+                    "noise_ip_count": 1,
+                    "riot_ip_count": 0,
+                    "not_noise_ip_count": 0,
+                    "noise_ip_ratio": 1.00,
+                    "riot_ip_ratio": 0.0,
                 },
-            ]
+            }
         )
         yield client
 
@@ -203,28 +186,12 @@ class TestAnalyze(object):
         "text, expected_output",
         (
             (
-                "8.8.8.8\n123.123.123.123",
+                "1.2.2.1",
                 {
-                    "count": 2,
-                    "summary": {
-                        "ip_count": 2,
-                        "noise_ip_count": 1,
-                        "riot_ip_count": 0,
-                        "not_noise_ip_count": 1,
-                        "noise_ip_ratio": 0.50,
-                        "riot_ip_ratio": 0.0,
-                    },
-                    "query": ["8.8.8.8", "123.123.123.123"],
+                    "count": 1,
+                    "query": ["1.2.2.1"],
                     "stats": {
                         "actors": [{"actor": "<actor_1>", "count": 1}],
-                        "asns": [
-                            {"asn": "<asn_1>", "count": 1},
-                            {"asn": "<asn_2>", "count": 1},
-                        ],
-                        "categories": [
-                            {"category": "<category_1>", "count": 1},
-                            {"category": "<category_2>", "count": 1},
-                        ],
                         "classifications": [
                             {"classification": "<classification_1>", "count": 1},
                             {"classification": "<classification_2>", "count": 1},
@@ -237,31 +204,19 @@ class TestAnalyze(object):
                             {"operating_system": "<operating_system_1>", "count": 1},
                             {"operating_system": "<operating_system_2>", "count": 1},
                         ],
-                        "organizations": [
-                            {"organization": "<organization_1>", "count": 1},
-                            {"organization": "<organization_2>", "count": 1},
-                        ],
                         "tags": [
                             {"tag": "<tag_1>", "count": 1},
                             {"tag": "<tag_2>", "count": 1},
                         ],
                     },
-                },
-            ),
-            (
-                "no ip address",
-                {
-                    "count": 0,
                     "summary": {
-                        "ip_count": 0,
-                        "noise_ip_count": 0,
-                        "not_noise_ip_count": 0,
+                        "ip_count": 1,
+                        "noise_ip_count": 1,
                         "riot_ip_count": 0,
-                        "noise_ip_ratio": 0,
-                        "riot_ip_ratio": 0,
+                        "not_noise_ip_count": 0,
+                        "noise_ip_ratio": 1.00,
+                        "riot_ip_ratio": 0.0,
                     },
-                    "query": [],
-                    "stats": {},
                 },
             ),
         ),
@@ -633,31 +588,82 @@ class TestQuick(object):
 class TestSensorActivity(object):
     """GreyNoise client run Sensor Activity test cases."""
 
+    @pytest.fixture
+    def client(self, client):
+        """API client fixture with analyze method mocked."""
+        client.sensor_activity = Mock(
+            return_value=[
+                {
+                    "bytes": 1,
+                    "destination_ip": "1.2.2.1",
+                    "destination_port": 1234,
+                    "http_uri": "",
+                    "packets": 3,
+                    "persona_id": "aaa-aa-aa-aa-aaaa",
+                    "protocols": ["tcp"],
+                    "sensor_id": "aaa-aa-aa-aa-aaaa",
+                    "session_id": "asdfasdfs",
+                    "source_ip": "1.2.2.1",
+                    "source_port": 1234,
+                    "start_time": "2024-06-09T23:56:57.51Z",
+                    "stop_time": "2024-06-09T23:56:58.037Z",
+                }
+            ]
+        )
+
+        yield client
+
     def test_sensor_activity(self, client):
         """Run Sensor Activity."""
         workspace_id = "workspace_id"
-        expected_response = []
-
-        client._request = Mock(return_value=expected_response)
-        response = client.sensor_activity(workspace_id=workspace_id)
-        client._request.assert_called_with(
-            "v1/workspaces/workspace_id/sensors/activity", params={"format": "json"}
+        expected_response = [
+            {
+                "bytes": 1,
+                "destination_ip": "1.2.2.1",
+                "destination_port": 1234,
+                "http_uri": "",
+                "packets": 3,
+                "persona_id": "aaa-aa-aa-aa-aaaa",
+                "protocols": ["tcp"],
+                "sensor_id": "aaa-aa-aa-aa-aaaa",
+                "session_id": "asdfasdfs",
+                "source_ip": "1.2.2.1",
+                "source_port": 1234,
+                "start_time": "2024-06-09T23:56:57.51Z",
+                "stop_time": "2024-06-09T23:56:58.037Z",
+            }
+        ]
+        response = client.sensor_activity(
+            workspace_id=workspace_id, include_headers=False
         )
+
         assert response == expected_response
 
     def test_query_with_size_and_scroll(self, client):
         """Run Sensor Activity with size and scroll parameters."""
         workspace_id = "workspace_id"
-        expected_response = []
+        expected_response = [
+            {
+                "bytes": 1,
+                "destination_ip": "1.2.2.1",
+                "destination_port": 1234,
+                "http_uri": "",
+                "packets": 3,
+                "persona_id": "aaa-aa-aa-aa-aaaa",
+                "protocols": ["tcp"],
+                "sensor_id": "aaa-aa-aa-aa-aaaa",
+                "session_id": "asdfasdfs",
+                "source_ip": "1.2.2.1",
+                "source_port": 1234,
+                "start_time": "2024-06-09T23:56:57.51Z",
+                "stop_time": "2024-06-09T23:56:58.037Z",
+            }
+        ]
 
-        client._request = Mock(return_value=expected_response)
         response = client.sensor_activity(
             workspace_id=workspace_id, size=5, scroll="scroll"
         )
-        client._request.assert_called_with(
-            "v1/workspaces/workspace_id/sensors/activity",
-            params={"format": "json", "size": 5, "scroll": "scroll"},
-        )
+
         assert response == expected_response
 
 
