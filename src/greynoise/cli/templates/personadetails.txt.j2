@@ -1,0 +1,38 @@
+{% import "macros.txt.j2" as macros with context %}
+
+{% if results %}
+---------------
+<header>Persona Details</header>
+---------------
+<key>ID</key>: <value>{{ results.id }}</value>
+<key>Name</key>: <value>{{ results.name }}</value>
+<key>Access Tier</key>: <value>{{ results.tier }}</value>
+<key>Created</key>: <value>{{ results.created_at.split("T")[0] }}</value>
+<key>Updated</key>: <value>{{ results.updated_at.split("T")[0] }}</value>
+<key>Author</key>: <value>{{ results.author }}</value>
+<key>Description</key>: <value>{{ results.description }}</value>
+{% if results.categories -%}
+<key>Categories</key>:
+{%- call(category) macros.verbose_list(results.categories) -%}
+- <value>{{ category }}</value>
+{% endcall -%}
+{% endif -%}
+{% if results.application_protocols -%}
+<key>Application Protocols</key>:
+{%- call(proto) macros.verbose_list(results.application_protocols) -%}
+- <value>{{ proto }}</value>
+{% endcall -%}
+{% endif -%}
+{% if results.ports -%}
+<key>Ports</key>:
+{%- call(port) macros.verbose_list(results.ports) -%}
+- <value>{{ port }}</value>
+{% endcall -%}
+{% endif -%}
+{% if results.associated_vulnerabilities -%}
+<key>Associated Vulerabilities</key>:
+{%- call(vuln) macros.verbose_list(results.associated_vulnerabilities) -%}
+- <value>{{ vuln }}</value>
+{% endcall -%}
+{% endif -%}
+{% endif %}

@@ -2,6 +2,8 @@
 
 import logging
 import re
+import sys
+import time
 from collections import OrderedDict
 
 import cachetools
@@ -9,7 +11,6 @@ import more_itertools
 import requests
 
 from greynoise.__version__ import __version__
-from greynoise.api.analyzer import Analyzer
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import (
@@ -58,6 +59,10 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     EP_PING = "ping"
     EP_RIOT = "v2/riot/{ip_address}"
     EP_SENSOR_ACTIVITY = "v1/workspaces/{workspace_id}/sensors/activity"
+    EP_SENSOR_LIST = "v1/workspaces/{workspace_id}/sensors"
+    EP_PERSONA_DETAILS = "v1/personas/{persona_id}"
+    EP_ANALYZE_UPLOAD = "v2/analyze/upload"
+    EP_ANALYZE = "v2/analyze/{id}"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
     CODE_MESSAGES = {
@@ -143,7 +148,15 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             self.ip_quick_check_cache = initialize_cache(cache_max_size, cache_ttl)
             self.ip_context_cache = initialize_cache(cache_max_size, cache_ttl)
 
-    def _request(self, endpoint, params=None, json=None, method="get"):
+    def _request(
+        self,
+        endpoint,
+        params=None,
+        json=None,
+        files=None,
+        method="get",
+        include_headers=False,
+    ):
         """Handle the requesting of information from the API.
 
         :param endpoint: Endpoint to send the request to
@@ -152,6 +165,8 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         :type param: dict
         :param json: Request's JSON payload
         :type json: dict
+        :param files: Request's file for update
+        :type files: text file
         :param method: Request method name
         :type method: str
         :returns: Response's JSON payload
@@ -179,6 +194,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         LOGGER.debug("Sending API request...headers: %s", headers)
         LOGGER.debug("Sending API request...params: %s", params)
         LOGGER.debug("Sending API request...json: %s", json)
+        LOGGER.debug("Sending API request...files: %s", files)
         LOGGER.debug("Sending API request...proxy: %s", self.proxy)
 
         request_method = getattr(self.session, method)
@@ -190,13 +206,20 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
                 timeout=self.timeout,
                 params=params,
                 json=json,
+                files=files,
                 proxies=proxies,
             )
         else:
             response = request_method(
-                url, headers=headers, timeout=self.timeout, params=params, json=json
+                url,
+                headers=headers,
+                timeout=self.timeout,
+                params=params,
+                json=json,
+                files=files,
             )
         content_type = response.headers.get("Content-Type", "")
+        headers = response.headers
         if "application/json" in content_type:
             body = response.json()
         else:
@@ -208,8 +231,10 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             raise RateLimitError()
         if response.status_code >= 400 and response.status_code != 404:
             raise RequestFailure(response.status_code, body)
-
-        return body
+        if include_headers:
+            return body, headers
+        else:
+            return body
 
     def analyze(self, text):
         """Aggregate stats related to IP addresses from a given text.
@@ -221,14 +246,48 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
         """
         if self.offering == "community":
-            response = [
-                {"message": "Quick Lookup not supported with Community offering"}
-            ]
+            text_stats = [{"message": "Analyze not supported with Community offering"}]
         else:
-            analyzer = Analyzer(self)
-            response = analyzer.analyze(text)
+            text_stats = {
+                "query": [],
+                "count": 0,
+                "stats": {},
+            }
 
-        return response
+            files = {"file": text}
+            upload = self._request(self.EP_ANALYZE_UPLOAD, files=files, method="post")
+
+            if "uuid" in upload:
+                uuid = upload["uuid"]
+                state = upload["state"]
+                while state != "completed":
+                    url = self.EP_ANALYZE.format(id=uuid)
+                    response = self._request(url)
+                    state = response["state"]
+                    time.sleep(5)
+                unique_ip_list = (
+                    response["details"].get("noise_ips_found", [])
+                    + response["details"].get("unknown_ips", [])
+                    + response["details"].get("riot_ips_found", [])
+                )
+
+                text_stats["summary"] = {
+                    "ip_count": response["details"].get("unique_ips", 0),
+                    "noise_ip_count": response["details"].get("noise_ips", 0),
+                    "not_noise_ip_count": response["details"].get("non_noise_ips", 0),
+                    "riot_ip_count": response["details"].get("riot_ips", 0),
+                    "noise_ip_ratio": response["details"].get(
+                        "percentage_of_noise_ips", 0
+                    ),
+                    "riot_ip_ratio": response["details"].get(
+                        "percentage_of_riot_ips", 0
+                    ),
+                }
+                text_stats["stats"] = response.get("stats")
+                text_stats["query"] = unique_ip_list
+                text_stats["count"] = response["details"].get("unique_ips", 0)
+
+        return text_stats
 
     def filter(self, text, noise_only=False, riot_only=False):
         """Filter lines that contain IP addresses from a given text.
@@ -583,7 +642,61 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     def sensor_activity(
         self,
         workspace_id,
-        format="json",
+        file_format=None,
+        start_time=None,
+        end_time=None,
+        persona_id=None,
+        source_ip=None,
+        size=None,
+        scroll=None,
+        include_headers=False,
+    ):
+        """Get session data from sensors"""
+        LOGGER.debug(
+            "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
+            workspace_id,
+            file_format,
+            start_time,
+            end_time,
+            persona_id,
+            source_ip,
+            size,
+            scroll,
+        )
+        if file_format is None or file_format == "json":
+            params = {"format": "json"}
+        elif file_format == "csv":
+            params = {"format": file_format}
+        else:
+            LOGGER.error(
+                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            )
+            sys.exit(1)
+
+        if start_time is not None:
+            params["start_time"] = start_time
+        if end_time is not None:
+            params["end_time"] = end_time
+        if persona_id is not None:
+            params["persona_id"] = persona_id
+        if source_ip is not None:
+            params["source_ip"] = source_ip
+        if size is not None:
+            params["size"] = size
+        if scroll is not None:
+            params["scroll"] = scroll
+        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
+        response, headers = self._request(endpoint, params=params, include_headers=True)
+
+        if include_headers:
+            return response, headers
+        else:
+            return response
+
+    def sensor_activity_ips(
+        self,
+        workspace_id,
+        file_format=None,
         start_time=None,
         end_time=None,
         persona_id=None,
@@ -595,7 +708,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         LOGGER.debug(
             "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
             workspace_id,
-            format,
+            file_format,
             start_time,
             end_time,
             persona_id,
@@ -603,23 +716,36 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             size,
             scroll,
         )
-        params = {"format": format}
+        if file_format is None or file_format == "json":
+            params = {"format": "json"}
+        elif file_format == "csv":
+            params = {"format": file_format}
+        else:
+            LOGGER.error(
+                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            )
+            sys.exit(1)
+
         if start_time is not None:
-            params = {"start_time": start_time}
+            params["start_time"] = start_time
         if end_time is not None:
-            params = {"end_time": end_time}
+            params["end_time"] = end_time
         if persona_id is not None:
-            params = {"persona_id": persona_id}
+            params["persona_id"] = persona_id
         if source_ip is not None:
-            params = {"source_ip": source_ip}
+            params["source_ip"] = source_ip
         if size is not None:
             params["size"] = size
         if scroll is not None:
             params["scroll"] = scroll
         endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
         response = self._request(endpoint, params=params)
+        ip_list = []
+        for item in response:
+            ip_list.append(item.get("source_ip", ""))
+        final_ip_list = list(set(ip_list))
 
-        return response
+        return final_ip_list
 
     def similar(self, ip_address, limit=None, min_score=None):
         """Query IP on the IP Similarity API
@@ -785,5 +911,54 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
 
             if "ip" not in response:
                 response["ip"] = ip_address
+
+        return response
+
+    def sensor_list(self, workspace_id=None):
+        """Query IP on the IP TimeSeries API
+
+        :param workspace_id: ID of Workspace
+        :type workspace_id: str
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Sensors List is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Sensor List for Workspace ID: %s...", workspace_id)
+
+            endpoint = self.EP_SENSOR_LIST.format(workspace_id=workspace_id)
+            response = self._request(endpoint)
+        new_response = {}
+        if "items" in response:
+            new_response["items"] = []
+            for sensor in response["items"]:
+                persona = self.persona_details(sensor["persona"])
+                sensor["persona_name"] = persona.get("name", "")
+                new_response["items"].append(sensor)
+        else:
+            new_response = response
+
+        return new_response
+
+    def persona_details(self, persona_id=None):
+        """Get persona details by ID
+
+        :param persona_id: ID of Persona
+        :type persona_id: str
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Persona Details is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Persona Details for Workspace ID: %s...", persona_id)
+
+            endpoint = self.EP_PERSONA_DETAILS.format(persona_id=persona_id)
+            response = self._request(endpoint)
 
         return response
