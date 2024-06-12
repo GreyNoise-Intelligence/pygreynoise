@@ -915,7 +915,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
         return response
 
     def sensor_list(self, workspace_id=None):
-        """Query IP on the IP TimeSeries API
+        """Get list of current sensors for Workspace
 
         :param workspace_id: ID of Workspace
         :type workspace_id: str
