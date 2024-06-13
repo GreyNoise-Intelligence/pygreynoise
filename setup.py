@@ -20,14 +20,14 @@ INSTALL_REQUIRES = [
     "click-repl",
     "dict2xml",
     "jinja2",
-    "more-itertools",
+    "more-itertools>=8.14.0",
     "requests",
     "six",
 ]
 
 setup(
     name="greynoise",
-    version="2.1.0",
+    version="2.2.0",
     description="Abstraction to interact with GreyNoise API.",
     url="https://greynoise.io/",
     author="GreyNoise Intelligence",

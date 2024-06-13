@@ -2,6 +2,35 @@
 Changelog
 =========
 
+Version `2.2.0`_
+================
+**Date**: June 11, 2024
+
+* API client:
+
+  * Update `analyze` command to use analysis endpoint
+  * Add `persona_details` command to pull a sensor persona's details based on ID
+  * Add `sensor_list` command to pull list of sensors from a users workspace, based on API key used
+  * Add `sensor_activity` command to pull sensor activity feed from users workspace
+  * Add `sensor_activity_ips` command to pull list of source ips from sensor activity feed
+
+* CLI:
+
+  * Update `analyze` output to match that of new endpoint response
+  * Add `persona-details` command to display command response
+  * Add `sensor-list` command to display command response
+  * Add `sensor-activity` command to display command response
+
+* Dependencies:
+
+  * Updated Clic to version 8.1.7
+  * Updated ansimarkup to version 2.1.0
+  * Updated click-repl to version 0.3.0
+  * Updated dict2xml to version 1.7.5
+  * Updated jinja2 to version 3.1.4
+  * Updated more-itertools to version 10.3.0 (for py3.8 and above only)
+  * Updated requests to version 2.32.3
+
 Version `2.1.0`_
 ================
 **Date**: February 07, 2024
@@ -380,6 +409,7 @@ Version `0.2.0`_
 .. _`1.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.1.0...1.2.0
 .. _`1.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.0...1.2.1
 .. _`1.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.2.1...1.3.0
-.. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...HEAD
+.. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...2.0.0
 .. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1
 .. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
+.. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...HEAD
