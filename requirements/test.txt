@@ -17,7 +17,7 @@ pytest==7.4.4;python_version=='3.7'
 pytest==8.2.2;python_version>='3.8'
 restructuredtext-lint==1.4.0
 twine<4.0.2;python_version<='3.7'
-twine==5.1.0;python_version>'3.7'
+twine==5.1.1;python_version>'3.7'
 yamllint==1.28.0;python_version=='3.6'
 yamllint==1.32.0;python_version=='3.7'
 yamllint==1.35.1;python_version>='3.8'
