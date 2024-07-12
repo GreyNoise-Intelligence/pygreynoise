@@ -239,7 +239,7 @@ def validate_cve_id(cve_id):
 
     """
     # CVE regular expression
-    cve_pattern = r'CVE-\d{4}-\d{4,7}'
+    cve_pattern = r"CVE-\d{4}-\d{4,7}"
 
     pattern = re.compile(cve_pattern)
 

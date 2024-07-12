@@ -15,12 +15,12 @@ from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import (
     load_config,
+    validate_cve_id,
     validate_ip,
     validate_similar_min_score,
     validate_timeline_days,
     validate_timeline_field_value,
     validate_timeline_granularity,
-    validate_cve_id,
 )
 
 LOGGER = logging.getLogger(__name__)
