@@ -240,7 +240,7 @@ def not_implemented_command(function):
 
 
 def workspace_command(function):
-    """Decorator that groups decorators common to sensor activity subcommands."""
+    """Decorator that groups decorators common to workspace subcommands."""
 
     @click.command()
     @click.argument("workspace_id", required=True)
@@ -323,10 +323,46 @@ def sensor_activity_command(function):
 
 
 def persona_command(function):
-    """Decorator that groups decorators common to sensor activity subcommands."""
+    """Decorator that groups decorators common to persona subcommands."""
 
     @click.command()
     @click.argument("persona_id", required=True)
+    @click.option("-k", "--api-key", help="Key to include in API requests")
+    @click.option(
+        "-O",
+        "--offering",
+        help="Which API offering to use, enterprise or community, "
+        "defaults to enterprise",
+    )
+    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
+    @click.option(
+        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
+    )
+    @click.option(
+        "-f",
+        "--format",
+        "output_format",
+        type=click.Choice(["json", "txt", "xml"]),
+        default="txt",
+        help="Output format",
+    )
+    @click.option("-v", "--verbose", count=True, help="Verbose output")
+    @pass_api_client
+    @click.pass_context
+    @echo_result
+    @handle_exceptions
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def cve_command(function):
+    """Decorator that groups decorators common to cve subcommand."""
+
+    @click.command()
+    @click.argument("cve_id", required=True)
     @click.option("-k", "--api-key", help="Key to include in API requests")
     @click.option(
         "-O",

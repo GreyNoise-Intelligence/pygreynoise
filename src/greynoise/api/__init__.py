@@ -20,6 +20,7 @@ from greynoise.util import (
     validate_timeline_days,
     validate_timeline_field_value,
     validate_timeline_granularity,
+    validate_cve_id,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
     EP_SENSOR_ACTIVITY = "v1/workspaces/{workspace_id}/sensors/activity"
     EP_SENSOR_LIST = "v1/workspaces/{workspace_id}/sensors"
     EP_PERSONA_DETAILS = "v1/personas/{persona_id}"
+    EP_CVE_LOOKUP = "v1/cve/{cve_id}"
     EP_ANALYZE_UPLOAD = "v2/analyze/upload"
     EP_ANALYZE = "v2/analyze/{id}"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
@@ -959,6 +961,29 @@ class GreyNoise(object):  # pylint: disable=R0205,R0902
             LOGGER.debug("Getting Persona Details for Workspace ID: %s...", persona_id)
 
             endpoint = self.EP_PERSONA_DETAILS.format(persona_id=persona_id)
+            response = self._request(endpoint)
+
+        return response
+
+    def cve(self, cve_id=None):
+        """Get CVE details by CVE ID
+
+        :param cve_id: ID of CVE
+        :type cve_id: str
+
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "CVE lookup is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Details for CVE ID: %s...", cve_id)
+
+            # check if CVE submitted is in correct format
+            validate_cve_id(cve_id)
+
+            endpoint = self.EP_CVE_LOOKUP.format(cve_id=cve_id)
             response = self._request(endpoint)
 
         return response
