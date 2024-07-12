@@ -11,28 +11,35 @@
 <key>CVSS Score</key>: <value>{{ results.details.cve_cvss_score }}</value>
 <key>Published to NIST NVD</key>: <value>{{ results.details.published_to_nist_nvd }}</value>
 
+{% if results.timeline -%}
 <header>Timeline Information</header>
 --------------------
 <key>Published Date</key>: <value>{{ results.timeline.cve_published_date.split("T")[0] }}</value>
 <key>Last Updated Date</key>: <value>{{ results.timeline.cve_last_updated_date.split("T")[0] }}</value>
 <key>First Known Date</key>: <value>{{ results.timeline.first_known_published_date.split("T")[0] }}</value>
 <key>Added to CISA Kev Date</key>: <value>{{ results.timeline.cisa_kev_date_added.split("T")[0] }}</value>
+{%- endif %}
 
+{% if results.exploitation_details -%}
 <header>Exploitation Details</header>
 --------------------
 <key>Attack Vector</key>: <value>{{ results.exploitation_details.attack_vector }}</value>
 <key>Exploit Found</key>: <value>{{ results.exploitation_details.exploit_found }}</value>
 <key>Exploit in KEV</key>: <value>{{ results.exploitation_details.exploitation_registered_in_kev }}</value>
 <key>EPSS Score</key>: <value>{{ results.exploitation_details.epss_score }}</value>
+{%- endif %}
 
+{% if results.exploitation_stats -%}
 <header>Exploitation Stats</header>
---------------------
+------------------
 <key># of Exploits</key>: <value>{{ results.exploitation_stats.number_of_available_exploits }}</value>
 <key># of Threat Actors</key>: <value>{{ results.exploitation_stats.number_of_threat_actors_exploiting_vulnerability }}</value>
 <key># of Botnets </key>: <value>{{ results.exploitation_stats.number_of_botnets_exploiting_vulnerability }}</value>
+{%- endif %}
 
+{% if results.exploitation_activity -%}
 <header>Exploitation Activity</header>
---------------------
+---------------------
 <key>Activity Seen</key>: <value>{{ results.exploitation_activity.activity_seen }}</value>
 <key># Benign Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.benign_ip_count_today }}</value>
 <key># Benign Scanners - 10 Days</key>: <value>{{ results.exploitation_activity.benign_ip_count_10_days }}</value>
@@ -40,5 +47,6 @@
 <key># Suspicious Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_today }}</value>
 <key># Suspicious Scanners - 10 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_10_days }}</value>
 <key># Suspicious Scanners - 30 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_30_days }}</value>
+{%- endif %}
 
 {%- endif %}
