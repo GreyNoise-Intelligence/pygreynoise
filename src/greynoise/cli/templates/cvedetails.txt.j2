@@ -1,5 +1,5 @@
 {% import "macros.txt.j2" as macros with context %}
-{%- if results %}
+{%- if results.details %}
 ----------------------------
           <header>CVE Details</header>
 ----------------------------
@@ -48,5 +48,6 @@
 <key># Suspicious Scanners - 10 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_10_days }}</value>
 <key># Suspicious Scanners - 30 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_30_days }}</value>
 {%- endif %}
-
+{% else %}
+Provided CVE was not found or valid.
 {%- endif %}
