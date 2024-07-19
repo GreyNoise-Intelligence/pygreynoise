@@ -7,6 +7,7 @@ import click
 
 from greynoise.__version__ import __version__
 from greynoise.cli.decorator import (
+    cve_command,
     echo_result,
     gnql_command,
     handle_exceptions,
@@ -495,5 +496,24 @@ def persona_details(
     """Retrieve Details of a Sensor Persona."""
     result = api_client.persona_details(
         persona_id=persona_id,
+    )
+    return result
+
+
+@cve_command
+def cve(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    verbose,
+    cve_id,
+    offering,
+):
+    """Retrieve Details of a CVE."""
+    result = api_client.cve(
+        cve_id=cve_id,
     )
     return result

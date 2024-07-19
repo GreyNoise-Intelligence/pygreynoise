@@ -1,6 +1,7 @@
 """Utility functions."""
 import logging
 import os
+import re
 from ipaddress import IPv6Address, ip_address
 
 from six.moves.configparser import ConfigParser
@@ -228,3 +229,21 @@ def validate_similar_min_score(min_score):
         return True
     else:
         raise ValueError("Min Score must be a valid integer between 0 and 100.")
+
+
+def validate_cve_id(cve_id):
+    """Check if provided value is a valid CVE ID
+
+    :param cve_id: field value to validate.
+    :type cve_id: str
+
+    """
+    # CVE regular expression
+    cve_pattern = r"CVE-\d{4}-\d{4,7}"
+
+    pattern = re.compile(cve_pattern)
+
+    if not pattern.match(cve_id):
+        raise ValueError("The provided ID does not match the format: CVE-XXXX-YYYYY")
+    else:
+        return True
