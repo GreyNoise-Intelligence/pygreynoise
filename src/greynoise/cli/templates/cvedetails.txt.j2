@@ -41,12 +41,12 @@
 <header>Exploitation Activity</header>
 ---------------------
 <key>Activity Seen</key>: <value>{{ results.exploitation_activity.activity_seen }}</value>
-<key># Benign Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.benign_ip_count_today }}</value>
-<key># Benign Scanners - 10 Days</key>: <value>{{ results.exploitation_activity.benign_ip_count_10_days }}</value>
-<key># Benign Scanners - 30 Days</key>: <value>{{ results.exploitation_activity.benign_ip_count_30_days }}</value>
-<key># Suspicious Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_today }}</value>
-<key># Suspicious Scanners - 10 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_10_days }}</value>
-<key># Suspicious Scanners - 30 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_30_days }}</value>
+<key># Benign Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.benign_ip_count_1d }}</value>
+<key># Benign Scanners - 10 Days</key>: <value>{{ results.exploitation_activity.benign_ip_count_10d }}</value>
+<key># Benign Scanners - 30 Days</key>: <value>{{ results.exploitation_activity.benign_ip_count_30d }}</value>
+<key># Suspicious Scanners - 1 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_1d }}</value>
+<key># Suspicious Scanners - 10 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_10d }}</value>
+<key># Suspicious Scanners - 30 Day</key>: <value>{{ results.exploitation_activity.threat_ip_count_30d }}</value>
 {%- endif %}
 {% else %}
 Provided CVE was not found or valid.
