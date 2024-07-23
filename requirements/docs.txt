@@ -1,5 +1,5 @@
 # Requirements needed to build the documentation
 -r common.txt
-Sphinx==7.4.4
+Sphinx==7.4.7
 sphinx-click==6.0.0
 sphinx-rtd-theme==2.0.0
