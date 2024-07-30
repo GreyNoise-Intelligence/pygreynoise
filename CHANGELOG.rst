@@ -4,7 +4,7 @@ Changelog
 
 Version `2.3.0`_
 ================
-**Date**: unreleased
+**Date**: July 30, 2024
 
 * API client:
 
