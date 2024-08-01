@@ -2,6 +2,22 @@
 Changelog
 =========
 
+Version `2.3.0`_
+================
+**Date**: July 30, 2024
+
+* API client:
+
+  * Add `cve` command to query the CVE lookup API
+
+* CLI:
+
+  * Add `cve` command to display result from CVE lookup API
+
+* Dependencies:
+
+  * Updated cachetools to version 5.4.0
+
 Version `2.2.0`_
 ================
 **Date**: June 11, 2024
@@ -412,4 +428,5 @@ Version `0.2.0`_
 .. _`2.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v1.3.0...2.0.0
 .. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1
 .. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
-.. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...HEAD
+.. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...2.2.0
+.. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...HEAD

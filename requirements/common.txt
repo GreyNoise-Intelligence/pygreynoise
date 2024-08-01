@@ -1,6 +1,6 @@
 Click==8.1.7
 ansimarkup==2.1.0
-cachetools==5.3.3;python_version>='3'
+cachetools==5.4.0;python_version>='3'
 colorama==0.4.6
 click-default-group==1.2.4
 click-repl==0.3.0
