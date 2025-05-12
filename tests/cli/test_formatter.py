@@ -17,92 +17,102 @@ from greynoise.cli.formatter import (
 )
 
 EXAMPLE_IP_CONTEXT = {
-    "actor": "<actor>",
-    "bot": False,
-    "classification": "<classification>",
-    "cve": ["<cve#1>", "<cve#2>"],
-    "first_seen": "<first_seen>",
     "ip": "<ip_address>",
-    "last_seen": "<last_seen>",
-    "metadata": {
-        "asn": "<asn>",
-        "category": "<category>",
-        "city": "<city>",
-        "country": "<country>",
-        "country_code": "<country_code>",
-        "source_country": "<source_country>",
-        "source_country_code": "<source_country_code>",
-        "destination_countries": ["<dest_country_1>", "<dest_country_2>"],
-        "destination_country_codes": ["<dest_country_code_1>", "<dest_country_code_2>"],
-        "organization": "<organization>",
-        "os": "<os>",
-        "region": "<region>",
-        "rdns": "<rdns>",
+    "internet_scanner_intelligence": {
+        "found": True,
+        "actor": "<actor>",
+        "bot": False,
+        "classification": "<classification>",
+        "cves": ["<cve#1>", "<cve#2>"],
+        "first_seen": "<first_seen>",
+        "last_seen_timestamp": "<last_seen>",
         "tor": False,
-    },
-    "raw_data": {
-        "hassh": [
-            {"fingerprint": "<hassh#1>", "port": 123456},
-            {"fingerprint": "<hassh#2>", "port": 123456},
-            {"fingerprint": "<hassh#3>", "port": 123456},
-        ],
-        "ja3": [
-            {"fingerprint": "<fingerprint#1>", "port": 123456},
-            {"fingerprint": "<fingerprint#2>", "port": 123456},
-            {"fingerprint": "<fingerprint#3>", "port": 123456},
-        ],
-        "scan": [
-            {"port": 123456, "protocol": "TCP"},
-            {"port": 123456, "protocol": "UDP"},
-        ],
-        "web": {
-            "paths": ["/", "/favicon.ico", "/robots.txt"],
-            "useragents": ["<useragent#1>", "<useragent#2>", "<useragent#3>"],
+        "metadata": {
+            "asn": "<asn>",
+            "category": "<category>",
+            "city": "<city>",
+            "country": "<country>",
+            "country_code": "<country_code>",
+            "source_city": "<source_city>",
+            "source_country": "<source_country>",
+            "source_country_code": "<source_country_code>",
+            "destination_countries": ["<dest_country_1>", "<dest_country_2>"],
+            "destination_country_codes": [
+                "<dest_country_code_1>",
+                "<dest_country_code_2>",
+            ],
+            "organization": "<organization>",
+            "os": "<os>",
+            "region": "<region>",
+            "rdns": "<rdns>",
         },
+        "raw_data": {
+            "hassh": [
+                {"fingerprint": "<hassh#1>", "port": 123456},
+                {"fingerprint": "<hassh#2>", "port": 123456},
+                {"fingerprint": "<hassh#3>", "port": 123456},
+            ],
+            "ja3": [
+                {"fingerprint": "<fingerprint#1>", "port": 123456},
+                {"fingerprint": "<fingerprint#2>", "port": 123456},
+                {"fingerprint": "<fingerprint#3>", "port": 123456},
+            ],
+            "scan": [
+                {"port": 123456, "protocol": "TCP"},
+                {"port": 123456, "protocol": "UDP"},
+            ],
+            "http": {
+                "path": ["/", "/favicon.ico", "/robots.txt"],
+                "useragent": ["<useragent#1>", "<useragent#2>", "<useragent#3>"],
+            },
+        },
+        "seen": True,
+        "spoofable": False,
+        "tags": [{"name": "<tag#1>"}, {"name": "<tag#2>"}, {"name": "<tag#3>"}],
+        "vpn": False,
+        "vpn_service": "",
     },
-    "seen": True,
-    "spoofable": False,
-    "tags": ["<tag#1>", "<tag#2>", "<tag#3>"],
-    "vpn": False,
-    "vpn_service": "",
+    "business_service_intelligence": {
+        "found": False,
+    },
 }
 
 EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
     textwrap.dedent(
         """\
-                  <header>OVERVIEW</header>
-        ----------------------------
+                  <header>Internet Scanner Intelligence</header>
+        -----------------------------------------------
         <key>IP</key>: <value><ip_address></value>
         <key>Actor</key>: <value><actor></value>
         <key>Classification</key>: <value><classification></value>
-        <key>First seen</key>: <value><first_seen></value>
-        <key>Last seen</key>: <value><last_seen></value>
+        <key>First Seen</key>: <value><first_seen></value>
+        <key>Last Seen</key>: <value><last_seen></value>
         <key>Spoofable</key>: <value>False</value>
         <key>BOT</key>: <value>False</value>
         <key>VPN</key>: <value>False</value>
-        <key>VPN Service</key>: <value></value>
-        <key>Tags</key>:
+        <key>TOR</key>: <value>False</value>
+        [TAGS]
         - <value><tag#1></value>
         - <value><tag#2></value>
         - <value><tag#3></value>
 
+        
                   <header>METADATA</header>
         ----------------------------
         <key>ASN</key>: <value><asn></value>
         <key>Category</key>: <value><category></value>
-        <key>Source Location</key>: <value><city>, <country> (<country_code>)</value>
+        <key>Source Location</key>: <value><source_city>, <source_country> (<source_country_code>)</value>
         <key>Destination Countries</key>: <value><dest_country_1>, <dest_country_2></value>
         <key>Region</key>: <value><region></value>
         <key>Organization</key>: <value><organization></value>
         <key>OS</key>: <value><os></value>
         <key>rDNS</key>: <value><rdns></value>
-        <key>Tor</key>: <value>False</value>
 
                   <header>RAW DATA</header>
         ----------------------------
-        [CVE]
-        - <key>CVE</key>: <value><cve#1></value>
-        - <key>CVE</key>: <value><cve#2></value>
+        [CVEs]
+        - <value><cve#1></value>
+        - <value><cve#2></value>
 
         [Scan]
         - <key>Port/Proto</key>: <value>123456/TCP</value>
@@ -158,8 +168,8 @@ class TestXMLFormatter(object):
         )
 
 
-class TestIPContextFormatter(object):
-    """IP context formatter tests."""
+class TestIPContextFormatter:
+    """Test IP context formatter."""
 
     @pytest.mark.parametrize(
         "result, expected",
@@ -167,8 +177,17 @@ class TestIPContextFormatter(object):
             (
                 [
                     EXAMPLE_IP_CONTEXT,
-                    {"error": "commonly spoofed ip", "ip": "<ip_address#2>"},
-                    {"ip": "<ip_address#3>", "seen": False},
+                    {
+                        "error": "commonly spoofed ip",
+                        "ip": "<ip_address#2>",
+                        "internet_scanner_intelligence": {"found": False},
+                        "business_service_intelligence": {"found": False},
+                    },
+                    {
+                        "ip": "<ip_address#3>",
+                        "internet_scanner_intelligence": {"found": False},
+                        "business_service_intelligence": {"found": False},
+                    },
                 ],
                 ANSI_MARKUP.parse(
                     textwrap.dedent(
@@ -177,6 +196,7 @@ class TestIPContextFormatter(object):
                         ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address>
+
 
                         """
                     )
@@ -194,9 +214,7 @@ class TestIPContextFormatter(object):
                         ╚═══════════════════════════╝
                         IP address: <ip_address#2>
 
-                        commonly spoofed ip
-
-
+                        <ip_address#2> has not been seen in scans in the past 90 days.
 
 
                         ╔═══════════════════════════╗
@@ -215,23 +233,42 @@ class TestIPContextFormatter(object):
         assert ip_context_formatter(result, verbose=False).strip("\n") == expected
 
 
-class TestIPQuickCheckFormatter(object):
-    """IP quick check formatter tests."""
+class TestIPQuickCheckFormatter:
+    """Test IP quick check formatter."""
 
     @pytest.mark.parametrize(
         "result, expected",
         (
             (
-                [{"ip": "0.0.0.0", "noise": True}],
+                [
+                    {
+                        "ip": "0.0.0.0",
+                        "internet_scanner_intelligence": {
+                            "found": True,
+                            "classification": "noise",
+                        },
+                        "business_service_intelligence": {"found": False},
+                    }
+                ],
                 ANSI_MARKUP.parse(
-                    "<noise>0.0.0.0</noise> is classified as <bold>NOISE</bold>."
+                    "<noise>0.0.0.0</noise> is identified as <bold>"
+                    "<red>NOISE</red></bold> and is classified as <green>noise</green>."
                 ),
             ),
             (
-                [{"ip": "0.0.0.0", "noise": False}],
+                [
+                    {
+                        "ip": "0.0.0.0",
+                        "internet_scanner_intelligence": {
+                            "found": False,
+                            "classification": "not-noise",
+                        },
+                        "business_service_intelligence": {"found": False},
+                    }
+                ],
                 ANSI_MARKUP.parse(
-                    "<not-noise>0.0.0.0</not-noise> "
-                    "is classified as <bold>NOT NOISE</bold>."
+                    "<not-noise>0.0.0.0</not-noise> is classified as <bold>"
+                    "NOT NOISE</bold>."
                 ),
             ),
         ),
@@ -250,12 +287,16 @@ class TestGNQLQueryFormatter(object):
             (
                 [
                     {
-                        "complete": True,
-                        "count": 1,
-                        "scroll": "abcdefg",
                         "data": [EXAMPLE_IP_CONTEXT],
-                        "message": "ok",
-                        "query": "<ip_address>",
+                        "request_metadata": {
+                            "restricted_fields": [],
+                            "message": "",
+                            "query": "<ip_address>",
+                            "count": 1,
+                            "scroll": "abcdefg",
+                            "complete": True,
+                            "adjusted_query": "",
+                        },
                     }
                 ],
                 ANSI_MARKUP.parse(
@@ -268,12 +309,12 @@ class TestGNQLQueryFormatter(object):
                         Count of IPs Returned: 1
                         Scroll Token: abcdefg
 
-
                         ┌───────────────────────────┐
                         │       Result 1 of 1       │
                         └───────────────────────────┘
 
-                        """
+
+                    """
                     )
                 )
                 + EXAMPLE_IP_CONTEXT_OUTPUT,
@@ -282,7 +323,12 @@ class TestGNQLQueryFormatter(object):
     )
     def test_format_gnql_query(self, result, expected):
         """Format GNQL query."""
-        assert gnql_query_formatter(result, verbose=False).strip("\n") == expected
+        actual = gnql_query_formatter(result, verbose=False).strip("\n")
+        print("\nActual output:")
+        print(actual)
+        print("\nExpected output:")
+        print(expected)
+        assert actual == expected
 
 
 class TestGNQLStatsFormatter(object):
@@ -404,62 +450,81 @@ class TestGNQLStatsFormatter(object):
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
 
 
-class TestRIOTFormatter(object):
-    """RIOT formatter tests."""
+class TestRIOTFormatter:
+    """Test RIOT formatter."""
 
     @pytest.mark.parametrize(
-        "result, expected",
+        "result, expected_output",
         (
             (
-                [
-                    {
-                        "ip": "0.0.0.0",
-                        "riot": True,
-                        "category": "<category>",
+                {
+                    "ip": "0.0.0.0",
+                    "business_service_intelligence": {
+                        "found": True,
                         "name": "<name>",
-                        "description": "<description>",
-                        "explanation": "<explanation>",
-                        "last_updated": "<last_updated>",
-                        "reference": "<reference>",
+                        "category": "<category>",
                         "trust_level": "<trust_level>",
-                    }
-                ],
+                        "last_updated": "<last_updated>",
+                    },
+                    "internet_scanner_intelligence": {
+                        "actor": "",
+                        "bot": False,
+                        "classification": "",
+                    },
+                },
                 ANSI_MARKUP.parse(
-                    "<riot>0.0.0.0</riot> is in RIOT dataset. "
-                    "Name: <value><name></value> "
-                    "Category: <value><category></value> "
-                    "Trust Level: <value><trust_level></value> "
-                    "Last Updated: <value><last_updated></value>"
+                    "<riot>0.0.0.0</riot> is in <bold><blue>RIOT</blue></bold>"
+                    " dataset. Name: <green><name></green> "
+                    "Category: <green><category></green> "
+                    "Trust Level: <green><trust_level></green> "
+                    "Last Updated: <green><last_updated></green>"
                 ),
             ),
             (
-                [{"ip": "0.0.0.0", "riot": False}],
+                {
+                    "ip": "0.0.0.0",
+                    "business_service_intelligence": {"found": False},
+                    "internet_scanner_intelligence": {
+                        "actor": "",
+                        "bot": False,
+                        "classification": "",
+                    },
+                },
                 ANSI_MARKUP.parse(
-                    "<not-riot>0.0.0.0</not-riot>"
-                    " is <bold>NOT FOUND</bold> in RIOT dataset."
+                    "<not-riot>0.0.0.0</not-riot> is <red>"
+                    "<bold>NOT FOUND</bold></red> in RIOT dataset."
                 ),
             ),
         ),
     )
-    def test_format_riot(self, result, expected):
-        """Format IP quick check."""
-        assert riot_formatter(result, verbose=False).strip("\n") == expected
+    def test_format_riot(self, result, expected_output):
+        """Test RIOT formatter."""
+        formatter = riot_formatter([result], verbose=False)
+        assert formatter.strip("\n") == expected_output
 
     @pytest.mark.parametrize(
-        "result, expected",
+        "result, expected_output",
         (
             (
                 [
                     {
+                        "business_service_intelligence": {
+                            "found": True,
+                            "category": "<category>",
+                            "name": "<name>",
+                            "description": "<description>",
+                            "explanation": "<explanation>",
+                            "last_updated": "<last_updated>",
+                            "reference": "<reference>",
+                            "trust_level": "<trust_level>",
+                        },
+                        "internet_scanner_intelligence": {
+                            "actor": "",
+                            "bot": False,
+                            "classification": "",
+                        },
                         "ip": "0.0.0.0",
-                        "riot": True,
-                        "category": "<category>",
-                        "name": "<name>",
-                        "description": "<description>",
-                        "explanation": "<explanation>",
-                        "last_updated": "<last_updated>",
-                        "reference": "<reference>",
-                        "trust_level": "<trust_level>",
+                        "request_metadata": {"restricted_fields": []},
                     }
                 ],
                 ANSI_MARKUP.parse(
@@ -483,6 +548,7 @@ class TestRIOTFormatter(object):
             ),
         ),
     )
-    def test_format_riot_verbose(self, result, expected):
+    def test_format_riot_verbose(self, result, expected_output):
         """Format IP quick check."""
-        assert riot_formatter(result, verbose=True).strip("\n") == expected
+        formatter = riot_formatter(result, verbose=True)
+        assert formatter.strip("\n") == expected_output

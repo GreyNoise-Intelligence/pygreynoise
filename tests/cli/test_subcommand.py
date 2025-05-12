@@ -4,13 +4,13 @@
 import json
 import textwrap
 from collections import OrderedDict
+from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from click import Context
 from click.testing import CliRunner
-from mock import patch
 from requests.exceptions import RequestException
-from six import StringIO
 
 from greynoise.__version__ import __version__
 from greynoise.cli import main, subcommand
@@ -387,127 +387,6 @@ class TestHelp(object):
         assert expected_output in result.output
 
 
-class TestInteresting(object):
-    """Interesting subcommand test cases."""
-
-    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
-    def test_interesting(self, api_client, ip_address, expected_response):
-        """Report IP address as "interesting"."""
-        runner = CliRunner()
-
-        api_client.interesting.return_value = expected_response
-
-        result = runner.invoke(subcommand.interesting, [ip_address])
-        assert result.exit_code == 0
-        assert result.output == ""
-        api_client.interesting.assert_called_with(ip_address=ip_address)
-
-    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
-    def test_input_file(self, api_client, ip_address, expected_response):
-        """Report IP address as "interesting" from input file."""
-        runner = CliRunner()
-
-        api_client.interesting.return_value = expected_response
-
-        result = runner.invoke(subcommand.interesting, ["-i", StringIO(ip_address)])
-        assert result.exit_code == 0
-        assert result.output == ""
-        api_client.interesting.assert_called_with(ip_address=ip_address)
-
-    @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
-    def test_stdin_input(self, api_client, ip_address, expected_response):
-        """Report IP address as "interesting" from stdin."""
-        runner = CliRunner()
-
-        api_client.interesting.return_value = expected_response
-
-        result = runner.invoke(subcommand.interesting, input=ip_address)
-        assert result.exit_code == 0
-        assert result.output == ""
-        api_client.interesting.assert_called_with(ip_address=ip_address)
-
-    def test_no_ip_address_passed(self, api_client):
-        """Usage is returned if no IP address or input file is passed."""
-        runner = CliRunner()
-
-        with patch("greynoise.cli.helper.sys") as sys:
-            sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.interesting, parent=Context(main, info_name="greynoise")
-            )
-        assert result.exit_code == -1
-        assert "Usage: greynoise interesting" in result.output
-        api_client.interesting.assert_not_called()
-
-    def test_input_file_invalid_ip_addresses_passed(self, api_client):
-        """Error returned if only invalid IP addresses are passed in input file."""
-        runner = CliRunner()
-
-        expected = (
-            "Error: at least one valid IP address must be passed either as an "
-            "argument (IP_ADDRESS) or through the -i/--input_file option.\n"
-        )
-
-        result = runner.invoke(
-            subcommand.interesting,
-            ["-i", StringIO("not-an-ip")],
-            parent=Context(main, info_name="greynoise"),
-        )
-        assert result.exit_code == -1
-        assert "Usage: greynoise interesting [OPTIONS] [IP_ADDRESS]..." in result.output
-        assert expected in result.output
-        api_client.interesting.assert_not_called()
-
-    def test_invalid_ip_address_as_argument(self, api_client):
-        """Interesting subcommand fails when ip_address is invalid."""
-        runner = CliRunner()
-
-        expected = "Error: Invalid value for '[IP_ADDRESS]...': not-an-ip\n"
-
-        result = runner.invoke(subcommand.interesting, ["not-an-ip"])
-        assert result.exit_code == 2
-        assert "Usage: interesting [OPTIONS] [IP_ADDRESS]..." in result.output
-        assert expected in result.output
-        api_client.interesting.assert_not_called()
-
-    def test_request_failure(self, api_client, caplog):
-        """Error is displayed on API request failure."""
-        runner = CliRunner()
-
-        api_client.interesting.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
-        expected = "API error: forbidden"
-
-        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
-        assert result.exit_code == -1
-        assert caplog.records[0].message == expected
-
-    def test_requests_exception(self, api_client, caplog):
-        """Error is displayed on requests library exception."""
-        runner = CliRunner()
-        expected = "API error: <error message>"
-
-        api_client.interesting.side_effect = RequestException("<error message>")
-        result = runner.invoke(subcommand.interesting, ["8.8.8.8"])
-        assert result.exit_code == -1
-        assert caplog.records[0].message == expected
-
-    def test_api_key_not_found(self):
-        """Error is displayed if API key is not found."""
-        runner = CliRunner()
-
-        with patch("greynoise.cli.decorator.load_config") as load_config:
-            load_config.return_value = {"api_key": ""}
-            result = runner.invoke(
-                subcommand.interesting,
-                ["8.8.8.8"],
-                parent=Context(main, info_name="greynoise"),
-            )
-            assert result.exit_code == -1
-            assert "Error: API key not found" in result.output
-
-
 class TestIP(object):
     """IP subcommand tests."""
 
@@ -804,7 +683,21 @@ class TestQuick(object):
                 "8.8.8.8",
                 "json",
                 json.dumps(
-                    [{"ip": "8.8.8.8", "noise": True}], indent=4, sort_keys=True
+                    [
+                        {
+                            "ip": "8.8.8.8",
+                            "internet_scanner_intelligence": {
+                                "found": True,
+                                "classification": "malicious",
+                            },
+                            "business_service_intelligence": {
+                                "found": True,
+                                "trust_level": "1",
+                            },
+                        }
+                    ],
+                    indent=4,
+                    sort_keys=True,
                 ),
             ),
             (
@@ -816,12 +709,24 @@ class TestQuick(object):
                     <root>
                     \t<item>
                     \t\t<ip>8.8.8.8</ip>
-                    \t\t<noise>True</noise>
+                    \t\t<internet_scanner_intelligence>
+                    \t\t\t<classification>malicious</classification>
+                    \t\t\t<found>True</found>
+                    \t\t</internet_scanner_intelligence>
+                    \t\t<business_service_intelligence>
+                    \t\t\t<found>True</found>
+                    \t\t\t<trust_level>1</trust_level>
+                    \t\t</business_service_intelligence>
                     \t</item>
                     </root>"""
                 ),
             ),
-            ("8.8.8.8", "txt", "8.8.8.8 is classified as NOISE."),
+            (
+                "8.8.8.8",
+                "txt",
+                "8.8.8.8 is identified as NOISE, is classified as "
+                "malicious and is part of RIOT and is Trust Level 1.",
+            ),
         ),
     )
     def test_quick(self, api_client, ip_address, output_format, expected):
@@ -829,7 +734,19 @@ class TestQuick(object):
         runner = CliRunner()
 
         api_client.quick.return_value = [
-            OrderedDict((("ip", ip_address), ("noise", True)))
+            OrderedDict(
+                [
+                    ("ip", ip_address),
+                    (
+                        "internet_scanner_intelligence",
+                        {"found": True, "classification": "malicious"},
+                    ),
+                    (
+                        "business_service_intelligence",
+                        {"found": True, "trust_level": "1"},
+                    ),
+                ]
+            )
         ]
 
         result = runner.invoke(subcommand.quick, ["-f", output_format, ip_address])
@@ -985,7 +902,15 @@ class TestIPMulti(object):
                 "8.8.8.8",
                 "json",
                 json.dumps(
-                    [{"ip": "8.8.8.8", "noise": True}], indent=4, sort_keys=True
+                    [
+                        {
+                            "ip": "8.8.8.8",
+                            "internet_scanner_intelligence": {"found": False},
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ],
+                    indent=4,
+                    sort_keys=True,
                 ),
             ),
             (
@@ -997,7 +922,12 @@ class TestIPMulti(object):
                     <root>
                     \t<item>
                     \t\t<ip>8.8.8.8</ip>
-                    \t\t<noise>True</noise>
+                    \t\t<internet_scanner_intelligence>
+                    \t\t\t<found>False</found>
+                    \t\t</internet_scanner_intelligence>
+                    \t\t<business_service_intelligence>
+                    \t\t\t<found>False</found>
+                    \t\t</business_service_intelligence>
                     \t</item>
                     </root>"""
                 ),
@@ -1005,7 +935,11 @@ class TestIPMulti(object):
             (
                 "8.8.8.8",
                 "txt",
-                "8.8.8.8 is classified as NOT NOISE.",
+                "╔═══════════════════════════╗\n"
+                "║      Context 1 of 1       ║\n"
+                "╚═══════════════════════════╝\n"
+                "IP address: 8.8.8.8\n\n"
+                "8.8.8.8 has not been seen in scans in the past 90 days.",
             ),
         ),
     )
@@ -1014,7 +948,13 @@ class TestIPMulti(object):
         runner = CliRunner()
 
         api_client.ip_multi.return_value = [
-            OrderedDict((("ip", ip_address), ("noise", True)))
+            OrderedDict(
+                (
+                    ("ip", ip_address),
+                    ("internet_scanner_intelligence", {"found": False}),
+                    ("business_service_intelligence", {"found": False}),
+                )
+            )
         ]
 
         result = runner.invoke(subcommand.ip_multi, ["-f", output_format, ip_address])
@@ -1028,13 +968,29 @@ class TestIPMulti(object):
             (
                 ["8.8.8.8", "8.8.8.9"],
                 [
-                    OrderedDict([("ip", "8.8.8.8"), ("noise", True)]),
-                    OrderedDict([("ip", "8.8.8.9"), ("noise", False)]),
+                    OrderedDict(
+                        [
+                            ("ip", "8.8.8.8"),
+                            ("internet_scanner_intelligence", {"found": False}),
+                        ]
+                    ),
+                    OrderedDict(
+                        [
+                            ("ip", "8.8.8.9"),
+                            ("internet_scanner_intelligence", {"found": False}),
+                        ]
+                    ),
                 ],
                 json.dumps(
                     [
-                        {"ip": "8.8.8.8", "noise": True},
-                        {"ip": "8.8.8.9", "noise": False},
+                        {
+                            "ip": "8.8.8.8",
+                            "internet_scanner_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "8.8.8.9",
+                            "internet_scanner_intelligence": {"found": False},
+                        },
                     ],
                     indent=4,
                     sort_keys=True,
@@ -1190,7 +1146,7 @@ class TestSetup(object):
             "proxy": DEFAULT_CONFIG["proxy"],
             "offering": DEFAULT_CONFIG["offering"],
         }
-        expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
+        expected_output = "Configuration saved in {}.\n".format(CONFIG_FILE)
 
         with patch("greynoise.cli.subcommand.save_config") as save_config:
             result = runner.invoke(subcommand.setup, [key_option, api_key])
@@ -1220,7 +1176,7 @@ class TestSetup(object):
             "proxy": proxy,
             "offering": offering,
         }
-        expected_output = "Configuration saved to {!r}\n".format(CONFIG_FILE)
+        expected_output = "Configuration saved in {}.\n".format(CONFIG_FILE)
 
         with patch("greynoise.cli.subcommand.save_config") as save_config:
             result = runner.invoke(

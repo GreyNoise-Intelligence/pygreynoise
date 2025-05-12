@@ -1,9 +1,10 @@
 """Utility functions test cases."""
 
+import os
 import textwrap
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 from six import StringIO
 
 from greynoise.util import (
@@ -34,6 +35,9 @@ class TestLoadConfig(object):
             "timeout": 60,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
     @patch("greynoise.util.open")
@@ -46,6 +50,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {}
@@ -82,6 +89,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {"GREYNOISE_API_KEY": expected["api_key"]}
@@ -117,6 +127,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {"GREYNOISE_API_SERVER": expected["api_server"]}
@@ -152,6 +165,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": str(expected["timeout"])}
@@ -187,6 +203,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {"GREYNOISE_OFFERING": expected["offering"]}
@@ -222,6 +241,9 @@ class TestLoadConfig(object):
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
+            "cache_max_size": 1000000,
+            "cache_ttl": 3600,
+            "use_cache": True,
         }
 
         os.environ = {"GREYNOISE_TIMEOUT": "invalid"}
@@ -424,3 +446,58 @@ class TestValidateTimelineField(object):
             "'http_path', 'http_user_agent', 'source_asn', 'source_org', "
             "'source_rdns', 'tag_ids', 'classification']"
         )
+
+
+def test_load_config_cache_settings():
+    """Test loading cache settings from environment variables."""
+    with patch.dict(
+        os.environ,
+        {
+            "GREYNOISE_CACHE_MAX_SIZE": "2000000",
+            "GREYNOISE_CACHE_TTL": "7200",
+        },
+    ):
+        config = load_config()
+        assert config["cache_max_size"] == 2000000
+        assert config["cache_ttl"] == 7200
+
+
+def test_save_config_cache_settings():
+    """Test saving cache settings to configuration file."""
+    config = {
+        "api_key": "test-api-key",
+        "api_server": "https://api.greynoise.io",
+        "timeout": 30,
+        "proxy": "",
+        "offering": "enterprise",
+        "cache_max_size": 2000000,
+        "cache_ttl": 7200,
+    }
+    expected = textwrap.dedent(
+        """\
+        [greynoise]
+        api_key = {}
+        api_server = {}
+        timeout = {}
+        proxy = {}
+        offering = {}
+        cache_max_size = {}
+        cache_ttl = {}\n
+        """.format(
+            config["api_key"],
+            config["api_server"],
+            config["timeout"],
+            config["proxy"],
+            config["offering"],
+            config["cache_max_size"],
+            config["cache_ttl"],
+        )
+    )
+
+    with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
+        os.path.isdir.return_value = True
+        config_file = StringIO()
+        open_().__enter__.return_value = config_file
+        save_config(config)
+
+    assert config_file.getvalue() == expected

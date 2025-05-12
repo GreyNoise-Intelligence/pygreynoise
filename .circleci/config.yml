@@ -9,12 +9,6 @@ workflows:
   version: 2
   build:
     jobs:
-      - py36:
-          filters:
-            <<: *TAGS_FILTER
-      - py37:
-          filters:
-            <<: *TAGS_FILTER
       - py38:
           filters:
             <<: *TAGS_FILTER
@@ -24,19 +18,25 @@ workflows:
       - py310:
           filters:
             <<: *TAGS_FILTER
+      - py311:
+          filters:
+            <<: *TAGS_FILTER
+      - py312:
+          filters:
+            <<: *TAGS_FILTER
       - sonarcloud:
           requires:
             # generate static analysis and coverage reports in py37 job
             # and upload them to sonarcloud.io in sonarcloud job
-            - py37
+            - py39
       - pypi:
           requires:
             # release to pypi only when test cases pass in all python versions
-            - py36
-            - py37
             - py38
             - py39
             - py310
+            - py311
+            - py312
           filters:
             <<: *TAGS_FILTER
             branches:

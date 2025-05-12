@@ -32,10 +32,14 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 {%- set max_elements = 20 %}
 {%- set elements_slice = elements[:max_elements if verbose < 1 else None] %}
 {%- set right_width = elements_slice | map(attribute='count') | map('string') | map('length') | max %}
-{%- set left_width_verbose = elements_slice | map(attribute=field_name) | map('length') | max %}
-{%- set left_width = left_width_verbose if verbose > 1 else [left_width_verbose, max_width - 3 - right_width] | min %}
+{%- set left_width_verbose = elements_slice | map(attribute=field_name) | map('string') | map('length') | max %}
+{%- set left_width = [3, left_width_verbose if verbose > 1 else [left_width_verbose, max_width - 3 - right_width] | min] | max %}
 {%- for element in elements_slice %}
+{%- if element[field_name] is not none %}
 - <key>{{ "%-*s" | format(left_width, element[field_name] | truncate(left_width, True, "...", 0)) }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
+{%- else %}
+- <key>{{ "%-*s" | format(left_width, "unknown") }}</key> <value>{{ "%*s" | format(right_width, element.count) }}</value>
+{%- endif %}
 {%- endfor %}
 {% if elements | length > max_elements and verbose < 1 -%}
 Showing results 1 - {{ max_elements }}. Run again with -v for full output.
@@ -64,6 +68,8 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 <unknown>{{ value }}</unknown>
 {%- elif value == "malicious" -%}
 <malicious>{{ value }}</malicious>
+{%- elif value == "suspicious" -%}
+<suspicious>{{ value }}</suspicious>
 {%- else -%}
 <value>{{ value }}</value>
 {%- endif -%}
@@ -97,3 +103,18 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 {%- set col_len = ports_list | string | length if ports_list | string | length > 25 else 25 %}
 {{- '%-*s' | format(col_len, ports_list | join(", ")) }}
 {%- endmacro %}
+
+{% macro verbose_list_from_dict(dict_data, field_name) %}
+{%- set max_elements = 20 %}
+{%- set elements_slice = dict_data[:max_elements if verbose < 1 else None] %}
+{%- for element in elements_slice %}
+{%- if element[field_name] is not none %}
+{{- caller(element[field_name]) -}}
+{%- else %}
+{{- caller({'name': 'unknown'}) -}}
+{%- endif %}
+{%- endfor %}
+{% if dict_data | length > max_elements and verbose < 1 -%}
+Showing results 1 - {{ max_elements }}. Run again with -v for full output.
+{% endif -%}
+{% endmacro %}

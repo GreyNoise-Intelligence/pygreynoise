@@ -1,10 +1,12 @@
 """Utility functions."""
+
+import configparser
 import logging
 import os
 import re
 from ipaddress import IPv6Address, ip_address
 
-from six.moves.configparser import ConfigParser
+import pkg_resources
 
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = logging.getLogger(__name__)
@@ -15,6 +17,9 @@ DEFAULT_CONFIG = {
     "timeout": 60,
     "proxy": "",
     "offering": "enterprise",
+    "cache_max_size": 1000000,
+    "cache_ttl": 3600,
+    "use_cache": True,
 }
 
 
@@ -26,7 +31,7 @@ def load_config():
     :rtype: dict
 
     """
-    config_parser = ConfigParser(
+    config_parser = configparser.ConfigParser(
         {key: str(value) for key, value in DEFAULT_CONFIG.items()}
     )
     config_parser.add_section("greynoise")
@@ -77,12 +82,45 @@ def load_config():
         # Environment variable takes precedence over configuration file content
         config_parser.set("greynoise", "offering", offering)
 
+    if "GREYNOISE_CACHE_MAX_SIZE" in os.environ:
+        cache_max_size = os.environ["GREYNOISE_CACHE_MAX_SIZE"]
+        try:
+            int(cache_max_size)
+        except ValueError:
+            LOGGER.error(
+                "GREYNOISE_CACHE_MAX_SIZE environment variable "
+                "cannot be converted to an integer: %r",
+                cache_max_size,
+            )
+        else:
+            LOGGER.debug(
+                "Cache max size found in environment variable: %s", cache_max_size
+            )
+            config_parser.set("greynoise", "cache_max_size", cache_max_size)
+
+    if "GREYNOISE_CACHE_TTL" in os.environ:
+        cache_ttl = os.environ["GREYNOISE_CACHE_TTL"]
+        try:
+            int(cache_ttl)
+        except ValueError:
+            LOGGER.error(
+                "GREYNOISE_CACHE_TTL environment variable "
+                "cannot be converted to an integer: %r",
+                cache_ttl,
+            )
+        else:
+            LOGGER.debug("Cache TTL found in environment variable: %s", cache_ttl)
+            config_parser.set("greynoise", "cache_ttl", cache_ttl)
+
     return {
         "api_key": config_parser.get("greynoise", "api_key"),
         "api_server": config_parser.get("greynoise", "api_server"),
         "timeout": config_parser.getint("greynoise", "timeout"),
         "proxy": config_parser.get("greynoise", "proxy"),
         "offering": config_parser.get("greynoise", "offering"),
+        "cache_max_size": config_parser.getint("greynoise", "cache_max_size"),
+        "cache_ttl": config_parser.getint("greynoise", "cache_ttl"),
+        "use_cache": config_parser.getboolean("greynoise", "use_cache"),
     }
 
 
@@ -93,17 +131,36 @@ def save_config(config):
     :type config:  dict
 
     """
-    config_parser = ConfigParser()
+    config_parser = configparser.ConfigParser()
     config_parser.add_section("greynoise")
-    config_parser.set("greynoise", "api_key", config["api_key"])
-    config_parser.set("greynoise", "api_server", config["api_server"])
-    config_parser.set("greynoise", "timeout", str(config["timeout"]))
-    config_parser.set("greynoise", "proxy", config["proxy"])
-    config_parser.set("greynoise", "offering", config["offering"])
+
+    # Only set values that are provided in the config
+    if "api_key" in config:
+        config_parser.set("greynoise", "api_key", config["api_key"])
+    if "api_server" in config:
+        config_parser.set("greynoise", "api_server", config["api_server"])
+    if "timeout" in config:
+        config_parser.set("greynoise", "timeout", str(config["timeout"]))
+    if "proxy" in config:
+        config_parser.set("greynoise", "proxy", config["proxy"])
+    if "offering" in config:
+        config_parser.set("greynoise", "offering", config["offering"])
+    if "cache_max_size" in config:
+        config_parser.set("greynoise", "cache_max_size", str(config["cache_max_size"]))
+    if "cache_ttl" in config:
+        config_parser.set("greynoise", "cache_ttl", str(config["cache_ttl"]))
+    if "use_cache" in config:
+        config_parser.set("greynoise", "use_cache", str(config["use_cache"]))
 
     config_dir = os.path.dirname(CONFIG_FILE)
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)
+
+    # If file doesn't exist, create it with default values
+    if not os.path.isfile(CONFIG_FILE):
+        for key, value in DEFAULT_CONFIG.items():
+            if not config_parser.has_option("greynoise", key):
+                config_parser.set("greynoise", key, str(value))
 
     with open(CONFIG_FILE, "w") as config_file:
         config_parser.write(config_file)
@@ -244,6 +301,22 @@ def validate_cve_id(cve_id):
     pattern = re.compile(cve_pattern)
 
     if not pattern.match(cve_id):
-        raise ValueError("The provided ID does not match the format: CVE-XXXX-YYYYY")
+        raise ValueError("Invalid CVE ID format: {!r}".format(cve_id))
     else:
         return True
+
+
+def load_template(template_name: str) -> str:
+    """Load a template from the templates directory.
+
+    Args:
+        template_name: Name of the template to load
+
+    Returns:
+        Template content as a string
+    """
+    template_path = pkg_resources.resource_filename(
+        "greynoise", f"templates/{template_name}"
+    )
+    with open(template_path) as template_file:
+        return template_file.read()
