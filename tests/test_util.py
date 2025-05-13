@@ -238,7 +238,7 @@ class TestLoadConfig(object):
         expected = {
             "api_key": "<api_key>",
             "api_server": "<api_server>",
-            "timeout": 123456,
+            "timeout": 60,
             "proxy": "",
             "offering": "enterprise",
             "cache_max_size": 1000000,
@@ -501,3 +501,76 @@ def test_save_config_cache_settings():
         save_config(config)
 
     assert config_file.getvalue() == expected
+
+
+class TestConfiguration:
+    """Test configuration scenarios."""
+
+    def test_environment_variables(self):
+        """Test configuration loading from environment variables."""
+        with patch.dict(
+            os.environ,
+            {
+                "GREYNOISE_API_KEY": "test-key",
+                "GREYNOISE_API_SERVER": "https://test.api.greynoise.io",
+                "GREYNOISE_TIMEOUT": "60",
+                "GREYNOISE_OFFERING": "enterprise",
+            },
+        ):
+            config = load_config()
+            assert config["api_key"] == "test-key"
+            assert config["api_server"] == "https://test.api.greynoise.io"
+            assert config["timeout"] == 60
+            assert config["offering"] == "enterprise"
+
+    def test_invalid_configuration(self, tmp_path):
+        """Test handling of invalid configuration."""
+        config_file = tmp_path / "config.ini"
+        config_file.write_text(
+            """
+[greynoise]
+api_key = test-key
+timeout = invalid
+"""
+        )
+
+        with patch("greynoise.util.CONFIG_FILE", str(config_file)):
+            print("CONFIG_FILE")
+            print(CONFIG_FILE)
+            config = load_config()
+            print("config")
+            print(config)
+            assert config["timeout"] == 60  # Should use default value
+
+            # Test invalid timeout
+        with patch.dict(os.environ, {"GREYNOISE_TIMEOUT": "invalid"}):
+            config = load_config()
+            assert config["timeout"] == 60  # Should use default value
+
+        # Test invalid cache max size
+        with patch.dict(os.environ, {"GREYNOISE_CACHE_MAX_SIZE": "invalid"}):
+            config = load_config()
+            assert config["cache_max_size"] == 1000000  # Should use default value
+
+        # Test invalid cache ttl
+        with patch.dict(os.environ, {"GREYNOISE_CACHE_TTL": "invalid"}):
+            config = load_config()
+            assert config["cache_ttl"] == 3600  # Should use default value
+
+    def test_configuration_validation(self):
+        """Test configuration validation."""
+        # Test valid configuration
+        with patch.dict(
+            os.environ,
+            {
+                "GREYNOISE_API_KEY": "test-key",
+                "GREYNOISE_API_SERVER": "https://api.greynoise.io",
+                "GREYNOISE_TIMEOUT": "30",
+                "GREYNOISE_OFFERING": "enterprise",
+            },
+        ):
+            config = load_config()
+            assert config["api_key"] == "test-key"
+            assert config["api_server"] == "https://api.greynoise.io"
+            assert config["timeout"] == 30
+            assert config["offering"] == "enterprise"

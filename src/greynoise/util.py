@@ -60,15 +60,9 @@ def load_config():
         try:
             int(timeout)
         except ValueError:
-            LOGGER.error(
-                "GREYNOISE_TIMEOUT environment variable "
-                "cannot be converted to an integer: %r",
-                timeout,
-            )
-        else:
-            LOGGER.debug("Timeout found in environment variable: %s", timeout)
-            # Environment variable takes precedence over configuration file content
-            config_parser.set("greynoise", "timeout", timeout)
+            timeout = DEFAULT_CONFIG["timeout"]
+        # Environment variable takes precedence over configuration file content
+        config_parser.set("greynoise", "timeout", str(timeout))
 
     if "GREYNOISE_PROXY" in os.environ:
         proxy = os.environ["GREYNOISE_PROXY"]
@@ -87,30 +81,37 @@ def load_config():
         try:
             int(cache_max_size)
         except ValueError:
-            LOGGER.error(
-                "GREYNOISE_CACHE_MAX_SIZE environment variable "
-                "cannot be converted to an integer: %r",
-                cache_max_size,
-            )
-        else:
-            LOGGER.debug(
-                "Cache max size found in environment variable: %s", cache_max_size
-            )
-            config_parser.set("greynoise", "cache_max_size", cache_max_size)
+            cache_max_size = DEFAULT_CONFIG["cache_max_size"]
+        config_parser.set("greynoise", "cache_max_size", str(cache_max_size))
 
     if "GREYNOISE_CACHE_TTL" in os.environ:
         cache_ttl = os.environ["GREYNOISE_CACHE_TTL"]
         try:
             int(cache_ttl)
         except ValueError:
-            LOGGER.error(
-                "GREYNOISE_CACHE_TTL environment variable "
-                "cannot be converted to an integer: %r",
-                cache_ttl,
+            cache_ttl = DEFAULT_CONFIG["cache_ttl"]
+        config_parser.set("greynoise", "cache_ttl", str(cache_ttl))
+
+    # validate config
+    if config_parser.get("greynoise", "timeout"):
+        try:
+            int(config_parser.get("greynoise", "timeout"))
+        except ValueError:
+            config_parser.set("greynoise", "timeout", str(DEFAULT_CONFIG["timeout"]))
+    if config_parser.get("greynoise", "cache_max_size"):
+        try:
+            int(config_parser.get("greynoise", "cache_max_size"))
+        except ValueError:
+            config_parser.set(
+                "greynoise", "cache_max_size", str(DEFAULT_CONFIG["cache_max_size"])
             )
-        else:
-            LOGGER.debug("Cache TTL found in environment variable: %s", cache_ttl)
-            config_parser.set("greynoise", "cache_ttl", cache_ttl)
+    if config_parser.get("greynoise", "cache_ttl"):
+        try:
+            int(config_parser.get("greynoise", "cache_ttl"))
+        except ValueError:
+            config_parser.set(
+                "greynoise", "cache_ttl", str(DEFAULT_CONFIG["cache_ttl"])
+            )
 
     return {
         "api_key": config_parser.get("greynoise", "api_key"),

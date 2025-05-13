@@ -4,9 +4,33 @@ Changelog
 
 Version `3.0.0`_
 ================
-**Date**: March 05, 2025
+**Date**: May 13, 2025
+
+* BREAKING CHANGE:
+
+  * `riot` command is deprecated and will be removed in a future version.
+    Please use `ip` command instead.
+  * Removed support for Python 3.6 and 3.7
+  * Many schema changes to the API responses for the `ip`, `ip-multi`, and
+    `query`commands
+  * Updated API endpoints to v3 for `ip`, `ip-multi`, `quick`, and `query` commands
+  * Updated Python version requirements to support Python 3.8 through 3.12
 
 * API client:
+
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to use new v3 endpoints
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to return `business_service_intelligence` and
+    `internet_scanner_intelligence` attributes
+  * Added thread support for multi-lookup requests
+
+* CLI:
+
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to support new attributes
+
+* Dependencies:
+
+  * Updated `dict2xml` to version 1.7.6
+  * Updated `requests` to version 2.32.3
 
 Version `2.3.0`_
 ================

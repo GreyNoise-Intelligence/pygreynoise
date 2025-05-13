@@ -2,6 +2,7 @@
 
 from unittest.mock import Mock, call, patch
 
+import cachetools
 import pytest
 
 from greynoise.api import APIConfig, GreyNoise
@@ -1030,3 +1031,172 @@ def test_api_client_parallel_processing():
     assert all(
         isinstance(result, dict) and "processed" in result for result in results["data"]
     )
+
+
+class TestErrorHandling:
+    """Test error handling scenarios."""
+
+    def test_rate_limiting(self, client):
+        """Test handling of rate limiting responses."""
+        client._request = Mock(
+            side_effect=RequestFailure(429, {"error": "Rate limit exceeded"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 429
+        assert exc_info.value.args[1] == {"error": "Rate limit exceeded"}
+
+    def test_network_timeout(self, client):
+        """Test handling of network timeouts."""
+        client._request = Mock(
+            side_effect=RequestFailure(504, {"error": "Gateway timeout"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 504
+        assert exc_info.value.args[1] == {"error": "Gateway timeout"}
+
+    def test_invalid_api_key(self, client):
+        """Test handling of invalid API key."""
+        client._request = Mock(
+            side_effect=RequestFailure(401, {"error": "Invalid API key"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 401
+        assert exc_info.value.args[1] == {"error": "Invalid API key"}
+
+
+class TestCacheBehavior:
+    """Test cache behavior scenarios."""
+
+    def test_cache_invalidation(self, client):
+        """Test cache invalidation when TTL expires."""
+        # Set a short TTL
+        client.config.cache_ttl = 1
+
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request
+        mock_response = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response)
+        first_result = client.ip("8.8.8.8")
+        assert first_result == mock_response
+        assert "8.8.8.8" in client.ip_context_cache
+
+        # Wait for TTL to expire
+        import time
+
+        time.sleep(1.1)  # Wait slightly longer than TTL
+
+        # Second request should hit API again
+        client._request.reset_mock()  # Reset the mock to track new calls
+        second_result = client.ip("8.8.8.8")
+        assert second_result == mock_response
+        assert client._request.call_count == 1  # Should make one new API call
+
+    def test_cache_size_limit(self, client):
+        """Test cache size limit enforcement."""
+        # Set a small cache size
+        client.config.cache_max_size = 2
+
+        # Reinitialize cache with new max_size
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request - should be cached
+        mock_response1 = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response1)
+        result1 = client.ip("8.8.8.8")
+        assert result1 == mock_response1
+        assert "8.8.8.8" in client.ip_context_cache
+        assert client.ip_context_cache["8.8.8.8"] == mock_response1
+
+        # Second request - should be cached
+        mock_response2 = {
+            "ip": "1.1.1.1",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response2)
+        result2 = client.ip("1.1.1.1")
+        assert result2 == mock_response2
+        assert "1.1.1.1" in client.ip_context_cache
+        assert client.ip_context_cache["1.1.1.1"] == mock_response2
+        assert len(client.ip_context_cache) == 2
+
+        # Third request - should cause first item to be evicted
+        mock_response3 = {
+            "ip": "9.9.9.9",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response3)
+        result3 = client.ip("9.9.9.9")
+        assert result3 == mock_response3
+        assert "9.9.9.9" in client.ip_context_cache
+        assert client.ip_context_cache["9.9.9.9"] == mock_response3
+
+        # Verify cache state
+        assert len(client.ip_context_cache) == 2
+        assert "8.8.8.8" not in client.ip_context_cache  # First item should be evicted
+        assert "1.1.1.1" in client.ip_context_cache  # Second item should remain
+        assert "9.9.9.9" in client.ip_context_cache  # Third item should remain
+
+        # Verify cache hits
+        client._request.reset_mock()
+        result = client.ip("1.1.1.1")  # Should be a cache hit
+        assert result == mock_response2
+        client._request.assert_not_called()  # Should not make API call
+
+        result = client.ip("9.9.9.9")  # Should be a cache hit
+        assert result == mock_response3
+        client._request.assert_not_called()  # Should not make API call
+
+        # Test cache miss for evicted item
+        client._request = Mock(
+            return_value=mock_response1
+        )  # Reset mock with original response
+        result = client.ip("8.8.8.8")  # Should be a cache miss
+        assert result == mock_response1
+        client._request.assert_called_once()  # Should make API call
+
+    def test_cache_ttl_behavior(self, client):
+        """Test cache TTL behavior."""
+        # Set a short TTL
+        client.config.cache_ttl = 1
+
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request
+        mock_response = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response)
+        first_result = client.ip("8.8.8.8")
+        assert first_result == mock_response
+
+        # Wait for TTL to expire
+        import time
+
+        time.sleep(1.1)
+
+        # Second request should hit API again
+        second_result = client.ip("8.8.8.8")
+        assert second_result == mock_response
+        assert client._request.call_count == 2

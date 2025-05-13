@@ -2238,3 +2238,117 @@ class TestTimelineDaily(object):
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
+
+
+class TestCLIIO:
+    """Test CLI input/output scenarios."""
+
+    def test_complex_input_file(self, api_client, tmp_path):
+        """Test handling of complex input files."""
+        # Create a temporary input file with various IP formats
+        input_file = tmp_path / "ips.txt"
+        input_file.write_text("8.8.8.8\n1.1.1.1\ninvalid-ip\n9.9.9.9")
+
+        runner = CliRunner()
+        api_client.ip_multi.return_value = [
+            {
+                "ip": "8.8.8.8",
+                "internet_scanner_intelligence": {
+                    "found": True,
+                    "classification": "malicious",
+                },
+                "business_service_intelligence": {"found": False},
+            },
+            {
+                "ip": "1.1.1.1",
+                "internet_scanner_intelligence": {"found": False},
+                "business_service_intelligence": {"found": False},
+            },
+            {
+                "ip": "9.9.9.9",
+                "internet_scanner_intelligence": {
+                    "found": True,
+                    "classification": "malicious",
+                },
+                "business_service_intelligence": {"found": False},
+            },
+        ]
+
+        result = runner.invoke(
+            subcommand.ip_multi, ["-f", "json", "-i", str(input_file)]
+        )
+        assert result.exit_code == 0
+        assert "8.8.8.8" in result.output
+        assert "1.1.1.1" in result.output
+        assert "9.9.9.9" in result.output
+        assert "invalid-ip" not in result.output
+
+    def test_output_format_combinations(self, api_client):
+        """Test different output format combinations."""
+        runner = CliRunner()
+        api_client.ip.return_value = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {
+                "found": True,
+                "classification": "malicious",
+                "actor": "test-actor",
+                "tags": [{"name": "test-tag"}],
+                "metadata": {
+                    "source_city": "test-source-city",
+                    "source_country": "test-source-country",
+                    "source_country_code": "test-source-country-code",
+                },
+                "raw_data": {
+                    "http": {},
+                },
+            },
+            "business_service_intelligence": {"found": False},
+        }
+
+        # Test JSON output
+        result = runner.invoke(subcommand.ip, ["-f", "json", "8.8.8.8"])
+        assert result.exit_code == 0
+        assert '"ip": "8.8.8.8"' in result.output
+        assert '"classification": "malicious"' in result.output
+
+        # Test XML output
+        result = runner.invoke(subcommand.ip, ["-f", "xml", "8.8.8.8"])
+        assert result.exit_code == 0
+        assert "<ip>8.8.8.8</ip>" in result.output
+        assert "<classification>malicious</classification>" in result.output
+
+        # Test TXT output
+        result = runner.invoke(subcommand.ip, ["-f", "txt", "8.8.8.8"])
+        assert result.exit_code == 0
+        assert "8.8.8.8" in result.output
+        assert "malicious" in result.output
+
+    def test_interactive_mode(self, api_client):
+        """Test interactive mode functionality."""
+        runner = CliRunner()
+        api_client.ip.return_value = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {
+                "found": True,
+                "classification": "malicious",
+                "actor": "test-actor",
+                "tags": [{"name": "test-tag"}],
+                "metadata": {
+                    "source_city": "test-source-city",
+                    "source_country": "test-source-country",
+                    "source_country_code": "test-source-country-code",
+                },
+                "raw_data": {
+                    "http": {},
+                },
+            },
+            "business_service_intelligence": {"found": False},
+        }
+
+        # Test interactive mode with input
+        result = runner.invoke(
+            subcommand.ip, input="8.8.8.8\n1.1.1.1\nq\n", catch_exceptions=False
+        )
+        assert result.exit_code == 0
+        assert "8.8.8.8" in result.output
+        assert "malicious" in result.output
