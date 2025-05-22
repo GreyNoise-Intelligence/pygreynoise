@@ -93,6 +93,13 @@
 {% endcall -%}
 {% endif %}
 
+{%- if ip_context.internet_scanner_intelligence.raw_data.tls.ja4 %}
+[JA4]
+{%- call(ja4) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.tls.ja4) -%}
+- <value>{{ ja4 }}</value>
+{% endcall -%}
+{% endif %}
+
 {%- if ip_context.internet_scanner_intelligence.raw_data.hassh %}
 [HASSH]
 {%- call(hassh) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.hassh) -%}
