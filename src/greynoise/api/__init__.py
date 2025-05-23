@@ -111,9 +111,7 @@ class BaseAPIClient:
 
         LOGGER.debug("Sending API request...URL: %s", url)
         LOGGER.debug("Sending API request...method: %s", method)
-        # LOGGER.debug("Sending API request...headers: %s", headers)
         LOGGER.debug("Sending API request...params: %s", params)
-        # LOGGER.debug("Sending API request...json: %s", json)
         LOGGER.debug("Sending API request...files: %s", files)
         LOGGER.debug("Sending API request...proxy: %s", proxy)
 
@@ -155,7 +153,7 @@ class BaseAPIClient:
             else:
                 body = response.text
 
-            # LOGGER.debug("API response received %s %s", response.status_code, body)
+            LOGGER.debug("API response received %s %s", response.status_code, body)
 
             if response.status_code == 429:
                 raise RateLimitError()
@@ -269,7 +267,7 @@ class GreyNoise(BaseAPIClient):
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
 
-    IP_QUICK_CHECK_CHUNK_SIZE = 10000
+    IP_MULTI_CHECK_CHUNK_SIZE = 10000
 
     IPV4_REGEX = re.compile(
         r"(?:{octet}\.){{3}}{octet}".format(
@@ -522,7 +520,7 @@ class GreyNoise(BaseAPIClient):
             api_results = self._process_batch_parallel(
                 api_ip_addresses,
                 process_chunk,
-                batch_size=self.IP_QUICK_CHECK_CHUNK_SIZE,
+                batch_size=self.IP_MULTI_CHECK_CHUNK_SIZE,
             )
 
             ip_results = []
@@ -614,7 +612,7 @@ class GreyNoise(BaseAPIClient):
             # Process valid IPs in parallel batches
             if self.config.use_cache:
                 # Keep the same ordering as in the input
-                LOGGER.debug("Using cache for quick lookup")
+                LOGGER.debug("Using cache for ip_multi lookup")
                 ordered_results = OrderedDict(
                     (ip_address, self.ip_context_cache.get(ip_address))
                     for ip_address in valid_ip_addresses
@@ -626,7 +624,7 @@ class GreyNoise(BaseAPIClient):
                 ]
 
             else:
-                LOGGER.debug("Not using cache for quick lookup")
+                LOGGER.debug("Not using cache for ip_multi lookup")
                 # Keep the same ordering as in the input
                 ordered_results = OrderedDict(
                     (ip_address, None) for ip_address in valid_ip_addresses
@@ -640,7 +638,7 @@ class GreyNoise(BaseAPIClient):
                 api_results = self._process_batch_parallel(
                     api_ip_addresses,
                     process_chunk,
-                    batch_size=self.IP_QUICK_CHECK_CHUNK_SIZE,
+                    batch_size=self.IP_MULTI_CHECK_CHUNK_SIZE,
                 )
 
                 ip_results = []

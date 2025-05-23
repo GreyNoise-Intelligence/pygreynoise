@@ -4,7 +4,7 @@ Changelog
 
 Version `3.0.0`_
 ================
-**Date**: May 22, 2025
+**Date**: May 23, 2025
 
 * BREAKING CHANGE:
 
@@ -466,5 +466,5 @@ Version `0.2.0`_
 .. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1
 .. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
 .. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...2.2.0
-.. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...HEAD
-.. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...3.0.0
+.. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...2.3.0
+.. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...HEAD
