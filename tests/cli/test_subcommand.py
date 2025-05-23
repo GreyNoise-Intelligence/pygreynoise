@@ -2300,6 +2300,7 @@ class TestCLIIO:
                 },
                 "raw_data": {
                     "http": {},
+                    "tls": {"ja4": "test-ja4"},
                 },
             },
             "business_service_intelligence": {"found": False},
@@ -2340,6 +2341,7 @@ class TestCLIIO:
                 },
                 "raw_data": {
                     "http": {},
+                    "tls": {"ja4": "test-ja4"},
                 },
             },
             "business_service_intelligence": {"found": False},

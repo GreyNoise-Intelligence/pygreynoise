@@ -65,6 +65,7 @@ EXAMPLE_IP_CONTEXT = {
                 "path": ["/", "/favicon.ico", "/robots.txt"],
                 "useragent": ["<useragent#1>", "<useragent#2>", "<useragent#3>"],
             },
+            "tls": {"ja4": ["test-ja4"]},
         },
         "seen": True,
         "spoofable": False,
@@ -132,6 +133,9 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#1></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#2></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><fingerprint#3></value>
+
+        [JA4]
+        - <value>test-ja4</value>
 
         [HASSH]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#1></value>

@@ -29,8 +29,13 @@ Version `3.0.0`_
 
 * Dependencies:
 
+  * Updated `Click` to version 8.2.1 for Python 3.10 and above
+  * Updated `Click` to version 8.1.8 for Python 3.9 and below
+  * Updated `cachetools` to version 5.5.2
   * Updated `dict2xml` to version 1.7.6
-  * Updated `requests` to version 2.32.3
+  * Updated `jinja2` to version 3.1.6
+  * Updated `more-itertools` to version 10.7.0
+  * Updated `six` to version 1.17.0
 
 Version `2.3.0`_
 ================
