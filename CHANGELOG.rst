@@ -15,6 +15,7 @@ Version `3.0.0`_
     `query`commands
   * Updated API endpoints to v3 for `ip`, `ip-multi`, `quick`, and `query` commands
   * Updated Python version requirements to support Python 3.8 through 3.12
+  * SDK now uses `api_config` object to initialize the API client
 
 * API client:
 
@@ -22,6 +23,7 @@ Version `3.0.0`_
   * Update `ip`, `ip-multi`, `quick`, and `query` commands to return `business_service_intelligence` and
     `internet_scanner_intelligence` attributes
   * Added thread support for multi-lookup requests
+  * Added `api_config` object to initialize the API client
 
 * CLI:
 
