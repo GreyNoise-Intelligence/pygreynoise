@@ -6,13 +6,13 @@ Version `3.0.0`_
 ================
 **Date**: May 23, 2025
 
-* BREAKING CHANGE:
+* BREAKING CHANGES:
 
-  * `riot` command is deprecated and will be removed in a future version.
+  * The `riot` command is deprecated and will be removed in a future version.
     Please use `ip` command instead.
   * Removed support for Python 3.6 and 3.7
   * Many schema changes to the API responses for the `ip`, `ip-multi`, and
-    `query`commands
+    `query` commands
   * Updated API endpoints to v3 for `ip`, `ip-multi`, `quick`, and `query` commands
   * Updated Python version requirements to support Python 3.8 through 3.12
   * SDK now uses `api_config` object to initialize the API client

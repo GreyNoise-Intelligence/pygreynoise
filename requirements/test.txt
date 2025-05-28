@@ -1,4 +1,5 @@
-black==25.1.0
+black==24.8.0;python_version=="3.8"
+black==25.1.0;python_version>="3.9"
 flake8==7.2.0
 isort==6.0.1
 mock==5.2.0
