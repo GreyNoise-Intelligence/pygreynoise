@@ -4,9 +4,8 @@ import configparser
 import logging
 import os
 import re
+from importlib import resources
 from ipaddress import IPv6Address, ip_address
-
-import pkg_resources
 
 CONFIG_FILE = os.path.expanduser(os.path.join("~", ".config", "greynoise", "config"))
 LOGGER = logging.getLogger(__name__)
@@ -316,8 +315,5 @@ def load_template(template_name: str) -> str:
     Returns:
         Template content as a string
     """
-    template_path = pkg_resources.resource_filename(
-        "greynoise", f"templates/{template_name}"
-    )
-    with open(template_path) as template_file:
-        return template_file.read()
+    template_path = resources.files("greynoise").joinpath(f"templates/{template_name}")
+    return template_path.read_text()
