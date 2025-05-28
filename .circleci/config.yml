@@ -61,14 +61,9 @@ DEFAULT_STEPS: &DEFAULT_STEPS
       path: workspace/test_results
 
 jobs:
-  py36:
+  py310:
     docker:
-      - image: cimg/python:3.6
-    steps: *DEFAULT_STEPS
-
-  py37:
-    docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run: *CREATE_VIRTUALENV_STEP
@@ -125,9 +120,14 @@ jobs:
       - image: cimg/python:3.9
     steps: *DEFAULT_STEPS
 
-  py310:
+  py311:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
+    steps: *DEFAULT_STEPS
+
+  py312:
+    docker:
+      - image: cimg/python:3.12
     steps: *DEFAULT_STEPS
 
   sonarcloud:
@@ -166,7 +166,7 @@ jobs:
 
   pypi:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.10
     steps:
       - checkout
       - run: *CREATE_VIRTUALENV_STEP
