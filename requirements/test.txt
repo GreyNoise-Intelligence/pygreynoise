@@ -1,8 +1,9 @@
 black==24.8.0;python_version=="3.8"
 black==25.1.0;python_version>="3.9"
-flake8==7.1.2;python_version<="3.8"
+flake8==7.1.2;python_version=="3.8"
 flake8==7.2.0;python_version>="3.9"
-isort==6.0.1
+isort==5.13.2;python_version=="3.8"
+isort==6.0.1;python_version>="3.9"
 mock==5.2.0
 pylint==3.3.7
 pytest-cov==6.1.1
