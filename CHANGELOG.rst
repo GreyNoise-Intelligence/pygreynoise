@@ -16,6 +16,7 @@ Version `3.0.0`_
   * Updated API endpoints to v3 for `ip`, `ip-multi`, `quick`, and `query` commands
   * Updated Python version requirements to support Python 3.8 through 3.12
   * SDK now uses `api_config` object to initialize the API client
+  * Use modern packaging metadata with pyproject.toml instead of setup.cfg
 
 * API client:
 
