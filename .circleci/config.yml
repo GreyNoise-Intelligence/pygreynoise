@@ -73,16 +73,16 @@ jobs:
           command: yamllint .
       - run:
           name: Style check (black)
-          command: black --check setup.py src tests docs
+          command: black --check src tests docs
       - run:
           name: Style check (isort)
-          command: isort --check-only setup.py src/**/*.py tests/**/*.py docs/**/*.py
+          command: isort --check-only src/**/*.py tests/**/*.py docs/**/*.py
       - run:
           name: Style check (rst)
           command: rst-lint *.rst
       - run:
           name: Static analysis (flake8)
-          command: flake8 setup.py src tests docs
+          command: flake8 src tests docs
       - run:
           name: Static analysis (pylint)
           command: |
@@ -91,7 +91,7 @@ jobs:
               --exit-zero \
               --reports no \
               --msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
-              setup.py src > workspace/pylint.txt
+              src > workspace/pylint.txt
       - run:
           name: Test cases
           command: |
@@ -172,8 +172,17 @@ jobs:
       - run: *CREATE_VIRTUALENV_STEP
       - run: *INSTALL_DEPENDENCIES_STEP
       - run:
+          name: Install build dependencies
+          command: |
+            . venv/bin/activate
+            pip install build twine
+      - run:
           name: Build packages
-          command: python3 setup.py sdist bdist_wheel
+          command: |
+            . venv/bin/activate
+            python -m build
       - run:
           name: Upload package to pypi
-          command: twine upload --username __token__ --disable-progress-bar dist/*
+          command: |
+            . venv/bin/activate
+            twine upload --username __token__ --disable-progress-bar dist/*
