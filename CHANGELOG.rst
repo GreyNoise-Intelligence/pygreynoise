@@ -4,7 +4,7 @@ Changelog
 
 Version `3.0.0`_
 ================
-**Date**: May 23, 2025
+**Date**: June 02, 2025
 
 * BREAKING CHANGES:
 
