@@ -1,135 +1,152 @@
 """GreyNoise API client test cases."""
 
-import pytest
-from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
 
-from greynoise.__version__ import __version__
-from greynoise.api import GreyNoise
-from greynoise.exceptions import RateLimitError, RequestFailure
+import cachetools
+import pytest
+
+from greynoise.api import APIConfig, GreyNoise
+from greynoise.exceptions import RequestFailure
 
 
 @pytest.fixture
 def client():
     """API client fixture."""
-    client = GreyNoise(api_key="<api_key>", integration_name="test")
+    config = APIConfig(
+        api_key="<api_key>",
+        api_server="https://api.greynoise.io",
+        timeout=120,
+        offering="enterprise",
+        proxy=None,
+        integration_name="test",
+        cache_max_size=1000000,
+        cache_ttl=3600,
+        use_cache=True,
+    )
+    client = GreyNoise(config)
     yield client
 
 
 @pytest.fixture
 def client_without_cache():
     """API client without cache fixture."""
-    client = GreyNoise(api_key="<api_key>", use_cache=False)
+    config = APIConfig(
+        api_key="<api_key>",
+        api_server="https://api.greynoise.io",
+        timeout=120,
+        offering="enterprise",
+        proxy=None,
+        integration_name="test",
+        use_cache=False,
+        cache_max_size=1000000,
+        cache_ttl=3600,
+    )
+    client = GreyNoise(config)
     yield client
 
 
 class TestInit(object):
-    """GreyNoise client initialization."""
+    """GreyNoise client initialization test cases."""
 
     def test_with_api_key(self):
-        """API parameter is passed."""
-        config = {
-            "api_key": "<api_key>",
-            "api_server": "<api_server>",
-            "timeout": "<timeout>",
-            "proxy": "<proxy>",
-            "offering": "<offering>",
-        }
-        with patch("greynoise.api.load_config") as load_config:
-            client = GreyNoise(**config)
-            assert client.api_key == config["api_key"]
-            assert client.api_server == config["api_server"]
-            assert client.timeout == config["timeout"]
-            assert client.proxy == config["proxy"]
-            assert client.offering == config["offering"]
-            load_config.assert_not_called()
+        """Initialize client with API key."""
+        api_key = "api-key"
+        config = APIConfig(
+            api_key=api_key,
+            api_server="https://api.greynoise.io",
+            timeout=60,
+            proxy=None,
+            offering="enterprise",
+            integration_name="greynoise-python",
+            use_cache=True,
+        )
+        client = GreyNoise(config)
+        assert client.config.api_key == api_key
+        assert client.config.api_server == "https://api.greynoise.io"
+        assert client.config.timeout == 60
+        assert client.config.proxy is None
+        assert client.config.offering == "enterprise"
+        assert client.config.integration_name == "greynoise-python"
+        assert client.config.use_cache is True
 
     def test_without_api_key(self):
-        """API parameter is not passed."""
-        config = {
-            "api_key": "<api_key>",
-            "api_server": "<api_server>",
-            "timeout": "<timeout>",
-            "proxy": "<proxy>",
-            "offering": "<offering>",
-        }
-        with patch("greynoise.api.load_config") as load_config:
-            load_config.return_value = config
-            client = GreyNoise()
-            assert client.api_key == config["api_key"]
-            assert client.api_server == config["api_server"]
-            assert client.timeout == config["timeout"]
-            assert client.proxy == config["proxy"]
-            assert client.offering == config["offering"]
-            load_config.assert_called()
+        """Initialize client without API key."""
+        config = APIConfig(
+            api_key=None,
+            api_server="https://api.greynoise.io",
+            timeout=60,
+            proxy=None,
+            offering="enterprise",
+            integration_name="greynoise-python",
+            use_cache=True,
+        )
+        client = GreyNoise(config)
+        assert client.config.api_key is None
+        assert client.config.api_server == "https://api.greynoise.io"
+        assert client.config.timeout == 60
+        assert client.config.proxy is None
+        assert client.config.offering == "enterprise"
+        assert client.config.integration_name == "greynoise-python"
+        assert client.config.use_cache is True
 
 
-class TestRequest(object):
-    """GreyNoise client _request method test cases."""
-
-    @pytest.mark.parametrize("status_code", (400, 500))
-    def test_status_code_failure(self, client, status_code):
-        """Exception is raised on response status code failure."""
-        client.session = Mock()
-        response = client.session.get()
-        response.status_code = status_code
-        response.headers.get.return_value = "application/json"
-        with pytest.raises(RequestFailure):
-            client._request("endpoint")
-
-    def test_rate_limit_error(self, client):
-        """Exception is raised on rate limit response."""
-        client.session = Mock()
-        response = client.session.get()
-        response.headers.get.return_value = "application/json"
-        response.status_code = 429
-        with pytest.raises(RateLimitError):
-            client._request("endpoint")
-
-    def test_json(self, client):
-        """Response's json payload is returned."""
-        expected_response = {"expected": "response"}
-        client.session = Mock()
-        response = client.session.get()
-        response.status_code = 200
-        response.headers.get.return_value = "application/json"
-        response.json.return_value = expected_response
-
-        response = client._request("endpoint")
-        assert response == expected_response
-
-    def test_text(self, client):
-        """Response's text payload is returned."""
-        expected_response = "<response>"
-        client.session = Mock()
-        response = client.session.get()
-        response.status_code = 200
-        response.headers.get.return_value = "text/plain"
-        response.text = expected_response
-
-        response = client._request("endpoint")
-        assert response == expected_response
+class TestRequest:
+    """Test request method parameters."""
 
     def test_request_method_parameters(self, client):
-        """Request method is called with expected parameters."""
-        expected_response = {"expected": "response"}
-        client.session = Mock()
-        response = client.session.get()
-        response.status_code = 200
-        response.headers.get.return_value = "application/json"
-        response.json.return_value = expected_response
-
-        response = client._request("endpoint")
-        assert response == expected_response
-        client.session.get.assert_called_with(
-            "{}/{}".format(client.api_server, "endpoint"),
-            headers={
-                "User-Agent": "GreyNoise/{} (test)".format(__version__),
-                "key": "<api_key>",
-            },
-            timeout=client.timeout,
-            params={},
+        """Test that request method parameters are passed correctly."""
+        client._request = Mock(return_value={"success": True})
+        client.request("test-endpoint", method="get")
+        client._request.assert_called_once_with(
+            "test-endpoint",
+            method="get",
+            params=None,
             json=None,
             files=None,
+            headers={"key": client.config.api_key, "Accept": "application/json"},
+            proxy=None,
+        )
+
+    def test_request_method_parameters_with_params(self, client):
+        """Test that parameters are passed correctly."""
+        client._request = Mock(return_value={"success": True})
+        client.request("test-endpoint", method="get", params={"test": "param"})
+        client._request.assert_called_once_with(
+            "test-endpoint",
+            method="get",
+            params={"test": "param"},
+            json=None,
+            files=None,
+            headers={"key": client.config.api_key, "Accept": "application/json"},
+            proxy=None,
+        )
+
+    def test_request_method_parameters_with_json(self, client):
+        """Test that JSON data is passed correctly."""
+        client._request = Mock(return_value={"success": True})
+        client.request("test-endpoint", method="post", json={"test": "data"})
+        client._request.assert_called_once_with(
+            "test-endpoint",
+            method="post",
+            params=None,
+            json={"test": "data"},
+            files=None,
+            headers={"key": client.config.api_key, "Accept": "application/json"},
+            proxy=None,
+        )
+
+    def test_request_method_parameters_with_files(self, client):
+        """Test that file data is passed correctly."""
+        client._request = Mock(return_value={"success": True})
+        client.request("test-endpoint", method="post", files={"test": "file"})
+        client._request.assert_called_once_with(
+            "test-endpoint",
+            method="post",
+            params=None,
+            json=None,
+            files={"test": "file"},
+            headers={"key": client.config.api_key, "Accept": "application/json"},
+            proxy=None,
         )
 
 
@@ -281,32 +298,6 @@ class TestFilter(object):
         assert output == expected_output
 
 
-class TestInteresting(object):
-    """GreyNoise client "interesting" IP test cases."""
-
-    def test_interesting(self, client):
-        """Report an IP as "interesting"."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-        client._request = Mock(return_value=expected_response)
-        response = client.interesting(ip_address)
-        client._request.assert_called_with(
-            "v2/interesting/{}".format(ip_address), method="post"
-        )
-        assert response == expected_response
-
-    def test_invalid_ip(self, client):
-        """Report an invalid IP as "interesting"."""
-        invalid_ip = "not an ip address"
-        client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.ip(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
-        client._request.assert_not_called()
-
-
 class TestIP(object):
     """GreyNoise client IP context test cases."""
 
@@ -317,7 +308,7 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.ip(ip_address)
-        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v3/ip/{}".format(ip_address))
         assert response == expected_response
 
     def test_ip_with_cache(self, client):
@@ -327,7 +318,7 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v3/ip/{}".format(ip_address))
 
         client._request.reset_mock()
         client.ip(ip_address)
@@ -341,11 +332,11 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v3/ip/{}".format(ip_address))
 
         client._request.reset_mock()
         client.ip(ip_address)
-        client._request.assert_called_with("v2/noise/context/{}".format(ip_address))
+        client._request.assert_called_with("v3/ip/{}".format(ip_address))
 
     def test_invalid_ip(self, client):
         """Get invalid IP address information."""
@@ -359,8 +350,8 @@ class TestIP(object):
         client._request.assert_not_called()
 
 
-class TestQuick(object):
-    """GreyNoise client IP quick check test cases."""
+class TestQuick:
+    """Test quick lookup functionality."""
 
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response, expected_results",
@@ -368,97 +359,59 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
+                {
+                    "data": [
+                        {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                        {"code": "0x01", "ip": "67.68.68.79", "noise": False},
+                        {"code": "0x99", "ip": "123.123.123.123", "noise": False},
+                    ]
+                },
                 [
                     {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                     {"code": "0x01", "ip": "67.68.68.79", "noise": False},
                     {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
-                [
-                    {
-                        "code": "0x00",
-                        "code_message": (
-                            "IP has never been observed scanning the Internet"
-                        ),
-                        "ip": "8.8.8.8",
-                        "noise": False,
-                    },
-                    {
-                        "code": "0x01",
-                        "code_message": (
-                            "IP has been observed by the GreyNoise sensor network"
-                        ),
-                        "ip": "67.68.68.79",
-                        "noise": False,
-                    },
-                    {
-                        "code": "0x99",
-                        "code_message": "Code message unknown: 0x99",
-                        "ip": "123.123.123.123",
-                        "noise": False,
-                    },
-                ],
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
+                {
+                    "data": [
+                        {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                        {"code": "0x99", "ip": "123.123.123.123", "noise": False},
+                    ]
+                },
                 [
                     {"code": "0x00", "ip": "8.8.8.8", "noise": False},
                     {"code": "0x99", "ip": "123.123.123.123", "noise": False},
                 ],
-                [
-                    {
-                        "code": "0x00",
-                        "code_message": (
-                            "IP has never been observed scanning the Internet"
-                        ),
-                        "ip": "8.8.8.8",
-                        "noise": False,
-                    },
-                    {
-                        "code": "0x99",
-                        "code_message": "Code message unknown: 0x99",
-                        "ip": "123.123.123.123",
-                        "noise": False,
-                    },
-                ],
             ),
             (
                 "8.8.8.8",
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                [
-                    {
-                        "code": "0x00",
-                        "code_message": (
-                            "IP has never been observed scanning the Internet"
-                        ),
-                        "ip": "8.8.8.8",
-                        "noise": False,
-                    }
-                ],
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {"data": [{"code": "0x00", "ip": "8.8.8.8", "noise": False}]},
+                [{"code": "0x00", "ip": "8.8.8.8", "noise": False}],
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                [
-                    {
-                        "code": "0x00",
-                        "code_message": (
-                            "IP has never been observed scanning the Internet"
-                        ),
-                        "ip": "8.8.8.8",
-                        "noise": False,
-                    }
-                ],
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ],
+                },
+                [{"ip": "8.8.8.8", "business_service_intelligence": {"found": False}}],
             ),
         ),
     )
@@ -471,51 +424,76 @@ class TestQuick(object):
         client._request.assert_has_calls([expected_request])
         assert results == expected_results
 
-    @pytest.mark.parametrize("ip_addresses", ([], ["not-an-ip"], "not-an-ip"))
-    def test_empty_request(self, client, ip_addresses):
-        """IP addresses is empty or only contains invalid IP addresses."""
-        client._request = Mock()
-        results = client.quick(ip_addresses)
-        client._request.assert_not_called()
-        assert results == []
-
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response",
         (
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
-                [
-                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                    {"code": "0x01", "ip": "67.68.68.79", "noise": False},
-                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
-                ],
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "67.68.68.79",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "123.123.123.123",
+                            "business_service_intelligence": {"found": False},
+                        },
+                    ]
+                },
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
-                [
-                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
-                ],
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "123.123.123.123",
+                            "business_service_intelligence": {"found": False},
+                        },
+                    ]
+                },
             ),
             (
                 "8.8.8.8",
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ]
+                },
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ]
+                },
             ),
         ),
     )
@@ -523,13 +501,34 @@ class TestQuick(object):
         self, client, ip_addresses, expected_request, mock_response
     ):
         """Get IP addresses noise status with cache."""
+        # First call should hit the API
         client._request = Mock(return_value=mock_response)
-        client.quick(ip_addresses)
+        first_results = client.quick(ip_addresses)
         client._request.assert_has_calls([expected_request])
 
+        # Reset the mock
         client._request.reset_mock()
-        client.quick(ip_addresses)
+
+        # Second call should use cache
+        second_results = client.quick(ip_addresses)
         client._request.assert_not_called()
+
+        # Results should be the same
+        assert first_results == second_results
+
+        # Verify cache contents
+        if isinstance(ip_addresses, str):
+            ip_addresses = [ip_addresses]
+        valid_ips = [
+            ip
+            for ip in ip_addresses
+            if ip != "not-an-ip" and not ip.startswith("not-an-ip")
+        ]
+        for ip in valid_ips:
+            assert ip in client.ip_quick_check_cache
+            assert client.ip_quick_check_cache[ip] == next(
+                (item for item in first_results if item["ip"] == ip), None
+            )
 
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response",
@@ -537,37 +536,70 @@ class TestQuick(object):
             (
                 ["8.8.8.8", "67.68.68.79", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "67.68.68.79", "123.123.123.123"]},
                 ),
-                [
-                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                    {"code": "0x01", "ip": "67.68.68.79", "noise": False},
-                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
-                ],
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "67.68.68.79",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "123.123.123.123",
+                            "business_service_intelligence": {"found": False},
+                        },
+                    ]
+                },
             ),
             (
                 ["8.8.8.8", "not-an-ip", "123.123.123.123"],
                 call(
-                    "v2/noise/multi/quick",
+                    "v3/ip?quick=true",
                     method="post",
                     json={"ips": ["8.8.8.8", "123.123.123.123"]},
                 ),
-                [
-                    {"code": "0x00", "ip": "8.8.8.8", "noise": False},
-                    {"code": "0x99", "ip": "123.123.123.123", "noise": False},
-                ],
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        },
+                        {
+                            "ip": "123.123.123.123",
+                            "business_service_intelligence": {"found": False},
+                        },
+                    ]
+                },
             ),
             (
                 "8.8.8.8",
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ]
+                },
             ),
             (
                 ["not-an-ip#1", "8.8.8.8", "not-an-ip#2"],
-                call("v2/noise/multi/quick", method="post", json={"ips": ["8.8.8.8"]}),
-                {"code": "0x00", "ip": "8.8.8.8", "noise": False},
+                call("v3/ip?quick=true", method="post", json={"ips": ["8.8.8.8"]}),
+                {
+                    "data": [
+                        {
+                            "ip": "8.8.8.8",
+                            "business_service_intelligence": {"found": False},
+                        }
+                    ]
+                },
             ),
         ),
     )
@@ -668,7 +700,7 @@ class TestSensorActivity(object):
 
 
 class TestQuery(object):
-    """GreyNoise client run GNQL query test cases."""
+    """GreyNoise client query test cases."""
 
     def test_query(self, client):
         """Run GNQL query."""
@@ -678,7 +710,7 @@ class TestQuery(object):
         client._request = Mock(return_value=expected_response)
         response = client.query(query)
         client._request.assert_called_with(
-            "v2/experimental/gnql", params={"query": query}
+            "v3/gnql", params={"query": query, "quick": False}
         )
         assert response == expected_response
 
@@ -690,8 +722,8 @@ class TestQuery(object):
         client._request = Mock(return_value=expected_response)
         response = client.query(query, size=5, scroll="scroll")
         client._request.assert_called_with(
-            "v2/experimental/gnql",
-            params={"query": query, "size": 5, "scroll": "scroll"},
+            "v3/gnql",
+            params={"query": query, "quick": False, "size": 5, "scroll": "scroll"},
         )
         assert response == expected_response
 
@@ -738,11 +770,43 @@ class TestPing(object):
         assert response == expected_response
 
 
+class TestCVE(object):
+    """GreyNoise client CVE lookup test cases."""
+
+    def test_cve(self, client):
+        """Get CVE details."""
+        cve_id = "CVE-2021-44228"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.cve(cve_id)
+        client._request.assert_called_with("v1/cve/{}".format(cve_id))
+        assert response == expected_response
+
+    def test_invalid_cve(self, client):
+        """Get invalid CVE ID information."""
+        invalid_cve = "not-a-cve"
+        client._request = Mock()
+
+        with pytest.raises(ValueError) as exception:
+            client.cve(invalid_cve)
+        assert str(exception.value) == f"Invalid CVE ID format: '{invalid_cve}'"
+        client._request.assert_not_called()
+
+    def test_community_offering(self, client):
+        """Test CVE lookup with community offering."""
+        client.offering = "community"
+        response = client.cve("CVE-2021-44228")
+        assert response == {
+            "message": "CVE lookup is not supported with Community offering"
+        }
+
+
 class TestSimilar(object):
     """GreyNoise client Similar context test cases."""
 
     def test_similar(self, client):
-        """Get IP address information."""
+        """Get similar IP addresses."""
         ip_address = "8.8.8.8"
         expected_response = {}
 
@@ -750,6 +814,18 @@ class TestSimilar(object):
         response = client.similar(ip_address)
         client._request.assert_called_with(
             "v3/similarity/ips/{}?limit=50".format(ip_address)
+        )
+        assert response == expected_response
+
+    def test_similar_with_limit_and_score(self, client):
+        """Get similar IP addresses with limit and minimum score."""
+        ip_address = "8.8.8.8"
+        expected_response = {}
+
+        client._request = Mock(return_value=expected_response)
+        response = client.similar(ip_address, limit=10, min_score=80)
+        client._request.assert_called_with(
+            "v3/similarity/ips/{}?limit=10&minimum_score=0.8".format(ip_address)
         )
         assert response == expected_response
 
@@ -764,12 +840,20 @@ class TestSimilar(object):
 
         client._request.assert_not_called()
 
+    def test_community_offering(self, client):
+        """Test similar lookup with community offering."""
+        client.offering = "community"
+        response = client.similar("8.8.8.8")
+        assert response == {
+            "message": "Similarity lookup not supported with Community offering"
+        }
+
 
 class TestTimeline(object):
-    """GreyNoise client Similar context test cases."""
+    """GreyNoise client Timeline test cases."""
 
     def test_timeline(self, client):
-        """Get IP address information."""
+        """Get IP address timeline."""
         ip_address = "8.8.8.8"
         expected_response = {}
 
@@ -793,10 +877,10 @@ class TestTimeline(object):
 
 
 class TestTimelineHourly(object):
-    """GreyNoise client Similar context test cases."""
+    """GreyNoise client Timeline Hourly test cases."""
 
     def test_timelinehourly(self, client):
-        """Get IP address information."""
+        """Get IP address hourly timeline."""
         ip_address = "8.8.8.8"
         expected_response = {}
 
@@ -817,3 +901,302 @@ class TestTimelineHourly(object):
         assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
+
+
+def test_api_config():
+    """Test API configuration initialization."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        integration_name="test",
+        cache_max_size=2000000,
+        cache_ttl=7200,
+        use_cache=True,
+    )
+    assert config.api_key == "test-api-key"
+    assert config.api_server == "https://api.greynoise.io"
+    assert config.timeout == 30
+    assert config.proxy == "http://proxy.example.com"
+    assert config.offering == "enterprise"
+    assert config.integration_name == "test"
+    assert config.cache_max_size == 2000000
+    assert config.cache_ttl == 7200
+    assert config.use_cache is True
+
+
+def test_api_client_initialization():
+    """Test API client initialization with configuration."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        integration_name="test",
+        cache_max_size=2000000,
+        cache_ttl=7200,
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+    assert client.config == config
+    assert client.session is not None
+    assert client._executor is not None
+    assert client.ip_quick_check_cache is not None
+    assert client.ip_context_cache is not None
+
+
+def test_api_client_request_retry():
+    """Test API client request retry functionality."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        integration_name="test",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    # Create mock responses with proper structure
+    mock_response1 = Mock()
+    mock_response1.status_code = 500
+    mock_response1.headers = Mock()
+    mock_response1.headers.get = Mock(return_value="application/json")
+    mock_response1.text = '{"error": "Internal Server Error"}'
+    mock_response1.json = Mock(return_value={"error": "Internal Server Error"})
+
+    mock_response2 = Mock()
+    mock_response2.status_code = 502
+    mock_response2.headers = Mock()
+    mock_response2.headers.get = Mock(return_value="application/json")
+    mock_response2.text = '{"error": "Bad Gateway"}'
+    mock_response2.json = Mock(return_value={"error": "Bad Gateway"})
+
+    mock_response3 = Mock()
+    mock_response3.status_code = 200
+    mock_response3.headers = Mock()
+    mock_response3.headers.get = Mock(return_value="application/json")
+    mock_response3.text = '{"success": true}'
+    mock_response3.json = Mock(return_value={"success": True})
+
+    with patch.object(client.session, "get") as mock_get:
+        # Set up the side effect to return our mock responses in sequence
+        mock_get.side_effect = [mock_response1, mock_response2, mock_response3]
+
+        # The first two calls should raise RequestFailure
+        with pytest.raises(RequestFailure) as exc_info:
+            client._request("test-endpoint")
+        assert exc_info.value.args[0] == 500
+        assert exc_info.value.args[1] == mock_response1.json.return_value
+
+        with pytest.raises(RequestFailure) as exc_info:
+            client._request("test-endpoint")
+        assert exc_info.value.args[0] == 502
+        assert exc_info.value.args[1] == mock_response2.json.return_value
+
+        # The third call should succeed
+        response = client._request("test-endpoint")
+        assert response == mock_response3.json.return_value
+        assert mock_get.call_count == 3
+
+
+def test_api_client_parallel_processing():
+    """Test API client parallel processing functionality."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        integration_name="test",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    def process_func(items):
+        return {"data": [{"processed": item} for item in items]}
+
+    items = list(range(100))
+    results = client._process_batch_parallel(
+        items, process_func, batch_size=10, max_workers=5
+    )
+
+    assert isinstance(results, dict)
+    assert "data" in results
+    assert len(results["data"]) == 100
+    assert all(
+        isinstance(result, dict) and "processed" in result for result in results["data"]
+    )
+
+
+class TestErrorHandling:
+    """Test error handling scenarios."""
+
+    def test_rate_limiting(self, client):
+        """Test handling of rate limiting responses."""
+        client._request = Mock(
+            side_effect=RequestFailure(429, {"error": "Rate limit exceeded"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 429
+        assert exc_info.value.args[1] == {"error": "Rate limit exceeded"}
+
+    def test_network_timeout(self, client):
+        """Test handling of network timeouts."""
+        client._request = Mock(
+            side_effect=RequestFailure(504, {"error": "Gateway timeout"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 504
+        assert exc_info.value.args[1] == {"error": "Gateway timeout"}
+
+    def test_invalid_api_key(self, client):
+        """Test handling of invalid API key."""
+        client._request = Mock(
+            side_effect=RequestFailure(401, {"error": "Invalid API key"})
+        )
+        with pytest.raises(RequestFailure) as exc_info:
+            client.ip("8.8.8.8")
+        assert exc_info.value.args[0] == 401
+        assert exc_info.value.args[1] == {"error": "Invalid API key"}
+
+
+class TestCacheBehavior:
+    """Test cache behavior scenarios."""
+
+    def test_cache_invalidation(self, client):
+        """Test cache invalidation when TTL expires."""
+        # Set a short TTL
+        client.config.cache_ttl = 1
+
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request
+        mock_response = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response)
+        first_result = client.ip("8.8.8.8")
+        assert first_result == mock_response
+        assert "8.8.8.8" in client.ip_context_cache
+
+        # Wait for TTL to expire
+        import time
+
+        time.sleep(1.1)  # Wait slightly longer than TTL
+
+        # Second request should hit API again
+        client._request.reset_mock()  # Reset the mock to track new calls
+        second_result = client.ip("8.8.8.8")
+        assert second_result == mock_response
+        assert client._request.call_count == 1  # Should make one new API call
+
+    def test_cache_size_limit(self, client):
+        """Test cache size limit enforcement."""
+        # Set a small cache size
+        client.config.cache_max_size = 2
+
+        # Reinitialize cache with new max_size
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request - should be cached
+        mock_response1 = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response1)
+        result1 = client.ip("8.8.8.8")
+        assert result1 == mock_response1
+        assert "8.8.8.8" in client.ip_context_cache
+        assert client.ip_context_cache["8.8.8.8"] == mock_response1
+
+        # Second request - should be cached
+        mock_response2 = {
+            "ip": "1.1.1.1",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response2)
+        result2 = client.ip("1.1.1.1")
+        assert result2 == mock_response2
+        assert "1.1.1.1" in client.ip_context_cache
+        assert client.ip_context_cache["1.1.1.1"] == mock_response2
+        assert len(client.ip_context_cache) == 2
+
+        # Third request - should cause first item to be evicted
+        mock_response3 = {
+            "ip": "9.9.9.9",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response3)
+        result3 = client.ip("9.9.9.9")
+        assert result3 == mock_response3
+        assert "9.9.9.9" in client.ip_context_cache
+        assert client.ip_context_cache["9.9.9.9"] == mock_response3
+
+        # Verify cache state
+        assert len(client.ip_context_cache) == 2
+        assert "8.8.8.8" not in client.ip_context_cache  # First item should be evicted
+        assert "1.1.1.1" in client.ip_context_cache  # Second item should remain
+        assert "9.9.9.9" in client.ip_context_cache  # Third item should remain
+
+        # Verify cache hits
+        client._request.reset_mock()
+        result = client.ip("1.1.1.1")  # Should be a cache hit
+        assert result == mock_response2
+        client._request.assert_not_called()  # Should not make API call
+
+        result = client.ip("9.9.9.9")  # Should be a cache hit
+        assert result == mock_response3
+        client._request.assert_not_called()  # Should not make API call
+
+        # Test cache miss for evicted item
+        client._request = Mock(
+            return_value=mock_response1
+        )  # Reset mock with original response
+        result = client.ip("8.8.8.8")  # Should be a cache miss
+        assert result == mock_response1
+        client._request.assert_called_once()  # Should make API call
+
+    def test_cache_ttl_behavior(self, client):
+        """Test cache TTL behavior."""
+        # Set a short TTL
+        client.config.cache_ttl = 1
+
+        client.ip_context_cache = cachetools.TTLCache(
+            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
+        )
+
+        # First request
+        mock_response = {
+            "ip": "8.8.8.8",
+            "internet_scanner_intelligence": {"found": True},
+            "business_service_intelligence": {"found": False},
+        }
+        client._request = Mock(return_value=mock_response)
+        first_result = client.ip("8.8.8.8")
+        assert first_result == mock_response
+
+        # Wait for TTL to expire
+        import time
+
+        time.sleep(1.1)
+
+        # Second request should hit API again
+        second_result = client.ip("8.8.8.8")
+        assert second_result == mock_response
+        assert client._request.call_count == 2

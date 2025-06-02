@@ -10,7 +10,7 @@ import logging
 import click
 from requests.exceptions import RequestException
 
-from greynoise.api import GreyNoise
+from greynoise.api import APIConfig, GreyNoise
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.exceptions import RequestFailure
@@ -39,7 +39,6 @@ def echo_result(function):
         if isinstance(formatter, dict):
             # For the text formatter, there's a separate formatter for each subcommand
             formatter = formatter[context.command.name]
-
         output = formatter(result, params.get("verbose", False)).strip("\n")
         click.echo(
             output, file=params.get("output_file", click.open_file("-", mode="w"))
@@ -126,12 +125,18 @@ def pass_api_client(function):
             else:
                 offering = config["offering"]
 
-        api_client = GreyNoise(
+        api_config = APIConfig(
             api_key=api_key,
+            api_server=config.get("api_server", "https://api.greynoise.io"),
+            timeout=config.get("timeout", 60),
+            proxy=config.get("proxy"),
             offering=offering,
-            timeout=config["timeout"],
             integration_name="cli",
+            cache_max_size=config.get("cache_max_size", 1000000),
+            cache_ttl=config.get("cache_ttl", 3600),
+            use_cache=config.get("use_cache", True),
         )
+        api_client = GreyNoise(api_config)
         return function(api_client, *args, **kwargs)
 
     return wrapper
