@@ -1,84 +1,112 @@
 {% import "macros.txt.j2" as macros with context %}
-{%- if ip_context.seen %}
-          <header>OVERVIEW</header>
-----------------------------
+{%- if ip_context.internet_scanner_intelligence.found or ip_context.business_service_intelligence.found%}
+{%- if ip_context.business_service_intelligence.found %}
+
+          <header>Business Service Intelligence</header>
+-----------------------------------------------
 <key>IP</key>: <value>{{ ip_context.ip }}</value>
-<key>Actor</key>: <value>{{ ip_context.actor }}</value>
-<key>Classification</key>: {{ macros.classification(ip_context.classification) }}
-<key>First seen</key>: <value>{{ ip_context.first_seen }}</value>
-<key>Last seen</key>: <value>{{ ip_context.last_seen }}</value>
-<key>Spoofable</key>: <value>{{ ip_context.spoofable }}</value>
-<key>BOT</key>: <value>{{ ip_context.bot }}</value>
-<key>VPN</key>: <value>{{ ip_context.vpn }}</value>
-<key>VPN Service</key>: <value>{{ ip_context.vpn_service }}</value>
-{% if ip_context.tags -%}
-<key>Tags</key>:
-{%- call(tag) macros.verbose_list(ip_context.tags) -%}
+<key>RIOT</key>: {{ macros.classification(ip_context.business_service_intelligence.found) }}
+<key>Category</key>: <value>{{ ip_context.business_service_intelligence.category }}</value>
+<key>Trust Level</key>: <value>{{ ip_context.business_service_intelligence.trust_level }}</value>
+<key>Name</key>: <value>{{ ip_context.business_service_intelligence.name }}</value>
+<key>Description</key>: <value>{{ ip_context.business_service_intelligence.description }}</value>
+<key>Explanation</key>: <value>{{ ip_context.business_service_intelligence.explanation }}</value>
+<key>Last Updated</key>: <value>{{ ip_context.business_service_intelligence.last_updated }}</value>
+<key>Reference</key>: <value>{{ ip_context.business_service_intelligence.reference }}</value>
+{%- endif %}
+{%- if ip_context.internet_scanner_intelligence.found %}
+
+          <header>Internet Scanner Intelligence</header>
+-----------------------------------------------
+<key>IP</key>: <value>{{ ip_context.ip }}</value>
+<key>Actor</key>: <value>{{ ip_context.internet_scanner_intelligence.actor }}</value>
+<key>Classification</key>: {{ macros.classification(ip_context.internet_scanner_intelligence.classification) }}
+{% if ip_context.internet_scanner_intelligence.first_seen -%}
+<key>First Seen</key>: <value>{{ ip_context.internet_scanner_intelligence.first_seen }}</value>
+{% endif -%}
+<key>Last Seen</key>: <value>{{ ip_context.internet_scanner_intelligence.last_seen_timestamp }}</value>
+<key>Spoofable</key>: <value>{{ ip_context.internet_scanner_intelligence.spoofable }}</value>
+<key>BOT</key>: <value>{{ ip_context.internet_scanner_intelligence.bot }}</value>
+<key>VPN</key>: <value>{{ ip_context.internet_scanner_intelligence.vpn }}</value>
+{% if ip_context.internet_scanner_intelligence.vpn -%}
+<key>VPN Service</key>: <value>{{ ip_context.internet_scanner_intelligence.vpn_service }}</value>
+{% endif -%}
+<key>TOR</key>: <value>{{ ip_context.internet_scanner_intelligence.tor }}</value>
+{% if ip_context.internet_scanner_intelligence.tags -%}
+[TAGS]
+{% call(tag) macros.verbose_list_from_dict(ip_context.internet_scanner_intelligence.tags, "name") -%}
 - <value>{{ tag }}</value>
 {% endcall -%}
 {% endif %}
+{%- endif %}
+{%- if ip_context.internet_scanner_intelligence.found %}
           <header>METADATA</header>
 ----------------------------
-<key>ASN</key>: <value>{{ ip_context.metadata.asn }}</value>
-<key>Category</key>: <value>{{ ip_context.metadata.category }}</value>
-<key>Source Location</key>: <value>{{ ip_context.metadata.location }}</value>
-{% if ip_context.metadata.destination_countries -%}
-<key>Destination Countries</key>: <value>{{ ip_context.metadata.destination_countries | join(', ') }}</value>
+<key>ASN</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.asn }}</value>
+<key>Category</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.category }}</value>
+<key>Source Location</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.location }}</value>
+{% if ip_context.internet_scanner_intelligence.metadata.destination_countries -%}
+<key>Destination Countries</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.destination_countries | join(', ') }}</value>
 {% endif -%}
-<key>Region</key>: <value>{{ ip_context.metadata.region }}</value>
-<key>Organization</key>: <value>{{ ip_context.metadata.organization }}</value>
-<key>OS</key>: <value>{{ ip_context.metadata.os }}</value>
-<key>rDNS</key>: <value>{{ ip_context.metadata.rdns }}</value>
-<key>Tor</key>: <value>{{ ip_context.metadata.tor }}</value>
-
+<key>Region</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.region }}</value>
+<key>Organization</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.organization }}</value>
+{% if ip_context.internet_scanner_intelligence.metadata.os -%}
+<key>OS</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.os }}</value>
+{% endif -%}
+{% if ip_context.internet_scanner_intelligence.metadata.rdns -%}
+<key>rDNS</key>: <value>{{ ip_context.internet_scanner_intelligence.metadata.rdns }}</value>
+{% endif %}
           <header>RAW DATA</header>
 ----------------------------
-{%- if ip_context.cve %}
-[CVE]
-{%- call(cve) macros.verbose_list(ip_context.cve) -%}
-- <key>CVE</key>: <value>{{ cve }}</value>
+{%- if ip_context.internet_scanner_intelligence.cves %}
+[CVEs]
+{%- call(cve) macros.verbose_list(ip_context.internet_scanner_intelligence.cves) -%}
+- <value>{{ cve }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- if ip_context.raw_data.scan %}
+{%- if ip_context.internet_scanner_intelligence.raw_data.scan %}
 [Scan]
-{%- call(scan) macros.verbose_list(ip_context.raw_data.scan) -%}
+{%- call(scan) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.scan) -%}
 - <key>Port/Proto</key>: <value>{{ scan.port }}/{{ scan.protocol }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- if ip_context.raw_data.web.paths %}
+{%- if ip_context.internet_scanner_intelligence.raw_data.http.path %}
 [Paths]
-{%- call(path) macros.verbose_list(ip_context.raw_data.web.paths) -%}
+{%- call(path) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.http.path) -%}
 - <value>{{ path }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- if ip_context.raw_data.web.useragents %}
+{%- if ip_context.internet_scanner_intelligence.raw_data.http.useragent %}
 [Useragents]
-{%- call(useragent) macros.verbose_list(ip_context.raw_data.web.useragents) -%}
+{%- call(useragent) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.http.useragent) -%}
 - <value>{{ useragent }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- if ip_context.raw_data.ja3 %}
+{%- if ip_context.internet_scanner_intelligence.raw_data.ja3 %}
 [JA3]
-{%- call(ja3) macros.verbose_list(ip_context.raw_data.ja3) -%}
+{%- call(ja3) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.ja3) -%}
 - <key>Port</key>: <value>{{ ja3.port }}</value>, <key>Fingerprint</key>: <value>{{ ja3.fingerprint }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- if ip_context.raw_data.hassh %}
-[HASSH]
-{%- call(hassh) macros.verbose_list(ip_context.raw_data.hassh) -%}
-- <key>Port</key>: <value>{{ hassh.port }}</value>, <key>Fingerprint</key>: <value>{{ hassh.fingerprint }}</value>
+{%- if ip_context.internet_scanner_intelligence.raw_data.tls.ja4 %}
+[JA4]
+{%- call(ja4) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.tls.ja4) -%}
+- <value>{{ ja4 }}</value>
 {% endcall -%}
 {% endif %}
 
-{%- elif ip_context.error %}
-{{ ip_context.error }}
+{%- if ip_context.internet_scanner_intelligence.raw_data.hassh %}
+[HASSH]
+{%- call(hassh) macros.verbose_list(ip_context.internet_scanner_intelligence.raw_data.hassh) -%}
+- <key>Port</key>: <value>{{ hassh.port }}</value>, <key>Fingerprint</key>: <value>{{ hassh.fingerprint }}</value>
+{% endcall -%}
+{%- endif %}
+{% endif %}
 {% else %}
 {{ ip_context.ip }} has not been seen in scans in the past 90 days.
 {% endif %}
-
-

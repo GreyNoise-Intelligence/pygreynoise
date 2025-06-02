@@ -2,6 +2,43 @@
 Changelog
 =========
 
+Version `3.0.0`_
+================
+**Date**: June 02, 2025
+
+* BREAKING CHANGES:
+
+  * The `riot` command is deprecated and will be removed in a future version.
+    Please use `ip` command instead.
+  * Removed support for Python 3.6 and 3.7
+  * Many schema changes to the API responses for the `ip`, `ip-multi`, and
+    `query` commands
+  * Updated API endpoints to v3 for `ip`, `ip-multi`, `quick`, and `query` commands
+  * Updated Python version requirements to support Python 3.8 through 3.12
+  * SDK now uses `api_config` object to initialize the API client
+  * Use modern packaging metadata with pyproject.toml instead of setup.cfg
+
+* API client:
+
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to use new v3 endpoints
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to return `business_service_intelligence` and
+    `internet_scanner_intelligence` attributes
+  * Added thread support for multi-lookup requests
+  * Added `api_config` object to initialize the API client
+
+* CLI:
+
+  * Update `ip`, `ip-multi`, `quick`, and `query` commands to support new attributes
+
+* Dependencies:
+
+  * Updated `Click` to version 8.1.8
+  * Updated `cachetools` to version 5.5.2
+  * Updated `dict2xml` to version 1.7.6
+  * Updated `jinja2` to version 3.1.6
+  * Updated `more-itertools` to version 10.7.0
+  * Updated `six` to version 1.17.0
+
 Version `2.3.0`_
 ================
 **Date**: July 30, 2024
@@ -429,4 +466,5 @@ Version `0.2.0`_
 .. _`2.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.0...2.0.1
 .. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
 .. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...2.2.0
-.. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...HEAD
+.. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...2.3.0
+.. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...HEAD

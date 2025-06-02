@@ -1,4 +1,4 @@
-"""CLI subcommands."""
+"""Command implementation."""
 
 import platform
 import sys
@@ -20,13 +20,14 @@ from greynoise.cli.decorator import (
 )
 from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
-from greynoise.cli.parameter import ip_addresses_parameter
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 
 
 @not_implemented_command
-def account():
+def account(api_client):
     """View information about your GreyNoise account."""
+    result = api_client.test_connection()
+    return result
 
 
 @not_implemented_command
@@ -128,22 +129,6 @@ def filter(
 def help_(context):
     """Show this message and exit."""
     click.echo(context.parent.get_help())
-
-
-@click.command()
-@click.argument("ip_address", callback=ip_addresses_parameter, nargs=-1)
-@click.option("-k", "--api-key", help="Key to include in API requests")
-@click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@pass_api_client
-@click.pass_context
-@handle_exceptions
-def interesting(context, api_client, api_key, input_file, ip_address):
-    """Report one or more IP addresses as "interesting"."""
-    ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [
-        api_client.interesting(ip_address=ip_address) for ip_address in ip_addresses
-    ]
-    return results
 
 
 @ip_lookup_command
@@ -260,32 +245,23 @@ def ip_multi(
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 @click.option("-s", "--api-server", help="API server")
 @click.option("-p", "--proxy", help="Proxy URL")
-def setup(api_key, timeout, api_server, proxy, offering):
-    """Configure API key."""
-    config = {"api_key": api_key}
-
-    if timeout is None:
-        config["timeout"] = DEFAULT_CONFIG["timeout"]
-    else:
-        config["timeout"] = timeout
-
-    if api_server is None:
-        config["api_server"] = DEFAULT_CONFIG["api_server"]
-    else:
-        config["api_server"] = api_server
-
-    if proxy is None:
-        config["proxy"] = DEFAULT_CONFIG["proxy"]
-    else:
-        config["proxy"] = proxy
-
-    if offering is None:
-        config["offering"] = DEFAULT_CONFIG["offering"]
-    else:
-        config["offering"] = offering
-
+@click.option("--cache-max-size", type=click.INT, help="Maximum size of the cache")
+@click.option("--cache-ttl", type=click.INT, help="Cache time-to-live in seconds")
+def setup(api_key, timeout, api_server, proxy, offering, cache_max_size, cache_ttl):
+    """Configure API client."""
+    config = {
+        "api_key": api_key,
+        "timeout": timeout or DEFAULT_CONFIG["timeout"],
+        "api_server": api_server or DEFAULT_CONFIG["api_server"],
+        "proxy": proxy or DEFAULT_CONFIG["proxy"],
+        "offering": offering or DEFAULT_CONFIG["offering"],
+        "cache_max_size": cache_max_size,
+        "cache_ttl": cache_ttl,
+    }
+    # Remove None values for optional parameters
+    config = {k: v for k, v in config.items() if v is not None or k == "api_key"}
     save_config(config)
-    click.echo("Configuration saved to {!r}".format(CONFIG_FILE))
+    click.echo("Configuration saved in {}.".format(CONFIG_FILE))
 
 
 @not_implemented_command

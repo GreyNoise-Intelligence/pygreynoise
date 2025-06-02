@@ -30,4 +30,5 @@ repos:
     rev: v1.17.0
     hooks:
       - id: yamllint
+        language: system
         args: [-c=.yamllint]

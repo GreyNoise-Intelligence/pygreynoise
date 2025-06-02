@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "greynoise"
+version = "3.0.0"
+description = "Abstraction to interact with GreyNoise API."
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "GreyNoise Intelligence", email = "support@greynoise.io"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+keywords = ["internet", "scanning", "threat intelligence", "security"]
+dependencies = [
+    "Click<=8.1.8",
+    "ansimarkup",
+    "cachetools",
+    "colorama",
+    "click-default-group",
+    "click-repl",
+    "dict2xml",
+    "jinja2",
+    "more-itertools>=8.14.0",
+    "requests",
+    "six",
+]
+
+[project.urls]
+Homepage = "https://greynoise.io/"
+Repository = "https://github.com/GreyNoise-Intelligence/pygreynoise"
+Documentation = "https://greynoise.io/"
+
+[project.scripts]
+greynoise = "greynoise.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/greynoise"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"src/greynoise/cli/templates/*.j2" = "greynoise/cli/templates" 

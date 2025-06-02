@@ -31,12 +31,12 @@
 {{- macros.column_verbose_list(result.stats.countries, "country") }}
 {%- endif %}
 
-{%- if result.stats.operating_systems %}
+{%- if "operating_systems" in result.stats and result.stats.operating_systems %}
 <header>Operating systems</header>:
 {{- macros.column_verbose_list(result.stats.operating_systems, "operating_system") }}
 {%- endif %}
 
-{%- if result.stats.tags %}
+{%- if "tags" in result.stats and result.stats.tags %}
 <header>Tags</header>:
 {{- macros.column_verbose_list(result.stats.tags, "tag") }}
 {%- endif %}

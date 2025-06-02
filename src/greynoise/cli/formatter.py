@@ -31,6 +31,7 @@ ANSI_MARKUP = ansimarkup.AnsiMarkup(
         "malicious": ansimarkup.parse("<light-red>"),
         "unknown": ansimarkup.parse(DIM),
         "benign": ansimarkup.parse("<light-green>"),
+        "suspicious": ansimarkup.parse("<yellow>"),
     }
 )
 
@@ -55,6 +56,8 @@ def colored_output(function):
 
 def json_formatter(result, _verbose):
     """Format result as json."""
+    if result is None or result == []:
+        return "No results found"
     if isinstance(result, list) and "data" in result[0]:
         res = [json.dumps(record) for record in result[0]["data"]]
         output = "\n".join(res)
@@ -67,6 +70,8 @@ def json_formatter(result, _verbose):
 def xml_formatter(result, _verbose):
     """Format result as xml."""
     xml_formatted = ""
+    if result is None or result == []:
+        return "No results found"
     if type(result) is list:
         xml_formatted = dict2xml({"item": result}, wrap="root", indent="\t")
     else:
@@ -79,9 +84,9 @@ def xml_formatter(result, _verbose):
 
 def get_location(metadata):
     """Get location from ip context metadata."""
-    city = metadata["city"]
-    country = metadata["country"]
-    country_code = metadata["country_code"]
+    city = metadata["source_city"]
+    country = metadata["source_country"]
+    country_code = metadata["source_country_code"]
 
     location = []
     if city:
@@ -97,17 +102,17 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if "seen" in ip_context:
-            if ip_context["seen"]:
-                metadata = ip_context["metadata"]
-                metadata["location"] = get_location(metadata)
-                template = JINJA2_ENV.get_template("ip_context.txt.j2")
-            else:
-                template = JINJA2_ENV.get_template("ip_context.txt.j2")
-        elif "noise" in ip_context or "riot" in ip_context:
-            template = JINJA2_ENV.get_template("ip_community.txt.j2")
-
-    return template.render(results=results, verbose=verbose)
+        if (
+            "internet_scanner_intelligence" in ip_context
+            and ip_context["internet_scanner_intelligence"]["found"]
+        ):
+            metadata = ip_context["internet_scanner_intelligence"]["metadata"]
+            metadata["location"] = get_location(metadata)
+            template = JINJA2_ENV.get_template("ip_context.txt.j2")
+        else:
+            template = JINJA2_ENV.get_template("ip_context.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
 @colored_output
@@ -130,8 +135,11 @@ def gnql_query_formatter(results, verbose):
     for result in results:
         if "data" in result:
             for ip_context in result["data"]:
-                if ip_context["seen"]:
-                    metadata = ip_context["metadata"]
+                if (
+                    "internet_scanner_intelligence" in ip_context
+                    and "found" in ip_context["internet_scanner_intelligence"]
+                ):
+                    metadata = ip_context["internet_scanner_intelligence"]["metadata"]
                     metadata["location"] = get_location(metadata)
 
     template = JINJA2_ENV.get_template("gnql_query.txt.j2")
@@ -158,14 +166,6 @@ def analyze_formatter(result, verbose):
 def riot_formatter(results, verbose):
     """Convert RIOT to human-readable text."""
     template = JINJA2_ENV.get_template("riot.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
-def interesting_formatter(results, verbose):
-    """Convert RIOT to human-readable text."""
-    template = JINJA2_ENV.get_template("interesting.txt.j2")
     max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
@@ -236,7 +236,6 @@ FORMATTERS = {
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
         "riot": riot_formatter,
-        "interesting": interesting_formatter,
         "ip-multi": ip_multi_context_formatter,
         "similar": similar_formatter,
         "timeline": timeline_formatter,

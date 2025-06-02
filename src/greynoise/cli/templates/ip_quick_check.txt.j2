@@ -1,10 +1,11 @@
+{% import "macros.txt.j2" as macros with context %}
 {% for ip_quick_check in results %}
-{%- if ip_quick_check.noise and ip_quick_check.riot%}
-<noise>{{ ip_quick_check.ip }}</noise> is classified as <bold>NOISE</bold> and is part of <bold>RIOT</bold>.
-{%- elif ip_quick_check.noise %}
-<noise>{{ ip_quick_check.ip }}</noise> is classified as <bold>NOISE</bold>.
-{%- elif ip_quick_check.riot %}
-<riot>{{ ip_quick_check.ip }}</riot> is part of <bold>RIOT</bold>.
+{%- if ip_quick_check.internet_scanner_intelligence.found and ip_quick_check.business_service_intelligence.found%}
+<noise>{{ ip_quick_check.ip }}</noise> is identified as <bold><red>NOISE</red></bold>, is classified as {{ macros.classification(ip_quick_check.internet_scanner_intelligence.classification) }} and is part of <bold><blue>RIOT</blue></bold> and is Trust Level <value>{{ ip_quick_check.business_service_intelligence.trust_level }}</value>.
+{%- elif ip_quick_check.internet_scanner_intelligence.found %}
+<noise>{{ ip_quick_check.ip }}</noise> is identified as <bold><red>NOISE</red></bold> and is classified as {{ macros.classification(ip_quick_check.internet_scanner_intelligence.classification) }}.
+{%- elif ip_quick_check.business_service_intelligence.found %}
+<riot>{{ ip_quick_check.ip }}</riot> is part of <bold><blue>RIOT</blue></bold> and is Trust Level <value>{{ ip_quick_check.business_service_intelligence.trust_level }}</value>.
 {%- elif ip_quick_check.message %}
 {{ ip_quick_check.message }}
 {%- else %}
