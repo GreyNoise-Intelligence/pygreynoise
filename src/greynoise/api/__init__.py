@@ -153,7 +153,7 @@ class BaseAPIClient:
             else:
                 body = response.text
 
-            LOGGER.debug("API response received %s %s", response.status_code, body)
+            LOGGER.debug("API response received %s", response.status_code)
 
             if response.status_code == 429:
                 raise RateLimitError()
@@ -201,7 +201,6 @@ class BaseAPIClient:
             for future in as_completed(future_to_chunk):
                 try:
                     chunk_results = future.result()
-                    LOGGER.debug(f"Chunked Results: {chunk_results}")
 
                     if first_result_type is None:
                         first_result_type = type(chunk_results)
@@ -218,7 +217,6 @@ class BaseAPIClient:
                                 dict_results[key].extend(value)
                             else:
                                 dict_results[key].append(value)
-                        LOGGER.debug(f"dict results: {dict_results}")
 
                 except Exception as e:
                     LOGGER.error("Error processing batch: %s", str(e))
@@ -247,6 +245,7 @@ class GreyNoise(BaseAPIClient):
 
     NAME = "GreyNoise"
     EP_GNQL = "v3/gnql"
+    EP_GNQL_METADATA = "v3/gnql/metadata"
     EP_GNQL_STATS = "v2/experimental/gnql/stats"
     EP_IP = "v3/ip/{ip_address}"
     EP_NOISE_MULTI = "v3/ip?quick=true"
@@ -447,12 +446,13 @@ class GreyNoise(BaseAPIClient):
                 params["size"] = size
             if scroll is not None:
                 params["scroll"] = scroll
-            response = self._request(self.EP_GNQL, params=params)
-
-        if exclude_raw:
-            if "data" in response:
-                for ip_data in response["data"]:
-                    ip_data["internet_scanner_intelligence"].pop("raw_data")
+            if exclude_raw:
+                LOGGER.debug("Using GNQL Metadata endpoint")
+                endpoint = self.EP_GNQL_METADATA
+            else:
+                LOGGER.debug("Using GNQL Full endpoint")
+                endpoint = self.EP_GNQL
+            response = self._request(endpoint, params=params)
 
         return response
 
