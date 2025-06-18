@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version `3.0.1`_
+================
+**Date**: June 18, 2025
+
+* API client:
+  * Updated `query` command to use GNQL Metadata endpoint when `exclude_raw` is True
+
 Version `3.0.0`_
 ================
 **Date**: June 02, 2025
@@ -467,4 +474,5 @@ Version `0.2.0`_
 .. _`2.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.0.1...2.1.0
 .. _`2.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.1.0...2.2.0
 .. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...2.3.0
-.. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...HEAD
+.. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...v3.0.0
+.. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...HEAD
