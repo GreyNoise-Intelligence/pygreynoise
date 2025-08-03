@@ -44,6 +44,10 @@ class APIConfig:
     cache_max_size: Optional[int] = 1000000
     cache_ttl: Optional[int] = 3600
     use_cache: Optional[bool] = True
+    psychic: Optional[bool] = False
+    psychic_model: Optional[int] = 1
+    psychic_cache_dir: Optional[str] = None
+    psychic_max_age_hours: Optional[int] = 1
 
 
 class BaseAPIClient:
@@ -277,6 +281,18 @@ class GreyNoise(BaseAPIClient):
     def __init__(self, config: APIConfig):
         super().__init__(config)
         self.offering = config.offering
+
+        # Initialize Psychic if enabled
+        self._psychic = None
+        if config.psychic:
+            from greynoise.psychic import Psychic
+            self._psychic = Psychic(
+                api_key=config.api_key,
+                model=config.psychic_model,
+                cache_dir=config.psychic_cache_dir,
+                max_age_hours=config.psychic_max_age_hours,
+                auto_download=True
+            )
 
     def request(
         self,
@@ -1080,3 +1096,69 @@ class GreyNoise(BaseAPIClient):
             response = self._request(endpoint)
 
         return response
+
+    def psychic_lookup(self, ip: str) -> Dict[str, Any]:
+        """
+        Look up an IP address using Psychic offline bitmaps.
+
+        :param ip: IP address to look up
+        :type ip: str
+        :return: Dictionary with IP information from Psychic bitmap
+        :rtype: dict
+        :raises: RuntimeError if psychic is not enabled
+        """
+        if not self._psychic:
+            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+
+        return self._psychic.lookup_ip(ip)
+
+    def psychic_lookup_ips(self, ips: List[str]) -> List[Dict[str, Any]]:
+        """
+        Look up multiple IP addresses using Psychic offline bitmaps.
+
+        :param ips: List of IP addresses to look up
+        :type ips: List[str]
+        :return: List of dictionaries with IP information from Psychic bitmap
+        :rtype: List[dict]
+        :raises: RuntimeError if psychic is not enabled
+        """
+        if not self._psychic:
+            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+
+        return self._psychic.lookup_ips(ips)
+
+    def psychic_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about the loaded Psychic bitmap.
+
+        :return: Dictionary with bitmap statistics
+        :rtype: dict
+        :raises: RuntimeError if psychic is not enabled
+        """
+        if not self._psychic:
+            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+
+        return self._psychic.get_stats()
+
+    def psychic_reload(self) -> None:
+        """
+        Force reload of Psychic bitmap data.
+
+        :raises: RuntimeError if psychic is not enabled
+        """
+        if not self._psychic:
+            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+
+        self._psychic.reload()
+
+    @property
+    def psychic_enabled(self) -> bool:
+        """Check if Psychic is enabled."""
+        return self._psychic is not None
+
+    @property
+    def psychic(self):
+        """Get direct access to the Psychic instance."""
+        if not self._psychic:
+            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+        return self._psychic
