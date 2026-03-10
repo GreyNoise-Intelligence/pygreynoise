@@ -98,6 +98,9 @@ class BaseAPIClient:
         if params is None:
             params = {}
 
+        # Use config proxy when no proxy is explicitly passed
+        proxy = proxy or self.config.proxy
+
         user_agent_parts = ["GreyNoise/{}".format(__version__)]
         if self.config.integration_name:
             user_agent_parts.append("({})".format(self.config.integration_name))
