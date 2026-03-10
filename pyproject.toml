@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "greynoise"
-version = "version=3.0.2"
+version = "3.0.2"
 description = "Abstraction to interact with GreyNoise API."
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8"

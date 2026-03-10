@@ -483,4 +483,4 @@ Version `0.2.0`_
 .. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...2.3.0
 .. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...v3.0.0
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
-.. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...3.0.2
+.. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...HEAD
