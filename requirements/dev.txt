@@ -2,4 +2,4 @@
 -r test.txt
 advbumpversion==1.2.0
 ipython==9.11.0
-tox==4.26.0
+tox==4.50.3
