@@ -1,5 +1,11 @@
 # Requirements needed to develop the application
 -r test.txt
 advbumpversion==1.2.0
-ipython==9.11.0
-tox==4.26.0
+ipython==8.13.0;python_version=="3.8"
+ipython==8.18.1;python_version=="3.9"
+ipython==8.38.0;python_version=="3.10"
+ipython==9.10.0;python_version=="3.11"
+ipython==9.11.0;python_version>="3.12"
+tox==4.25.0;python_version=="3.8"
+tox==4.30.3;python_version=="3.9"
+tox==4.50.3;python_version>="3.10"

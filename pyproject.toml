@@ -28,17 +28,22 @@ classifiers = [
 ]
 keywords = ["internet", "scanning", "threat intelligence", "security"]
 dependencies = [
-    "Click<=8.1.8",
-    "ansimarkup",
-    "cachetools",
-    "colorama",
-    "click-default-group",
-    "click-repl",
-    "dict2xml",
-    "jinja2",
-    "more-itertools>=8.14.0",
-    "requests",
-    "six",
+    "Click<=8.1.8; python_version < '3.10'",
+    "Click==8.3.1; python_version >= '3.10'",
+    "ansimarkup==2.2.0",
+    "cachetools==5.5.2; python_version == '3.8'",
+    "cachetools==6.2.6; python_version == '3.9'",
+    "cachetools==7.0.5; python_version >= '3.10'",
+    "colorama==0.4.6",
+    "click-default-group==1.2.4",
+    "click-repl==0.3.0",
+    "dict2xml==1.7.8",
+    "jinja2==3.1.6",
+    "more-itertools==10.5.0; python_version == '3.8'",
+    "more-itertools==10.8.0; python_version >= '3.9'",
+    "requests==2.32.4; python_version == '3.8'",
+    "requests==2.32.5; python_version >= '3.9'",
+    "six==1.17.0",
 ]
 
 [project.urls]
