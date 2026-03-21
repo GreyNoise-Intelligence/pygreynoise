@@ -460,8 +460,9 @@ class PsychicBitmapParser:
                             tag_idx_data = f.read(2)
                             if len(tag_idx_data) < 2:
                                 self._log(
-                                    f"ERROR: Insufficient data for tag index {j} at mapping {i}, \
-                                        expected 2 bytes, got {len(tag_idx_data)}"
+                                    f"ERROR: Insufficient data for tag index {j} at \
+                                        mapping {i}, expected 2 bytes, \
+                                            got {len(tag_idx_data)}"
                                 )
                                 raise ValueError(
                                     f"Insufficient data for tag index {j} \
@@ -486,8 +487,9 @@ class PsychicBitmapParser:
                             cve_idx_data = f.read(2)
                             if len(cve_idx_data) < 2:
                                 self._log(
-                                    f"ERROR: Insufficient data for CVE index {j} at mapping {i}, \
-                                        expected 2 bytes, got {len(cve_idx_data)}"
+                                    f"ERROR: Insufficient data for CVE index {j} \
+                                        at mapping {i}, expected 2 bytes, \
+                                            got {len(cve_idx_data)}"
                                 )
                                 raise ValueError(
                                     f"Insufficient data for CVE index {j} \
