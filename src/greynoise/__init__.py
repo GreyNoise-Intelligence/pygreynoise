@@ -11,3 +11,4 @@ from greynoise.__version__ import (  # noqa
     __version__,
 )
 from greynoise.api import GreyNoise  # noqa
+from greynoise.psychic import Psychic  # noqa
