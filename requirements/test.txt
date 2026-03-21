@@ -1,5 +1,6 @@
 black==24.8.0;python_version=="3.8"
-black==26.3.1;python_version>="3.9"
+black==25.11.0;python_version=="3.9"
+black==26.3.1;python_version>="3.10"
 flake8==7.1.2;python_version=="3.8"
 flake8==7.2.0;python_version>="3.9"
 isort==5.13.2;python_version=="3.8"
