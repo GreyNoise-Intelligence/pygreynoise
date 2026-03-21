@@ -526,13 +526,11 @@ class TestConfiguration:
     def test_invalid_configuration(self, tmp_path):
         """Test handling of invalid configuration."""
         config_file = tmp_path / "config.ini"
-        config_file.write_text(
-            """
+        config_file.write_text("""
 [greynoise]
 api_key = test-key
 timeout = invalid
-"""
-        )
+""")
 
         with patch("greynoise.util.CONFIG_FILE", str(config_file)):
             print("CONFIG_FILE")

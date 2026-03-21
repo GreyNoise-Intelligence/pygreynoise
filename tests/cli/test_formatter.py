@@ -150,12 +150,10 @@ class TestJSONFormatter(object):
 
     def test_json_format(self):
         """Format to json."""
-        assert json_formatter({"a": "result"}, _verbose=False) == textwrap.dedent(
-            """\
+        assert json_formatter({"a": "result"}, _verbose=False) == textwrap.dedent("""\
             {
                 "a": "result"
-            }"""
-        )
+            }""")
 
 
 class TestXMLFormatter(object):
@@ -163,13 +161,11 @@ class TestXMLFormatter(object):
 
     def test_xml_format(self):
         """Format to xml."""
-        assert xml_formatter({"a": "result"}, _verbose=False) == textwrap.dedent(
-            """\
+        assert xml_formatter({"a": "result"}, _verbose=False) == textwrap.dedent("""\
             <?xml version="1.0" ?>
             <root>
                <a>result</a>
-            </root>"""
-        )
+            </root>""")
 
 
 class TestIPContextFormatter:
@@ -193,18 +189,14 @@ class TestIPContextFormatter:
                         "business_service_intelligence": {"found": False},
                     },
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address>
 
 
-                        """
-                    )
-                )
+                        """))
                 + EXAMPLE_IP_CONTEXT_OUTPUT
                 + ANSI_MARKUP.parse(
                     textwrap.dedent(
@@ -303,9 +295,7 @@ class TestGNQLQueryFormatter(object):
                         },
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -318,10 +308,7 @@ class TestGNQLQueryFormatter(object):
                         └───────────────────────────┘
 
 
-                    """
-                    )
-                )
-                + EXAMPLE_IP_CONTEXT_OUTPUT,
+                    """)) + EXAMPLE_IP_CONTEXT_OUTPUT,
             ),
         ),
     )
@@ -397,9 +384,7 @@ class TestGNQLStatsFormatter(object):
                         },
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -443,9 +428,7 @@ class TestGNQLStatsFormatter(object):
 
                         <header>Tags</header>:
                         - <key><tag>     </key> <value>1</value>
-                        - <key><long_tag></key> <value>1</value>"""
-                    )
-                ),
+                        - <key><long_tag></key> <value>1</value>""")),
             ),
         ),
     )
@@ -531,9 +514,7 @@ class TestRIOTFormatter:
                         "request_metadata": {"restricted_fields": []},
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                     <riot>0.0.0.0</riot> is in RIOT dataset.
 
                               <header>OVERVIEW</header>
@@ -546,9 +527,7 @@ class TestRIOTFormatter:
                     <key>Description</key>: <value><description></value>
                     <key>Explanation</key>: <value><explanation></value>
                     <key>Last Updated</key>: <value><last_updated></value>
-                    <key>Reference</key>: <value><reference></value>"""
-                    )
-                ),
+                    <key>Reference</key>: <value><reference></value>""")),
             ),
         ),
     )

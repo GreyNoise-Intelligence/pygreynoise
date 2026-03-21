@@ -290,10 +290,8 @@ class PsychicBitmapParser:
                 self._log(f"Parsing {name} bitmap")
                 self.bitmaps[name] = RoaringBitmapReader()
                 self.bitmaps[name].read_from(f)
-                self._log(
-                    f"Loaded {name} bitmap with \
-                    {self.bitmaps[name].num_containers} containers"
-                )
+                self._log(f"Loaded {name} bitmap with \
+                    {self.bitmaps[name].num_containers} containers")
 
     def _parse_model3(self, f: BinaryIO):
         """Parse Model 3 data (5 bitmaps + metadata)."""
@@ -426,10 +424,8 @@ class PsychicBitmapParser:
                     # Read IP
                     ip_data = f.read(4)
                     if len(ip_data) < 4:
-                        self._log(
-                            f"ERROR: Insufficient data for IP at mapping {i}, \
-                            expected 4 bytes, got {len(ip_data)}"
-                        )
+                        self._log(f"ERROR: Insufficient data for IP at mapping {i}, \
+                            expected 4 bytes, got {len(ip_data)}")
                         break
                     ip_int = struct.unpack(">I", ip_data)[0]
 
@@ -464,10 +460,8 @@ class PsychicBitmapParser:
                                         mapping {i}, expected 2 bytes, \
                                             got {len(tag_idx_data)}"
                                 )
-                                raise ValueError(
-                                    f"Insufficient data for tag index {j} \
-                                        at mapping {i}"
-                                )
+                                raise ValueError(f"Insufficient data for tag index {j} \
+                                        at mapping {i}")
                             tag_idx = struct.unpack(">H", tag_idx_data)[0]
                             tag_indices.append(tag_idx)
                         metadata["ip_tags"][ip_int] = tag_indices
@@ -486,15 +480,11 @@ class PsychicBitmapParser:
                         for j in range(cve_count):
                             cve_idx_data = f.read(2)
                             if len(cve_idx_data) < 2:
-                                self._log(
-                                    f"ERROR: Insufficient data for CVE index {j} \
+                                self._log(f"ERROR: Insufficient data for CVE index {j} \
                                         at mapping {i}, expected 2 bytes, \
-                                            got {len(cve_idx_data)}"
-                                )
-                                raise ValueError(
-                                    f"Insufficient data for CVE index {j} \
-                                        at mapping {i}"
-                                )
+                                            got {len(cve_idx_data)}")
+                                raise ValueError(f"Insufficient data for CVE index {j} \
+                                        at mapping {i}")
                             cve_idx = struct.unpack(">H", cve_idx_data)[0]
                             cve_indices.append(cve_idx)
                         metadata["ip_cves"][ip_int] = cve_indices
