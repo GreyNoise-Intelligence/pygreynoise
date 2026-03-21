@@ -5,17 +5,15 @@ This module provides offline bitmap functionality for GreyNoise data,
 allowing for extremely fast IP lookups without API calls.
 """
 
-import struct
 import ipaddress
-import json
+import logging
 import os
+import struct
+import tempfile
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Tuple, Optional, Set, BinaryIO, Union
 from pathlib import Path
-import tempfile
-import hashlib
-import logging
+from typing import Any, BinaryIO, Dict, List, Optional, Set, Tuple
 
 import requests
 
@@ -24,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 class RoaringBitmapReader:
     """
-    Pure Python implementation of Roaring Bitmap reader for the standard serialized format.
+    Pure Python implementation of Roaring Bitmap reader for the
+    standard serialized format.
     """
 
     SERIAL_COOKIE_NO_RUNCONTAINER = 12346  # 0x303a
@@ -44,19 +43,19 @@ class RoaringBitmapReader:
         if len(cookie_data) < 4:
             return  # Empty bitmap
 
-        cookie = struct.unpack('<I', cookie_data)[0]
+        cookie = struct.unpack("<I", cookie_data)[0]
 
         if cookie not in [self.SERIAL_COOKIE_NO_RUNCONTAINER, self.SERIAL_COOKIE]:
-            raise ValueError(f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})")
-
-        has_run_containers = (cookie == self.SERIAL_COOKIE)
+            raise ValueError(
+                f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})"
+            )
 
         if cookie == self.SERIAL_COOKIE_NO_RUNCONTAINER:
             # Cookie followed by container count (4 bytes)
             count_data = file.read(4)
             if len(count_data) < 4:
                 raise ValueError("Invalid bitmap: missing container count")
-            self.num_containers = struct.unpack('<I', count_data)[0]
+            self.num_containers = struct.unpack("<I", count_data)[0]
         else:
             # For SERIAL_COOKIE, the upper 16 bits contain (num_containers - 1)
             # This case is not used by psychic2 based on our analysis
@@ -73,13 +72,13 @@ class RoaringBitmapReader:
             key_data = file.read(2)
             if len(key_data) < 2:
                 raise ValueError("Insufficient data for key")
-            keys.append(struct.unpack('<H', key_data)[0])
+            keys.append(struct.unpack("<H", key_data)[0])
 
             # Read cardinality (stored as card-1)
             card_data = file.read(2)
             if len(card_data) < 2:
                 raise ValueError("Insufficient data for cardinality")
-            cardinalities.append(struct.unpack('<H', card_data)[0] + 1)
+            cardinalities.append(struct.unpack("<H", card_data)[0] + 1)
 
         # Read offsets if present
         # Check if we need to skip offsets
@@ -101,7 +100,7 @@ class RoaringBitmapReader:
                     val_data = file.read(2)
                     if len(val_data) < 2:
                         raise ValueError(f"Insufficient data for array container {i}")
-                    values.add(struct.unpack('<H', val_data)[0])
+                    values.add(struct.unpack("<H", val_data)[0])
                 self.containers[key] = values
             else:
                 # Bitmap container (8KB = 8192 bytes = 1024 uint64s)
@@ -112,7 +111,7 @@ class RoaringBitmapReader:
                 # Convert bitmap to set of values
                 values = set()
                 for j in range(1024):  # 1024 uint64 values
-                    word = struct.unpack('<Q', bitmap_data[j*8:(j+1)*8])[0]
+                    word = struct.unpack("<Q", bitmap_data[j * 8 : (j + 1) * 8])[0]
                     if word != 0:
                         # Extract set bits
                         for bit in range(64):
@@ -165,37 +164,37 @@ class PsychicBitmapParser:
         if len(data) < offset + 34:
             raise ValueError("Invalid header: insufficient data")
 
-        header_data = data[offset:offset + 34]
+        header_data = data[offset : offset + 34]
 
         magic = header_data[0:2]
-        if magic != b'GN':
+        if magic != b"GN":
             raise ValueError(f"Invalid magic bytes: {magic.hex()}")
 
         model_id = header_data[2]
         version = header_data[3]
 
-        gen_days = struct.unpack('>H', header_data[4:6])[0]
-        start_days = struct.unpack('>H', header_data[6:8])[0]
-        end_days = struct.unpack('>H', header_data[8:10])[0]
+        gen_days = struct.unpack(">H", header_data[4:6])[0]
+        start_days = struct.unpack(">H", header_data[6:8])[0]
+        end_days = struct.unpack(">H", header_data[8:10])[0]
 
         # Parse user info (bytes 10-25)
         user_info = header_data[10:26]
 
         # Parse downloaded timestamp (bytes 26-33)
-        downloaded_timestamp = struct.unpack('>Q', header_data[26:34])[0]
+        downloaded_timestamp = struct.unpack(">Q", header_data[26:34])[0]
 
         # Calculate dates
         gen_base = datetime(2017, 9, 1)
         date_base = datetime(2024, 9, 1)
 
         header = {
-            'model': model_id + 1,
-            'version': version,
-            'generation_date': gen_base + timedelta(days=gen_days),
-            'start_date': date_base + timedelta(days=start_days),
-            'end_date': date_base + timedelta(days=end_days),
-            'user_info': user_info,
-            'downloaded_timestamp': downloaded_timestamp
+            "model": model_id + 1,
+            "version": version,
+            "generation_date": gen_base + timedelta(days=gen_days),
+            "start_date": date_base + timedelta(days=start_days),
+            "end_date": date_base + timedelta(days=end_days),
+            "user_info": user_info,
+            "downloaded_timestamp": downloaded_timestamp,
         }
 
         return header, offset + 34
@@ -206,10 +205,10 @@ class PsychicBitmapParser:
 
         # Parse header
         self.header, offset = self._parse_header(self.data)
-        self.model = self.header['model']
-        self.version = self.header['version']
-        self.start_date = self.header['start_date']
-        self.end_date = self.header['end_date']
+        self.model = self.header["model"]
+        self.version = self.header["version"]
+        self.start_date = self.header["start_date"]
+        self.end_date = self.header["end_date"]
 
         self._log(f"Model: {self.model}, Version: {self.version}")
         self._log(f"Date range: {self.start_date} to {self.end_date}")
@@ -233,26 +232,36 @@ class PsychicBitmapParser:
         self._log("Parsing Model 1 bitmap")
 
         # Single bitmap for seen IPs
-        self.bitmaps['seen'] = RoaringBitmapReader()
-        self.bitmaps['seen'].read_from(f)
+        self.bitmaps["seen"] = RoaringBitmapReader()
+        self.bitmaps["seen"].read_from(f)
 
-        self._log(f"Loaded seen bitmap with {self.bitmaps['seen'].num_containers} containers")
+        self._log(
+            f"Loaded seen bitmap with {self.bitmaps['seen'].num_containers} containers"
+        )
 
     def _parse_model2(self, f: BinaryIO):
         """Parse Model 2 data (5 bitmaps, possibly multi-date)."""
         if self.version == 2:
             # Multi-date format
-            date_count = struct.unpack('>H', f.read(2))[0]
+            date_count = struct.unpack(">H", f.read(2))[0]
             self._log(f"Multi-date format with {date_count} dates")
 
             # Store bitmaps for each date
             for i in range(date_count):
-                date_offset = struct.unpack('>H', f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
-                date_str = date.strftime('%Y-%m-%d')
+                date_offset = struct.unpack(">H", f.read(2))[0]
+                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(
+                    days=date_offset
+                )
+                date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
-                bitmap_names = ['seen', 'benign', 'malicious', 'suspicious', '3wh_completed']
+                bitmap_names = [
+                    "seen",
+                    "benign",
+                    "malicious",
+                    "suspicious",
+                    "3wh_completed",
+                ]
                 self.date_bitmaps[date_str] = {}
 
                 for name in bitmap_names:
@@ -260,38 +269,57 @@ class PsychicBitmapParser:
                     bitmap = RoaringBitmapReader()
                     bitmap.read_from(f)
                     self.date_bitmaps[date_str][name] = bitmap
-                    self._log(f"Loaded {name} bitmap with {bitmap.num_containers} containers")
+                    self._log(
+                        f"Loaded {name} bitmap with {bitmap.num_containers} containers"
+                    )
 
                 # Also store the last date's data in self.bitmaps for compatibility
                 if i == date_count - 1:
                     self.bitmaps = self.date_bitmaps[date_str]
         else:
             # Single date format
-            bitmap_names = ['seen', 'benign', 'malicious', 'suspicious', '3wh_completed']
+            bitmap_names = [
+                "seen",
+                "benign",
+                "malicious",
+                "suspicious",
+                "3wh_completed",
+            ]
 
             for name in bitmap_names:
                 self._log(f"Parsing {name} bitmap")
                 self.bitmaps[name] = RoaringBitmapReader()
                 self.bitmaps[name].read_from(f)
-                self._log(f"Loaded {name} bitmap with {self.bitmaps[name].num_containers} containers")
+                self._log(
+                    f"Loaded {name} bitmap with \
+                    {self.bitmaps[name].num_containers} containers"
+                )
 
     def _parse_model3(self, f: BinaryIO):
         """Parse Model 3 data (5 bitmaps + metadata)."""
         if self.version == 2:
             # Multi-date format with per-date metadata
-            date_count = struct.unpack('>H', f.read(2))[0]
+            date_count = struct.unpack(">H", f.read(2))[0]
             self._log(f"Multi-date format with {date_count} dates")
 
             self.date_metadata = {}  # Store metadata for each date
 
             for i in range(date_count):
-                date_offset = struct.unpack('>H', f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
-                date_str = date.strftime('%Y-%m-%d')
+                date_offset = struct.unpack(">H", f.read(2))[0]
+                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(
+                    days=date_offset
+                )
+                date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
                 # Parse bitmaps for this date
-                bitmap_names = ['seen', 'benign', 'malicious', 'suspicious', '3wh_completed']
+                bitmap_names = [
+                    "seen",
+                    "benign",
+                    "malicious",
+                    "suspicious",
+                    "3wh_completed",
+                ]
                 self.date_bitmaps[date_str] = {}
 
                 for name in bitmap_names:
@@ -299,7 +327,9 @@ class PsychicBitmapParser:
                     bitmap = RoaringBitmapReader()
                     bitmap.read_from(f)
                     self.date_bitmaps[date_str][name] = bitmap
-                    self._log(f"Loaded {name} bitmap with {bitmap.num_containers} containers")
+                    self._log(
+                        f"Loaded {name} bitmap with {bitmap.num_containers} containers"
+                    )
 
                 # Parse metadata for this date
                 self._log(f"Parsing metadata for date {date_str}")
@@ -323,124 +353,149 @@ class PsychicBitmapParser:
         metadata = {}
 
         # Actor list
-        actor_count = struct.unpack('>H', f.read(2))[0]
-        metadata['actors'] = []
+        actor_count = struct.unpack(">H", f.read(2))[0]
+        metadata["actors"] = []
         for i in range(actor_count):
-            length = struct.unpack('>H', f.read(2))[0]
-            actor = f.read(length).decode('utf-8')
-            metadata['actors'].append(actor)
+            length = struct.unpack(">H", f.read(2))[0]
+            actor = f.read(length).decode("utf-8")
+            metadata["actors"].append(actor)
         self._log(f"Loaded {actor_count} actors")
 
         # Tag list
-        tag_count = struct.unpack('>H', f.read(2))[0]
-        metadata['tags'] = []
+        tag_count = struct.unpack(">H", f.read(2))[0]
+        metadata["tags"] = []
         for i in range(tag_count):
-            length = struct.unpack('>H', f.read(2))[0]
-            tag = f.read(length).decode('utf-8')
-            metadata['tags'].append(tag)
+            length = struct.unpack(">H", f.read(2))[0]
+            tag = f.read(length).decode("utf-8")
+            metadata["tags"].append(tag)
         self._log(f"Loaded {tag_count} tags")
 
         # CVE list
-        cve_count = struct.unpack('>H', f.read(2))[0]
-        metadata['cves'] = []
+        cve_count = struct.unpack(">H", f.read(2))[0]
+        metadata["cves"] = []
         for i in range(cve_count):
-            length = struct.unpack('>H', f.read(2))[0]
-            cve = f.read(length).decode('utf-8')
-            metadata['cves'].append(cve)
+            length = struct.unpack(">H", f.read(2))[0]
+            cve = f.read(length).decode("utf-8")
+            metadata["cves"].append(cve)
         self._log(f"Loaded {cve_count} CVEs")
 
         # IP mappings
-        metadata['ip_actors'] = {}
-        metadata['ip_tags'] = {}
-        metadata['ip_cves'] = {}
+        metadata["ip_actors"] = {}
+        metadata["ip_tags"] = {}
+        metadata["ip_cves"] = {}
 
         # Version 0 uses separate sections, version 2 uses combined format
         if self.version == 0:
-            # Version 0 format: separate sections for IP-Actor, IP-Tag, and IP-CVE mappings
+            # Version 0 format: separate sections for IP-Actor, IP-Tag,
+            # and IP-CVE mappings
             # Read IP->Actor mappings
-            ip_actor_count = struct.unpack('>I', f.read(4))[0]
+            ip_actor_count = struct.unpack(">I", f.read(4))[0]
             self._log(f"Loading {ip_actor_count} IP-actor mappings")
             for i in range(ip_actor_count):
-                ip_int = struct.unpack('>I', f.read(4))[0]
-                actor_idx = struct.unpack('>H', f.read(2))[0]
-                metadata['ip_actors'][ip_int] = actor_idx
+                ip_int = struct.unpack(">I", f.read(4))[0]
+                actor_idx = struct.unpack(">H", f.read(2))[0]
+                metadata["ip_actors"][ip_int] = actor_idx
 
             # Read IP->Tag mappings
-            ip_tag_count = struct.unpack('>I', f.read(4))[0]
+            ip_tag_count = struct.unpack(">I", f.read(4))[0]
             self._log(f"Loading {ip_tag_count} IP-tag mappings")
             for i in range(ip_tag_count):
-                ip_int = struct.unpack('>I', f.read(4))[0]
-                tag_count = struct.unpack('>H', f.read(2))[0]
+                ip_int = struct.unpack(">I", f.read(4))[0]
+                tag_count = struct.unpack(">H", f.read(2))[0]
                 tag_indices = []
                 for _ in range(tag_count):
-                    tag_indices.append(struct.unpack('>H', f.read(2))[0])
-                metadata['ip_tags'][ip_int] = tag_indices
+                    tag_indices.append(struct.unpack(">H", f.read(2))[0])
+                metadata["ip_tags"][ip_int] = tag_indices
 
             # Read IP->CVE mappings
-            ip_cve_count = struct.unpack('>I', f.read(4))[0]
+            ip_cve_count = struct.unpack(">I", f.read(4))[0]
             self._log(f"Loading {ip_cve_count} IP-CVE mappings")
             for i in range(ip_cve_count):
-                ip_int = struct.unpack('>I', f.read(4))[0]
-                cve_count = struct.unpack('>H', f.read(2))[0]
+                ip_int = struct.unpack(">I", f.read(4))[0]
+                cve_count = struct.unpack(">H", f.read(2))[0]
                 cve_indices = []
                 for _ in range(cve_count):
-                    cve_indices.append(struct.unpack('>H', f.read(2))[0])
-                metadata['ip_cves'][ip_int] = cve_indices
+                    cve_indices.append(struct.unpack(">H", f.read(2))[0])
+                metadata["ip_cves"][ip_int] = cve_indices
         else:
             # Version 2 format: combined mapping format
-            mapping_count = struct.unpack('>I', f.read(4))[0]
+            mapping_count = struct.unpack(">I", f.read(4))[0]
             self._log(f"Loading {mapping_count} IP mappings")
             for i in range(mapping_count):
                 try:
                     # Read IP
                     ip_data = f.read(4)
                     if len(ip_data) < 4:
-                        self._log(f"ERROR: Insufficient data for IP at mapping {i}, expected 4 bytes, got {len(ip_data)}")
+                        self._log(
+                            f"ERROR: Insufficient data for IP at mapping {i}, \
+                            expected 4 bytes, got {len(ip_data)}"
+                        )
                         break
-                    ip_int = struct.unpack('>I', ip_data)[0]
+                    ip_int = struct.unpack(">I", ip_data)[0]
 
                     # Read actor index (0xFFFF means no actor)
                     actor_data = f.read(2)
                     if len(actor_data) < 2:
-                        self._log(f"ERROR: Insufficient data for actor index at mapping {i}, expected 2 bytes, got {len(actor_data)}")
+                        self._log(
+                            f"ERROR: Insufficient data for actor index at mapping {i}, \
+                                expected 2 bytes, got {len(actor_data)}"
+                        )
                         break
-                    actor_idx = struct.unpack('>H', actor_data)[0]
-                    if actor_idx != 0xFFFF and actor_idx < len(metadata['actors']):
-                        metadata['ip_actors'][ip_int] = actor_idx
+                    actor_idx = struct.unpack(">H", actor_data)[0]
+                    if actor_idx != 0xFFFF and actor_idx < len(metadata["actors"]):
+                        metadata["ip_actors"][ip_int] = actor_idx
 
                     # Read tag count and indices
                     tag_count_data = f.read(2)
                     if len(tag_count_data) < 2:
-                        self._log(f"ERROR: Insufficient data for tag count at mapping {i}, expected 2 bytes, got {len(tag_count_data)}")
+                        self._log(
+                            f"ERROR: Insufficient data for tag count at mapping {i}, \
+                                expected 2 bytes, got {len(tag_count_data)}"
+                        )
                         break
-                    tag_count = struct.unpack('>H', tag_count_data)[0]
+                    tag_count = struct.unpack(">H", tag_count_data)[0]
                     if tag_count > 0:
                         tag_indices = []
                         for j in range(tag_count):
                             tag_idx_data = f.read(2)
                             if len(tag_idx_data) < 2:
-                                self._log(f"ERROR: Insufficient data for tag index {j} at mapping {i}, expected 2 bytes, got {len(tag_idx_data)}")
-                                raise ValueError(f"Insufficient data for tag index {j} at mapping {i}")
-                            tag_idx = struct.unpack('>H', tag_idx_data)[0]
+                                self._log(
+                                    f"ERROR: Insufficient data for tag index {j} at mapping {i}, \
+                                        expected 2 bytes, got {len(tag_idx_data)}"
+                                )
+                                raise ValueError(
+                                    f"Insufficient data for tag index {j} \
+                                        at mapping {i}"
+                                )
+                            tag_idx = struct.unpack(">H", tag_idx_data)[0]
                             tag_indices.append(tag_idx)
-                        metadata['ip_tags'][ip_int] = tag_indices
+                        metadata["ip_tags"][ip_int] = tag_indices
 
                     # Read CVE count and indices
                     cve_count_data = f.read(2)
                     if len(cve_count_data) < 2:
-                        self._log(f"ERROR: Insufficient data for CVE count at mapping {i}, expected 2 bytes, got {len(cve_count_data)}")
+                        self._log(
+                            f"ERROR: Insufficient data for CVE count at mapping {i}, \
+                                expected 2 bytes, got {len(cve_count_data)}"
+                        )
                         break
-                    cve_count = struct.unpack('>H', cve_count_data)[0]
+                    cve_count = struct.unpack(">H", cve_count_data)[0]
                     if cve_count > 0:
                         cve_indices = []
                         for j in range(cve_count):
                             cve_idx_data = f.read(2)
                             if len(cve_idx_data) < 2:
-                                self._log(f"ERROR: Insufficient data for CVE index {j} at mapping {i}, expected 2 bytes, got {len(cve_idx_data)}")
-                                raise ValueError(f"Insufficient data for CVE index {j} at mapping {i}")
-                            cve_idx = struct.unpack('>H', cve_idx_data)[0]
+                                self._log(
+                                    f"ERROR: Insufficient data for CVE index {j} at mapping {i}, \
+                                        expected 2 bytes, got {len(cve_idx_data)}"
+                                )
+                                raise ValueError(
+                                    f"Insufficient data for CVE index {j} \
+                                        at mapping {i}"
+                                )
+                            cve_idx = struct.unpack(">H", cve_idx_data)[0]
                             cve_indices.append(cve_idx)
-                        metadata['ip_cves'][ip_int] = cve_indices
+                        metadata["ip_cves"][ip_int] = cve_indices
                 except Exception as e:
                     self._log(f"ERROR at mapping {i}: {e}")
                     raise
@@ -452,30 +507,30 @@ class PsychicBitmapParser:
         try:
             ip = ipaddress.IPv4Address(ip_str)
             ip_int = int(ip)
-        except:
+        except ValueError:
             raise ValueError(f"Invalid IP address: {ip_str}")
 
         # For multi-date format, check all dates
         if self.version == 2 and self.model == 3:
             results = []
             for date_str, bitmaps in self.date_bitmaps.items():
-                if bitmaps['seen'].contains(ip_int):
+                if bitmaps["seen"].contains(ip_int):
                     result = {
-                        'ip': ip_str,
-                        'date': date_str,
-                        'seen': True,
-                        '3wh_completed': bitmaps['3wh_completed'].contains(ip_int)
+                        "ip": ip_str,
+                        "date": date_str,
+                        "seen": True,
+                        "3wh_completed": bitmaps["3wh_completed"].contains(ip_int),
                     }
 
                     # Determine classification
-                    if bitmaps['benign'].contains(ip_int):
-                        result['classification'] = 'benign'
-                    elif bitmaps['malicious'].contains(ip_int):
-                        result['classification'] = 'malicious'
-                    elif bitmaps['suspicious'].contains(ip_int):
-                        result['classification'] = 'suspicious'
+                    if bitmaps["benign"].contains(ip_int):
+                        result["classification"] = "benign"
+                    elif bitmaps["malicious"].contains(ip_int):
+                        result["classification"] = "malicious"
+                    elif bitmaps["suspicious"].contains(ip_int):
+                        result["classification"] = "suspicious"
                     else:
-                        result['classification'] = 'unknown'
+                        result["classification"] = "unknown"
 
                     results.append(result)
 
@@ -484,35 +539,32 @@ class PsychicBitmapParser:
                 return results[0]  # Return first occurrence
             else:
                 return {
-                    'ip': ip_str,
-                    'date': self.header['start_date'].strftime('%Y-%m-%d'),
-                    'seen': False,
-                    '3wh_completed': False,
-                    'classification': 'unknown'
+                    "ip": ip_str,
+                    "date": self.header["start_date"].strftime("%Y-%m-%d"),
+                    "seen": False,
+                    "3wh_completed": False,
+                    "classification": "unknown",
                 }
 
-        result = {
-            'ip': ip_str,
-            'date': self.header['start_date'].strftime('%Y-%m-%d')
-        }
+        result = {"ip": ip_str, "date": self.header["start_date"].strftime("%Y-%m-%d")}
 
         if self.model == 1:
-            result['seen'] = self.bitmaps['seen'].contains(ip_int)
+            result["seen"] = self.bitmaps["seen"].contains(ip_int)
 
         elif self.model == 2:
             # Model 2 data
-            result['seen'] = self.bitmaps['seen'].contains(ip_int)
-            result['3wh_completed'] = self.bitmaps['3wh_completed'].contains(ip_int)
+            result["seen"] = self.bitmaps["seen"].contains(ip_int)
+            result["3wh_completed"] = self.bitmaps["3wh_completed"].contains(ip_int)
 
             # Determine classification
-            if self.bitmaps['benign'].contains(ip_int):
-                result['classification'] = 'benign'
-            elif self.bitmaps['malicious'].contains(ip_int):
-                result['classification'] = 'malicious'
-            elif self.bitmaps['suspicious'].contains(ip_int):
-                result['classification'] = 'suspicious'
+            if self.bitmaps["benign"].contains(ip_int):
+                result["classification"] = "benign"
+            elif self.bitmaps["malicious"].contains(ip_int):
+                result["classification"] = "malicious"
+            elif self.bitmaps["suspicious"].contains(ip_int):
+                result["classification"] = "suspicious"
             else:
-                result['classification'] = 'unknown'
+                result["classification"] = "unknown"
 
         elif self.model == 3:
             # For Model 3, handle both single-date and multi-date formats
@@ -520,43 +572,47 @@ class PsychicBitmapParser:
                 # Multi-date format, check all dates
                 results = []
                 for date_str, bitmaps in self.date_bitmaps.items():
-                    if bitmaps['seen'].contains(ip_int):
+                    if bitmaps["seen"].contains(ip_int):
                         date_result = {
-                            'ip': ip_str,
-                            'date': date_str,
-                            'seen': True,
-                            '3wh_completed': bitmaps['3wh_completed'].contains(ip_int)
+                            "ip": ip_str,
+                            "date": date_str,
+                            "seen": True,
+                            "3wh_completed": bitmaps["3wh_completed"].contains(ip_int),
                         }
 
                         # Determine classification
-                        if bitmaps['benign'].contains(ip_int):
-                            date_result['classification'] = 'benign'
-                        elif bitmaps['malicious'].contains(ip_int):
-                            date_result['classification'] = 'malicious'
-                        elif bitmaps['suspicious'].contains(ip_int):
-                            date_result['classification'] = 'suspicious'
+                        if bitmaps["benign"].contains(ip_int):
+                            date_result["classification"] = "benign"
+                        elif bitmaps["malicious"].contains(ip_int):
+                            date_result["classification"] = "malicious"
+                        elif bitmaps["suspicious"].contains(ip_int):
+                            date_result["classification"] = "suspicious"
                         else:
-                            date_result['classification'] = 'unknown'
+                            date_result["classification"] = "unknown"
 
                         # Add metadata for this date
                         metadata = self.date_metadata.get(date_str, {})
-                        if ip_int in metadata.get('ip_actors', {}):
-                            actor_idx = metadata['ip_actors'][ip_int]
-                            date_result['actor'] = metadata['actors'][actor_idx]
+                        if ip_int in metadata.get("ip_actors", {}):
+                            actor_idx = metadata["ip_actors"][ip_int]
+                            date_result["actor"] = metadata["actors"][actor_idx]
                         else:
-                            date_result['actor'] = "unknown"
+                            date_result["actor"] = "unknown"
 
-                        if ip_int in metadata.get('ip_tags', {}):
-                            tag_indices = metadata['ip_tags'][ip_int]
-                            date_result['tags'] = [metadata['tags'][idx] for idx in tag_indices]
+                        if ip_int in metadata.get("ip_tags", {}):
+                            tag_indices = metadata["ip_tags"][ip_int]
+                            date_result["tags"] = [
+                                metadata["tags"][idx] for idx in tag_indices
+                            ]
                         else:
-                            date_result['tags'] = []
+                            date_result["tags"] = []
 
-                        if ip_int in metadata.get('ip_cves', {}):
-                            cve_indices = metadata['ip_cves'][ip_int]
-                            date_result['cves'] = [metadata['cves'][idx] for idx in cve_indices]
+                        if ip_int in metadata.get("ip_cves", {}):
+                            cve_indices = metadata["ip_cves"][ip_int]
+                            date_result["cves"] = [
+                                metadata["cves"][idx] for idx in cve_indices
+                            ]
                         else:
-                            date_result['cves'] = []
+                            date_result["cves"] = []
 
                         results.append(date_result)
 
@@ -565,75 +621,81 @@ class PsychicBitmapParser:
                     return results[0]
                 else:
                     return {
-                        'ip': ip_str,
-                        'date': self.header['start_date'].strftime('%Y-%m-%d'),
-                        'seen': False,
-                        '3wh_completed': False,
-                        'classification': 'unknown',
-                        'actor': 'unknown',
-                        'tags': [],
-                        'cves': []
+                        "ip": ip_str,
+                        "date": self.header["start_date"].strftime("%Y-%m-%d"),
+                        "seen": False,
+                        "3wh_completed": False,
+                        "classification": "unknown",
+                        "actor": "unknown",
+                        "tags": [],
+                        "cves": [],
                     }
             else:
                 # Single-date format
-                result['seen'] = self.bitmaps['seen'].contains(ip_int)
-                result['3wh_completed'] = self.bitmaps['3wh_completed'].contains(ip_int)
+                result["seen"] = self.bitmaps["seen"].contains(ip_int)
+                result["3wh_completed"] = self.bitmaps["3wh_completed"].contains(ip_int)
 
                 # Determine classification
-                if self.bitmaps['benign'].contains(ip_int):
-                    result['classification'] = 'benign'
-                elif self.bitmaps['malicious'].contains(ip_int):
-                    result['classification'] = 'malicious'
-                elif self.bitmaps['suspicious'].contains(ip_int):
-                    result['classification'] = 'suspicious'
+                if self.bitmaps["benign"].contains(ip_int):
+                    result["classification"] = "benign"
+                elif self.bitmaps["malicious"].contains(ip_int):
+                    result["classification"] = "malicious"
+                elif self.bitmaps["suspicious"].contains(ip_int):
+                    result["classification"] = "suspicious"
                 else:
-                    result['classification'] = 'unknown'
+                    result["classification"] = "unknown"
 
                 # Add metadata
-                if ip_int in self.metadata.get('ip_actors', {}):
-                    actor_idx = self.metadata['ip_actors'][ip_int]
-                    result['actor'] = self.metadata['actors'][actor_idx]
+                if ip_int in self.metadata.get("ip_actors", {}):
+                    actor_idx = self.metadata["ip_actors"][ip_int]
+                    result["actor"] = self.metadata["actors"][actor_idx]
                 else:
-                    result['actor'] = "unknown"
+                    result["actor"] = "unknown"
 
-                if ip_int in self.metadata.get('ip_tags', {}):
-                    tag_indices = self.metadata['ip_tags'][ip_int]
-                    result['tags'] = [self.metadata['tags'][idx] for idx in tag_indices]
+                if ip_int in self.metadata.get("ip_tags", {}):
+                    tag_indices = self.metadata["ip_tags"][ip_int]
+                    result["tags"] = [self.metadata["tags"][idx] for idx in tag_indices]
                 else:
-                    result['tags'] = []
+                    result["tags"] = []
 
-                if ip_int in self.metadata.get('ip_cves', {}):
-                    cve_indices = self.metadata['ip_cves'][ip_int]
-                    result['cves'] = [self.metadata['cves'][idx] for idx in cve_indices]
+                if ip_int in self.metadata.get("ip_cves", {}):
+                    cve_indices = self.metadata["ip_cves"][ip_int]
+                    result["cves"] = [self.metadata["cves"][idx] for idx in cve_indices]
                 else:
-                    result['cves'] = []
+                    result["cves"] = []
 
         return result
 
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about the bitmap file."""
         stats = {
-            'model': self.model,
-            'version': self.header['version'],
-            'generation_date': self.header['generation_date'].strftime('%Y-%m-%d'),
-            'start_date': self.header['start_date'].strftime('%Y-%m-%d'),
-            'end_date': self.header['end_date'].strftime('%Y-%m-%d'),
-            'bitmaps': {}
+            "model": self.model,
+            "version": self.header["version"],
+            "generation_date": self.header["generation_date"].strftime("%Y-%m-%d"),
+            "start_date": self.header["start_date"].strftime("%Y-%m-%d"),
+            "end_date": self.header["end_date"].strftime("%Y-%m-%d"),
+            "bitmaps": {},
         }
 
         # For multi-date format, aggregate stats across all dates
         if self.version == 2 and self.model in [2, 3]:
             all_ips = {}
-            for bitmap_name in ['seen', 'benign', 'malicious', 'suspicious', '3wh_completed']:
+            for bitmap_name in [
+                "seen",
+                "benign",
+                "malicious",
+                "suspicious",
+                "3wh_completed",
+            ]:
                 all_ips[bitmap_name] = set()
                 for date_str, bitmaps in self.date_bitmaps.items():
                     all_ips[bitmap_name].update(bitmaps[bitmap_name].get_all_values())
-                stats['bitmaps'][bitmap_name] = len(all_ips[bitmap_name])
+                stats["bitmaps"][bitmap_name] = len(all_ips[bitmap_name])
         else:
             # Count IPs in each bitmap
             for name, bitmap in self.bitmaps.items():
                 count = len(bitmap.get_all_values())
-                stats['bitmaps'][name] = count
+                stats["bitmaps"][name] = count
 
         # Add metadata stats for Model 3
         if self.model == 3:
@@ -645,25 +707,25 @@ class PsychicBitmapParser:
                 all_ip_mappings = 0
 
                 for date_str, metadata in self.date_metadata.items():
-                    all_actors.update(metadata.get('actors', []))
-                    all_tags.update(metadata.get('tags', []))
-                    all_cves.update(metadata.get('cves', []))
-                    all_ip_mappings += len(metadata.get('ip_actors', {}))
+                    all_actors.update(metadata.get("actors", []))
+                    all_tags.update(metadata.get("tags", []))
+                    all_cves.update(metadata.get("cves", []))
+                    all_ip_mappings += len(metadata.get("ip_actors", {}))
 
-                stats['metadata'] = {
-                    'actors': len(all_actors),
-                    'tags': len(all_tags),
-                    'cves': len(all_cves),
-                    'ip_mappings': all_ip_mappings
+                stats["metadata"] = {
+                    "actors": len(all_actors),
+                    "tags": len(all_tags),
+                    "cves": len(all_cves),
+                    "ip_mappings": all_ip_mappings,
                 }
             else:
-                stats['metadata'] = {
-                    'actors': len(self.metadata.get('actors', [])),
-                    'tags': len(self.metadata.get('tags', [])),
-                    'cves': len(self.metadata.get('cves', [])),
-                    'ips_with_actors': len(self.metadata.get('ip_actors', {})),
-                    'ips_with_tags': len(self.metadata.get('ip_tags', {})),
-                    'ips_with_cves': len(self.metadata.get('ip_cves', {}))
+                stats["metadata"] = {
+                    "actors": len(self.metadata.get("actors", [])),
+                    "tags": len(self.metadata.get("tags", [])),
+                    "cves": len(self.metadata.get("cves", [])),
+                    "ips_with_actors": len(self.metadata.get("ip_actors", {})),
+                    "ips_with_tags": len(self.metadata.get("ip_tags", {})),
+                    "ips_with_cves": len(self.metadata.get("ip_cves", {})),
                 }
 
         return stats
@@ -680,7 +742,7 @@ class PsychicCache:
         :param max_age_hours: Maximum age of cached data in hours
         """
         if cache_dir is None:
-            cache_dir = os.path.join(tempfile.gettempdir(), 'greynoise_psychic')
+            cache_dir = os.path.join(tempfile.gettempdir(), "greynoise_psychic")
 
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -716,7 +778,7 @@ class PsychicCache:
 
         cache_path = self._get_cache_path(model, date)
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 return f.read()
         except Exception as e:
             logger.warning(f"Failed to read cached bitmap: {e}")
@@ -726,7 +788,7 @@ class PsychicCache:
         """Cache bitmap data."""
         cache_path = self._get_cache_path(model, date)
         try:
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 f.write(data)
             logger.debug(f"Cached bitmap to {cache_path}")
         except Exception as e:
@@ -756,8 +818,14 @@ class Psychic:
 
     PSYCHIC_BASE_URL = "https://psychic.labs.greynoise.io/v1/psychic"
 
-    def __init__(self, api_key: str, model: int = 1, cache_dir: Optional[str] = None,
-                 max_age_hours: int = 1, auto_download: bool = True):
+    def __init__(
+        self,
+        api_key: str,
+        model: int = 1,
+        cache_dir: Optional[str] = None,
+        max_age_hours: int = 1,
+        auto_download: bool = True,
+    ):
         """
         Initialize Psychic bitmap client.
 
@@ -775,10 +843,9 @@ class Psychic:
         self.auto_download = auto_download
         self.cache = PsychicCache(cache_dir, max_age_hours)
         self.session = requests.Session()
-        self.session.headers.update({
-            'key': api_key,
-            'User-Agent': 'pygreynoise-psychic'
-        })
+        self.session.headers.update(
+            {"key": api_key, "User-Agent": "pygreynoise-psychic"}
+        )
 
         self._parser = None
         self._last_loaded_date = None
@@ -789,7 +856,7 @@ class Psychic:
 
     def _get_today_date(self) -> str:
         """Get today's date in YYYY-MM-DD format."""
-        return datetime.now().strftime('%Y-%m-%d')
+        return datetime.now().strftime("%Y-%m-%d")
 
     def _download_bitmap(self, date: str) -> bytes:
         """Download bitmap for a specific date."""
@@ -797,7 +864,9 @@ class Psychic:
 
         logger.debug(f"Downloading bitmap from {url}")
 
-        response = self.session.get(url, timeout=300)  # 5 minute timeout for large files
+        response = self.session.get(
+            url, timeout=300
+        )  # 5 minute timeout for large files
         response.raise_for_status()
 
         if response.status_code == 200:
@@ -811,7 +880,9 @@ class Psychic:
 
         logger.debug(f"Generating bitmap from {url}")
 
-        response = self.session.get(url, timeout=600)  # 10 minute timeout for generation
+        response = self.session.get(
+            url, timeout=600
+        )  # 10 minute timeout for generation
         response.raise_for_status()
 
         if response.status_code == 200:
@@ -867,7 +938,9 @@ class Psychic:
             if self.auto_download:
                 self._ensure_current_bitmap()
             else:
-                raise RuntimeError("No bitmap loaded. Set auto_download=True or call load_bitmap()")
+                raise RuntimeError(
+                    "No bitmap loaded. Set auto_download=True or call load_bitmap()"
+                )
 
         return self._parser.lookup_ip(ip)
 
@@ -886,7 +959,9 @@ class Psychic:
             if self.auto_download:
                 self._ensure_current_bitmap()
             else:
-                raise RuntimeError("No bitmap loaded. Set auto_download=True or call load_bitmap()")
+                raise RuntimeError(
+                    "No bitmap loaded. Set auto_download=True or call load_bitmap()"
+                )
 
         return self._parser.get_stats()
 

@@ -111,3 +111,4 @@ pyvenv.cfg
 workspace/
 
 .DS_Store
+.vscode/
