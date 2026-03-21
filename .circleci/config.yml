@@ -68,7 +68,7 @@ jobs:
           command: yamllint .
       - run:
           name: Style check (black)
-          command: black --check src tests docs
+          command: black --check --target-version py310 src tests docs
       - run:
           name: Style check (isort)
           command: isort --check-only src/**/*.py tests/**/*.py docs/**/*.py
