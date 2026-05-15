@@ -170,6 +170,12 @@ def riot(
 
 
 @gnql_command
+@click.option(
+    "--exclude",
+    "exclude_fields",
+    default=None,
+    help="Comma-separated fields to omit from GNQL results (API ``exclude`` param).",
+)
 def query(
     context,
     api_client,
@@ -182,11 +188,15 @@ def query(
     size,
     scroll,
     offering,
+    exclude_fields,
 ):
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
     results = [
-        api_client.query(query=item, size=size, scroll=scroll) for item in queries
+        api_client.query(
+            query=item, size=size, scroll=scroll, exclude_fields=exclude_fields
+        )
+        for item in queries
     ]
     return results
 

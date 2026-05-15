@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version `3.0.3`_
+================
+**Date**: May 15, 2026
+
+* API client:
+  * Add `exclude_fields` parameter to `query` command
+  * Update `stats` to use v3 endpoint
+
 Version `3.0.2`_
 ================
 **Date**: March 10, 2026
@@ -483,4 +491,5 @@ Version `0.2.0`_
 .. _`2.3.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.2.0...2.3.0
 .. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...v3.0.0
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
-.. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...HEAD
+.. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...v3.0.2
+.. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...3.0.3
