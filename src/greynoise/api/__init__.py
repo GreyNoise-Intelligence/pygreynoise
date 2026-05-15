@@ -249,7 +249,7 @@ class GreyNoise(BaseAPIClient):
     NAME = "GreyNoise"
     EP_GNQL = "v3/gnql"
     EP_GNQL_METADATA = "v3/gnql/metadata"
-    EP_GNQL_STATS = "v2/experimental/gnql/stats"
+    EP_GNQL_STATS = "v3/gnql/stats"
     EP_IP = "v3/ip/{ip_address}"
     EP_NOISE_MULTI = "v3/ip?quick=true"
     EP_NOISE_CONTEXT_MULTI = "v3/ip"
@@ -436,19 +436,58 @@ class GreyNoise(BaseAPIClient):
         response = self._request(endpoint)
         return response
 
-    def query(self, query, size=None, scroll=None, exclude_raw=False, quick=False):
-        """Run GNQL query."""
+    def query(
+        self,
+        query,
+        size=None,
+        scroll=None,
+        exclude_raw=False,
+        quick=False,
+        exclude_fields: Optional[Union[str, List[str]]] = None,
+    ) -> Dict[str, Any]:
+        """Run GNQL query.
+
+        :param query: GNQL query
+        :type query: str
+        :param size: Max number of results to return
+        :type size: int
+        :param scroll: Scroll token for pagination
+        :type scroll: str
+        :param exclude_raw: Whether to exclude raw results
+        :type exclude_raw: bool
+        :param quick: Whether to use quick lookup
+        :type quick: bool
+        :param exclude_fields: Field names to exclude; comma-separated string or list
+            of strings (sent to the API as the ``exclude`` query parameter).
+        :type exclude_fields: str or list[str]
+        """
         if self.offering == "community":
             response = {"message": "GNQL not supported with Community offering"}
         else:
             LOGGER.debug(
-                "Running GNQL query: %s %s %s %s...", query, size, scroll, quick
+                "Running GNQL query: %s %s %s %s %s...",
+                query,
+                size,
+                scroll,
+                quick,
+                exclude_fields,
             )
             params = {"query": query, "quick": quick}
             if size is not None:
                 params["size"] = size
             if scroll is not None:
                 params["scroll"] = scroll
+            if exclude_fields is not None:
+                if isinstance(exclude_fields, str):
+                    normalized_ef = ",".join(
+                        p.strip() for p in exclude_fields.split(",") if p.strip()
+                    )
+                else:
+                    normalized_ef = ",".join(
+                        str(p).strip() for p in exclude_fields if str(p).strip()
+                    )
+                if normalized_ef:
+                    params["exclude"] = normalized_ef
             if exclude_raw:
                 LOGGER.debug("Using GNQL Metadata endpoint")
                 endpoint = self.EP_GNQL_METADATA

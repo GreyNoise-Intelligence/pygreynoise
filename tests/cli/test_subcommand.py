@@ -585,7 +585,9 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", query])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query, size=None, scroll=None)
+        api_client.query.assert_called_with(
+            query=query, size=None, scroll=None, exclude_fields=None
+        )
 
     def test_input_file(self, api_client):
         """Run query from input file."""
@@ -598,7 +600,9 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", "-i", StringIO(query)])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query, size=None, scroll=None)
+        api_client.query.assert_called_with(
+            query=query, size=None, scroll=None, exclude_fields=None
+        )
 
     def test_stdin_input(self, api_client):
         """Run query from stdin."""
@@ -611,7 +615,30 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json"], input=query)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(query=query, size=None, scroll=None)
+        api_client.query.assert_called_with(
+            query=query, size=None, scroll=None, exclude_fields=None
+        )
+
+    def test_query_with_exclude(self, api_client):
+        """Run query with --exclude forwarded to the client."""
+        runner = CliRunner()
+
+        query = "<query>"
+        api_client.query.return_value = []
+        expected = json.dumps([[]], indent=4, sort_keys=True)
+
+        result = runner.invoke(
+            subcommand.query,
+            ["-f", "json", "--exclude", "raw_data,tls", query],
+        )
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == expected
+        api_client.query.assert_called_with(
+            query=query,
+            size=None,
+            scroll=None,
+            exclude_fields="raw_data,tls",
+        )
 
     def test_no_query_passed(self, api_client):
         """Usage is returned if no query or input file is passed."""

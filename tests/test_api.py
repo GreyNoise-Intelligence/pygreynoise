@@ -727,6 +727,34 @@ class TestQuery(object):
         )
         assert response == expected_response
 
+    def test_query_exclude_fields_as_list(self, client):
+        """exclude_fields is sent as a comma-separated exclude query parameter."""
+        query = "<query>"
+        client._request = Mock(return_value=[])
+        client.query(query, exclude_fields=["raw_data", "tls"])
+        client._request.assert_called_with(
+            "v3/gnql",
+            params={
+                "query": query,
+                "quick": False,
+                "exclude": "raw_data,tls",
+            },
+        )
+
+    def test_query_exclude_fields_as_string(self, client):
+        """exclude_fields string is normalized to comma-separated names."""
+        query = "<query>"
+        client._request = Mock(return_value=[])
+        client.query(query, exclude_fields=" raw_data , tls ")
+        client._request.assert_called_with(
+            "v3/gnql",
+            params={
+                "query": query,
+                "quick": False,
+                "exclude": "raw_data,tls",
+            },
+        )
+
 
 class TestStats(object):
     """GreyNoise client run GNQL stats query test cases."""
@@ -738,9 +766,7 @@ class TestStats(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.stats(query)
-        client._request.assert_called_with(
-            "v2/experimental/gnql/stats", params={"query": query}
-        )
+        client._request.assert_called_with("v3/gnql/stats", params={"query": query})
         assert response == expected_response
 
 
