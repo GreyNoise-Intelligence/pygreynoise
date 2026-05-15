@@ -766,9 +766,7 @@ class TestStats(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.stats(query)
-        client._request.assert_called_with(
-            "v2/experimental/gnql/stats", params={"query": query}
-        )
+        client._request.assert_called_with("v3/gnql/stats", params={"query": query})
         assert response == expected_response
 
 
