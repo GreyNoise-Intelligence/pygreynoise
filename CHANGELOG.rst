@@ -21,7 +21,7 @@ Version `3.1.0`_
   * The `timelinehourly` function is deprecated and will be removed in a future version.
 
 * CLI:
-  * Added `psychic-download` commands to support Psychic file downloads
+  * Added `psychic-download` and `psychic-generate` commands to support Psychic file downloads
   * Updated `ip` command to support Psychic API endpoints with new `-p/--psychic` option
   * Added `callback` commands to support Callback API endpoints
   * Added `recall` commands to support Recall API endpoints

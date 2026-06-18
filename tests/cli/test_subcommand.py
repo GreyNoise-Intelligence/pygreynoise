@@ -2376,3 +2376,29 @@ class TestRecallAndCallback(object):
             model=3,
         )
         assert result.output.strip() == "./psychic_m3_2026-06-17.csv"
+
+    def test_psychic_generate(self, api_client):
+        runner = CliRunner()
+        api_client.psychic_generate.return_value = (
+            "./psychic_m3_2026-06-01_2026-06-12.bin"
+        )
+        result = runner.invoke(
+            main,
+            [
+                "psychic-generate",
+                "--start-date",
+                "2026-06-01",
+                "--end-date",
+                "2026-06-12",
+                "--model",
+                "3",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.psychic_generate.assert_called_once_with(
+            start_date="2026-06-01",
+            end_date="2026-06-12",
+            output_path=".",
+            model=3,
+        )
+        assert result.output.strip() == "./psychic_m3_2026-06-01_2026-06-12.bin"

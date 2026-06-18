@@ -613,3 +613,52 @@ def psychic_download_cmd(
         model=model_int,
     )
     click.echo(path)
+
+
+@click.command(name="psychic-generate")
+@click.option(
+    "-s",
+    "--start-date",
+    required=True,
+    help="Start date in YYYY-MM-DD format",
+)
+@click.option(
+    "-e",
+    "--end-date",
+    required=True,
+    help="End date in YYYY-MM-DD format",
+)
+@click.option(
+    "-m",
+    "--model",
+    type=click.Choice(["1", "2", "3"]),
+    help="Psychic model to use (default: from config or 1)",
+)
+@click.option("-k", "--api-key", help="Key to include in API requests")
+@click.option(
+    "-O",
+    "--offering",
+    help="Which API offering to use, enterprise or community, "
+    "defaults to enterprise",
+)
+@pass_api_client
+@click.pass_context
+@handle_exceptions
+def psychic_generate_cmd(
+    context,
+    api_client,
+    api_key,
+    offering,
+    start_date,
+    end_date,
+    model,
+):
+    """Generate a Psychic bitmap (.bin) for a date range and write it to the current directory."""
+    model_int = int(model) if model is not None else None
+    path = api_client.psychic_generate(
+        start_date=start_date,
+        end_date=end_date,
+        output_path=".",
+        model=model_int,
+    )
+    click.echo(path)

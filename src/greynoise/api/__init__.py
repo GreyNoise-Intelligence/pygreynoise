@@ -397,6 +397,39 @@ class GreyNoise(BaseAPIClient):
 
         raise ValueError("file_format must be 'bin', 'mmdb', or 'csv'")
 
+    def psychic_generate(
+        self,
+        start_date: str,
+        end_date: str,
+        output_path: Optional[str] = None,
+        model: Optional[int] = None,
+    ) -> str:
+        """
+        Generate a Psychic bitmap for a date range and write it to disk.
+
+        :param start_date: Start date in YYYY-MM-DD format
+        :param end_date: End date in YYYY-MM-DD format
+        :param output_path: Directory or file path for the generated file
+            (default: current directory)
+        :param model: Psychic model to use (1, 2, or 3; default: from config or 1)
+        :return: Path to the written bitmap file
+        :rtype: str
+        """
+        from pathlib import Path
+
+        from greynoise.psychic import _psychic_output_path
+
+        psychic = self._get_psychic_for_download(model)
+        directory = output_path or "."
+        file_path = _psychic_output_path(
+            directory,
+            Path("."),
+            f"psychic_m{psychic.model}_{start_date}_{end_date}.bin",
+        )
+        bitmap_data = psychic._generate_bitmap(start_date, end_date)
+        file_path.write_bytes(bitmap_data)
+        return str(file_path)
+
     def request(
         self,
         endpoint: str,
@@ -1391,14 +1424,9 @@ class GreyNoise(BaseAPIClient):
         :type end_date: str
         :return: Bytes of the bitmap file
         :rtype: bytes
-        :raises: RuntimeError if psychic is not enabled
         """
-        if not self._psychic:
-            raise RuntimeError(
-                "Psychic is not enabled. Initialize GreyNoise with psychic=True"
-            )
-
-        return self._psychic._generate_bitmap(start_date, end_date)
+        psychic = self._get_psychic_for_download()
+        return psychic._generate_bitmap(start_date, end_date)
 
     def psychic_reload(self) -> None:
         """
