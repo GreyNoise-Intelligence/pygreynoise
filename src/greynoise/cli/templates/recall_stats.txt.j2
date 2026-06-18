@@ -1,0 +1,63 @@
+{% import "macros.txt.j2" as macros with context %}
+{%- set max_rows = 100 if verbose else 25 %}
+{%- if result is string %}
+{{ result }}
+{%- elif result is mapping and result.get("message") %}
+{{ result.message }}
+{%- elif result is mapping %}
+----------------------------
+    <header>Recall — Stats</header>
+----------------------------
+{%- for mk in ["query", "start", "end", "format", "interval", "total", "count"] %}
+{%- if result.get(mk) is not none %}
+<key>{{ mk | replace("_", " ") | title }}</key>: <value>{{ result.get(mk) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- set stats_obj = result.get("stats") %}
+{%- set rows = result.get("data") or result.get("results") or result.get("buckets") or result.get("intervals") or [] %}
+{%- if stats_obj is mapping %}
+<header>Stats</header>
+{%- for sk, sv in stats_obj | dictsort %}
+{%- if sv is mapping %}
+<key>{{ sk | replace("_", " ") | title }}</key>:
+{{ sv | tojson }}
+{%- elif sv is iterable and sv is not string %}
+{%- set sv_list = sv | list %}
+<key>{{ sk | replace("_", " ") | title }}</key>:
+{%- for item in sv_list[:max_rows] %}
+  {%- if item is mapping %}
+  - {% for ik, iv in item | dictsort %}<key>{{ ik }}</key>: <value>{{ iv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+  {%- else %}
+  - <value>{{ item }}</value>
+  {%- endif %}
+{%- endfor %}
+{%- if sv_list | length > max_rows %}
+  <dim>… {{ sv_list | length - max_rows }} more (use -v or -f json)</dim>
+{%- endif %}
+{%- else %}
+<key>{{ sk | replace("_", " ") | title }}</key>: <value>{{ sv }}</value>
+{%- endif %}
+{%- endfor %}
+{%- elif rows is iterable and rows is not string and rows is not mapping and rows | length > 0 %}
+<header>Buckets</header>
+{%- for row in rows[:max_rows] %}
+{%- if row is mapping %}
+  <value>{{ loop.index }}</value>. {% for rk, rv in row | dictsort %}<key>{{ rk }}</key>: <value>{{ rv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+{%- else %}
+  <value>{{ loop.index }}</value>. <value>{{ row }}</value>
+{%- endif %}
+{%- endfor %}
+{%- if rows | length > max_rows %}
+<dim>Showing {{ max_rows }} of {{ rows | length }} rows. Use -v or -f json.</dim>
+{%- endif %}
+{%- elif verbose %}
+<header>Full response</header>
+{{ result | tojson }}
+{%- else %}
+<dim>No structured stats buckets detected. Use -v for the full payload or -f json.</dim>
+{%- endif %}
+{%- else %}
+{{ result | tojson }}
+{%- endif %}

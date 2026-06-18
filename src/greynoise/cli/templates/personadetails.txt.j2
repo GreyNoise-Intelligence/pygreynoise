@@ -1,6 +1,6 @@
 {% import "macros.txt.j2" as macros with context %}
 
-{% if results %}
+{% if results.id %}
 ---------------
 <header>Persona Details</header>
 ---------------
@@ -35,4 +35,6 @@
 - <value>{{ vuln }}</value>
 {% endcall -%}
 {% endif -%}
+{% else %}
+No persona details found for the specified ID.
 {% endif %}

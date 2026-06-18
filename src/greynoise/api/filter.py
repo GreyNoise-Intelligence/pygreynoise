@@ -63,9 +63,9 @@ class Filter(object):
         riot_ip_addresses = []
 
         for result in self.api.quick(text_ip_addresses):
-            if result["noise"]:
+            if result.get("internet_scanner_intelligence", {}).get("found", False):
                 noise_ip_addresses.append(result["ip"])
-            if result["riot"]:
+            if result.get("business_service_intelligence", {}).get("found", False):
                 riot_ip_addresses.append(result["ip"])
 
         def all_ip_addresses_noisy(line):

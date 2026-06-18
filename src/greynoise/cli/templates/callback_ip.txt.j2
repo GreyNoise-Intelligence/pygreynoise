@@ -1,0 +1,73 @@
+{% import "macros.txt.j2" as macros with context %}
+{%- set skip = ["message", "ip", "source_workspaces"] %}
+{%- set lim = 50 if verbose else 20 %}
+{%- if result is string %}
+{{ result }}
+{%- elif result is mapping and result.get("message") %}
+{{ result.message }}
+{%- elif result is mapping %}
+----------------------------
+     <header>Callback IP</header>
+----------------------------
+{%- if result.get("ip") is not none %}
+<key>IP</key>: <value>{{ result.ip }}</value>
+{%- endif %}
+{%- if result.get("source_workspaces") %}
+<header>Source workspaces</header>
+{%- for ws in result.source_workspaces %}
+  - <value>{{ ws }}</value>
+{%- endfor %}
+{%- endif %}
+{%- for k, v in result | dictsort %}
+{%- if k not in skip %}
+{%- if v is mapping %}
+<header>{{ k | replace("_", " ") | title }}</header>
+{%- if k == "enrichment" %}
+{%- for ik, iv in v | dictsort %}
+{%- if iv is mapping %}
+<key>{{ ik }}</key>:
+  - {% for sk, sv in iv | dictsort %}<key>{{ sk }}</key>: <value>{{ sv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+{%- elif iv is iterable and iv is not string %}
+{%- set ivlist = iv | list %}
+<key>{{ ik }}</key>:
+{%- for item in ivlist[:lim] %}
+  {%- if item is mapping %}
+  - {% for jk, jv in item | dictsort %}<key>{{ jk }}</key>: <value>{{ jv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+  {%- else %}
+  - <value>{{ item }}</value>
+  {%- endif %}
+{%- endfor %}
+{%- if ivlist | length > lim %}
+  <dim>… truncated; use -v or -f json for full output</dim>
+{%- endif %}
+{%- else %}
+<key>{{ ik }}</key>: <value>{{ iv }}</value>
+{%- endif %}
+{%- endfor %}
+{%- else %}
+{{ v | tojson }}
+{%- endif %}
+{%- elif v is iterable and v is not string %}
+{%- set vlist = v | list %}
+<header>{{ k | replace("_", " ") | title }}</header>
+{%- for item in vlist[:lim] %}
+  {%- if item is mapping %}
+  - {% for ik, iv in item | dictsort %}<key>{{ ik }}</key>: <value>{{ iv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+  {%- else %}
+  - <value>{{ item }}</value>
+  {%- endif %}
+{%- endfor %}
+{%- if vlist | length > lim %}
+<dim>… truncated; use -v or -f json for full output</dim>
+{%- endif %}
+{%- else %}
+<key>{{ k | replace("_", " ") | title }}</key>: <value>{{ v }}</value>
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- else %}
+{{ result | tojson }}
+{%- endif %}

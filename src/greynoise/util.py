@@ -4,6 +4,7 @@ import configparser
 import logging
 import os
 import re
+from datetime import date, datetime, timezone
 from importlib import resources
 from ipaddress import IPv6Address, ip_address
 
@@ -19,7 +20,24 @@ DEFAULT_CONFIG = {
     "cache_max_size": 1000000,
     "cache_ttl": 3600,
     "use_cache": True,
+    "psychic": False,
+    "psychic_model": 1,
+    "psychic_cache_dir": "",
+    "psychic_max_age_hours": 1,
 }
+
+_OPTIONAL_EMPTY_OMIT_KEYS = frozenset({"proxy", "psychic_cache_dir"})
+
+
+def _omit_empty_optional_config_options(config_parser):
+    """Remove optional greynoise keys whose value is blank."""
+    if not config_parser.has_section("greynoise"):
+        return
+
+    for key in _OPTIONAL_EMPTY_OMIT_KEYS:
+        if config_parser.has_option("greynoise", key):
+            if not config_parser.get("greynoise", key).strip():
+                config_parser.remove_option("greynoise", key)
 
 
 def load_config():
@@ -112,6 +130,41 @@ def load_config():
                 "greynoise", "cache_ttl", str(DEFAULT_CONFIG["cache_ttl"])
             )
 
+    if "GREYNOISE_PSYCHIC" in os.environ:
+        config_parser.set("greynoise", "psychic", os.environ["GREYNOISE_PSYCHIC"])
+    if "GREYNOISE_PSYCHIC_MODEL" in os.environ:
+        config_parser.set(
+            "greynoise", "psychic_model", os.environ["GREYNOISE_PSYCHIC_MODEL"]
+        )
+    if "GREYNOISE_PSYCHIC_CACHE_DIR" in os.environ:
+        config_parser.set(
+            "greynoise", "psychic_cache_dir", os.environ["GREYNOISE_PSYCHIC_CACHE_DIR"]
+        )
+    if "GREYNOISE_PSYCHIC_MAX_AGE_HOURS" in os.environ:
+        config_parser.set(
+            "greynoise",
+            "psychic_max_age_hours",
+            os.environ["GREYNOISE_PSYCHIC_MAX_AGE_HOURS"],
+        )
+
+    try:
+        config_parser.getint("greynoise", "psychic_model")
+    except ValueError:
+        config_parser.set(
+            "greynoise", "psychic_model", str(DEFAULT_CONFIG["psychic_model"])
+        )
+    try:
+        config_parser.getint("greynoise", "psychic_max_age_hours")
+    except ValueError:
+        config_parser.set(
+            "greynoise",
+            "psychic_max_age_hours",
+            str(DEFAULT_CONFIG["psychic_max_age_hours"]),
+        )
+
+    psychic_cache_dir_raw = config_parser.get("greynoise", "psychic_cache_dir").strip()
+    psychic_cache_dir = psychic_cache_dir_raw or None
+
     return {
         "api_key": config_parser.get("greynoise", "api_key"),
         "api_server": config_parser.get("greynoise", "api_server"),
@@ -121,18 +174,40 @@ def load_config():
         "cache_max_size": config_parser.getint("greynoise", "cache_max_size"),
         "cache_ttl": config_parser.getint("greynoise", "cache_ttl"),
         "use_cache": config_parser.getboolean("greynoise", "use_cache"),
+        "psychic": config_parser.getboolean("greynoise", "psychic"),
+        "psychic_model": config_parser.getint("greynoise", "psychic_model"),
+        "psychic_cache_dir": psychic_cache_dir,
+        "psychic_max_age_hours": config_parser.getint(
+            "greynoise", "psychic_max_age_hours"
+        ),
     }
 
 
 def save_config(config):
     """Save configuration.
 
+    Merges into the existing file when present so keys not passed in ``config``
+    (e.g. ``psychic_model``) are preserved.
+
     :param config: Data to be written to the configuration file.
     :type config:  dict
 
     """
     config_parser = configparser.ConfigParser()
-    config_parser.add_section("greynoise")
+    config_dir = os.path.dirname(CONFIG_FILE)
+    if not os.path.isdir(config_dir):
+        os.makedirs(config_dir)
+
+    if os.path.isfile(CONFIG_FILE):
+        config_parser.read(CONFIG_FILE)
+    if not config_parser.has_section("greynoise"):
+        config_parser.add_section("greynoise")
+
+    for key, value in DEFAULT_CONFIG.items():
+        if not config_parser.has_option("greynoise", key):
+            if key in _OPTIONAL_EMPTY_OMIT_KEYS and not str(value).strip():
+                continue
+            config_parser.set("greynoise", key, str(value))
 
     # Only set values that are provided in the config
     if "api_key" in config:
@@ -142,7 +217,11 @@ def save_config(config):
     if "timeout" in config:
         config_parser.set("greynoise", "timeout", str(config["timeout"]))
     if "proxy" in config:
-        config_parser.set("greynoise", "proxy", config["proxy"])
+        proxy = config["proxy"]
+        if proxy:
+            config_parser.set("greynoise", "proxy", proxy)
+        elif config_parser.has_option("greynoise", "proxy"):
+            config_parser.remove_option("greynoise", "proxy")
     if "offering" in config:
         config_parser.set("greynoise", "offering", config["offering"])
     if "cache_max_size" in config:
@@ -151,16 +230,24 @@ def save_config(config):
         config_parser.set("greynoise", "cache_ttl", str(config["cache_ttl"]))
     if "use_cache" in config:
         config_parser.set("greynoise", "use_cache", str(config["use_cache"]))
+    if "psychic" in config:
+        config_parser.set("greynoise", "psychic", str(config["psychic"]))
+    if "psychic_model" in config:
+        config_parser.set("greynoise", "psychic_model", str(config["psychic_model"]))
+    if "psychic_cache_dir" in config:
+        cache_dir = config["psychic_cache_dir"]
+        if cache_dir:
+            config_parser.set("greynoise", "psychic_cache_dir", str(cache_dir))
+        elif config_parser.has_option("greynoise", "psychic_cache_dir"):
+            config_parser.remove_option("greynoise", "psychic_cache_dir")
+    if "psychic_max_age_hours" in config:
+        config_parser.set(
+            "greynoise",
+            "psychic_max_age_hours",
+            str(config["psychic_max_age_hours"]),
+        )
 
-    config_dir = os.path.dirname(CONFIG_FILE)
-    if not os.path.isdir(config_dir):
-        os.makedirs(config_dir)
-
-    # If file doesn't exist, create it with default values
-    if not os.path.isfile(CONFIG_FILE):
-        for key, value in DEFAULT_CONFIG.items():
-            if not config_parser.has_option("greynoise", key):
-                config_parser.set("greynoise", key, str(value))
+    _omit_empty_optional_config_options(config_parser)
 
     with open(CONFIG_FILE, "w") as config_file:
         config_parser.write(config_file)
@@ -304,6 +391,90 @@ def validate_cve_id(cve_id):
         raise ValueError("Invalid CVE ID format: {!r}".format(cve_id))
     else:
         return True
+
+
+def _format_datetime_rfc3339_utc(dt):
+    """Format a datetime as an RFC 3339 instant in UTC (suffix ``Z``)."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    frac = ""
+    if dt.microsecond:
+        frac = dt.strftime(".%f").rstrip("0").rstrip(".")
+    return dt.strftime("%Y-%m-%dT%H:%M:%S") + frac + "Z"
+
+
+def normalize_rfc3339_datetime(value):
+    """Parse *value* into an RFC 3339 / ISO 8601 string in UTC, or return ``None``.
+
+    Used for API parameters (e.g. Recall ``start`` / ``end``) that require RFC 3339.
+
+    Accepts:
+
+    - ``None`` → ``None``
+    - :class:`~datetime.datetime` (naive values are treated as UTC)
+    - :class:`~datetime.date` → midnight UTC on that date
+    - Unix timestamp as :class:`int` or :class:`float` (seconds since epoch, UTC)
+    - Strings: RFC 3339 / ISO 8601 (including ``Z``), ``YYYY-MM-DD``, or
+      ``YYYY-MM-DD HH:MM:SS`` (optional fractional seconds; naive → UTC)
+
+    :param value: Raw start/end time from the caller
+    :return: Normalized string or ``None``
+    :raises TypeError: if *value* has an unsupported type
+    :raises ValueError: if a string cannot be parsed
+
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        raise TypeError("start/end must not be a boolean")
+    if isinstance(value, (int, float)):
+        dt = datetime.fromtimestamp(float(value), tz=timezone.utc)
+        return _format_datetime_rfc3339_utc(dt)
+    if isinstance(value, datetime):
+        return _format_datetime_rfc3339_utc(value)
+    if isinstance(value, date):
+        dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        return _format_datetime_rfc3339_utc(dt)
+    if not isinstance(value, str):
+        raise TypeError(
+            "start/end must be None, str, datetime, date, or numeric timestamp, not {!r}".format(
+                type(value).__name__
+            )
+        )
+
+    s = value.strip()
+    if not s:
+        raise ValueError("start/end datetime string is empty")
+
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+        try:
+            dt = datetime.strptime(s, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            return _format_datetime_rfc3339_utc(dt)
+        except ValueError:
+            raise ValueError("Invalid calendar date: {!r}".format(value)) from None
+
+    iso_candidate = s.replace("Z", "+00:00").replace("z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(iso_candidate)
+    except ValueError:
+        dt = None
+    if dt is not None:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return _format_datetime_rfc3339_utc(dt)
+
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"):
+        try:
+            dt = datetime.strptime(s, fmt).replace(tzinfo=timezone.utc)
+            return _format_datetime_rfc3339_utc(dt)
+        except ValueError:
+            continue
+
+    raise ValueError(
+        "Could not parse datetime as RFC 3339 / ISO 8601: {!r}".format(value)
+    )
 
 
 def load_template(template_name: str) -> str:

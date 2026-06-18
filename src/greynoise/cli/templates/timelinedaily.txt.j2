@@ -1,0 +1,23 @@
+{% import "macros.txt.j2" as macros with context %}
+{% for item in results -%}
+
+---------------------
+<header>IP Timeline - Summary</header>
+---------------------
+<key>IP</key>: <value>{{ item.metadata.ip }}</value>
+<key>Days</key>: <value>{{ item.metadata.days }}</value>
+<key>Granularity</key>: <value>{{ item.metadata.granularity }}</value>
+
+<header>Timeline - Event Details</header>
+------------------------
+{%- for day in item.data %}
+<key>Timestamp</key>: <value>{{ day.date.replace("T", " ").replace("Z", "") }}</value>
+<key>Classification</key>: {{ macros.classification(day.classification[0]) }}
+<key>Organization</key>: {{ day.organization | join(", ") }}
+{% if day.asns %}<key>ASNs</key>: {{ day.asns | join(", ") }}{% endif %}
+{% if day.ports %}<key>Ports</key>: {{ day.ports | join(", ") }}{% endif %}
+{% if day.web_paths %}<key>Web Paths</key>: {{ day.web_paths | join(", ") }}{% endif %}
+{% if day.user_agents %}<key>User Agents</key>: {{ day.user_agents | join(", ") }}{% endif %}
+{% if day.tags %}<key>Tags</key>: {{ day.tags | join(", ") }}{% endif %}
+{% endfor %}
+{% endfor %}

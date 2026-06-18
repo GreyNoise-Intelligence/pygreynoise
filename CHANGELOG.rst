@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version `3.1.0`_
+================
+**Date**: unreleased
+
+* API client:
+
 Version `3.0.3`_
 ================
 **Date**: May 15, 2026
@@ -492,4 +498,5 @@ Version `0.2.0`_
 .. _`3.0.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v2.3.0...v3.0.0
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
 .. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...v3.0.2
-.. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...HEAD
+.. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...v3.0.3
+.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...HEAD

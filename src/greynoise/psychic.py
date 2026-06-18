@@ -5,6 +5,8 @@ This module provides offline bitmap functionality for GreyNoise data,
 allowing for extremely fast IP lookups without API calls.
 """
 
+import csv
+import io
 import ipaddress
 import logging
 import os
@@ -13,11 +15,132 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, Set, Tuple
+from typing import Any, BinaryIO, Dict, List, Optional, Set, Tuple, Union
 
 import requests
 
+try:
+    import maxminddb
+except ImportError:
+    maxminddb = None  # type: ignore[assignment]
+
+from greynoise import PSYCHIC_USER_AGENT
+
 logger = logging.getLogger(__name__)
+
+MMDB_CSV_COLUMNS = {
+    1: ["ip", "seen"],
+    2: ["ip", "seen", "3wh_completed", "classification"],
+    3: [
+        "ip",
+        "date",
+        "seen",
+        "3wh_completed",
+        "classification",
+        "actor",
+        "tags",
+        "cves",
+    ],
+}
+
+
+MMDB_FIELD_ALIASES = {
+    "3wh_completed": ("3wh_completed", "handshake_complete"),
+}
+
+
+def _mmdb_record_value(record: Dict[str, Any], column: str) -> Any:
+    """Return a CSV column value from an MMDB record."""
+    keys = MMDB_FIELD_ALIASES.get(column, (column,))
+    for key in keys:
+        if key in record:
+            return record[key]
+
+    classifications = record.get("classifications")
+    if isinstance(classifications, dict):
+        for key in keys:
+            if key in classifications:
+                return classifications[key]
+
+    return None
+
+
+def _mmdb_value_to_csv(value: Any) -> str:
+    """Convert an MMDB record value to a CSV-safe string."""
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, list):
+        return ";".join(str(item) for item in value)
+    return str(value)
+
+
+def _mmdb_record_to_csv_row(
+    network: Union[ipaddress.IPv4Network, ipaddress.IPv6Network],
+    record: Dict[str, Any],
+    columns: List[str],
+) -> Dict[str, str]:
+    """Build a CSV row from an MMDB network/record pair."""
+    ip = record.get("ip") or str(network.network_address)
+    row = {}
+    for column in columns:
+        if column == "ip":
+            row[column] = str(ip)
+        else:
+            row[column] = _mmdb_value_to_csv(_mmdb_record_value(record, column))
+    return row
+
+
+def _psychic_output_path(
+    output_path: Optional[str],
+    default_directory: Path,
+    filename: str,
+) -> Path:
+    """Resolve a psychic output path from a directory or file path."""
+    if output_path is None:
+        directory = default_directory
+    else:
+        path = Path(output_path)
+        if path.suffix in {".csv", ".mmdb"}:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path
+        directory = path
+
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory / filename
+
+
+def _write_mmdb_bytes_to_csv(mmdb_data: bytes, output_path: Path, model: int) -> None:
+    """Iterate an MMDB file and write psychic records to CSV."""
+    if maxminddb is None:
+        raise ImportError(
+            "maxminddb is required for Psychic CSV export. "
+            "Install it with: pip install maxminddb"
+        )
+
+    if model not in MMDB_CSV_COLUMNS:
+        raise ValueError("Model must be 1, 2, or 3")
+
+    columns = MMDB_CSV_COLUMNS[model]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(suffix=".mmdb", delete=False) as mmdb_file:
+        mmdb_path = mmdb_file.name
+        mmdb_file.write(mmdb_data)
+
+    try:
+        with maxminddb.open_database(mmdb_path) as reader, open(
+            output_path, "w", newline="", encoding="utf-8"
+        ) as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=columns)
+            writer.writeheader()
+            for network, record in reader:
+                if not record:
+                    continue
+                writer.writerow(_mmdb_record_to_csv_row(network, record, columns))
+    finally:
+        os.unlink(mmdb_path)
 
 
 class RoaringBitmapReader:
@@ -201,7 +324,6 @@ class PsychicBitmapParser:
 
     def _parse_data(self):
         """Parse the complete bitmap data."""
-        import io
 
         # Parse header
         self.header, offset = self._parse_header(self.data)
@@ -290,8 +412,10 @@ class PsychicBitmapParser:
                 self._log(f"Parsing {name} bitmap")
                 self.bitmaps[name] = RoaringBitmapReader()
                 self.bitmaps[name].read_from(f)
-                self._log(f"Loaded {name} bitmap with \
-                    {self.bitmaps[name].num_containers} containers")
+                self._log(
+                    f"Loaded {name} bitmap with \
+                    {self.bitmaps[name].num_containers} containers"
+                )
 
     def _parse_model3(self, f: BinaryIO):
         """Parse Model 3 data (5 bitmaps + metadata)."""
@@ -424,8 +548,10 @@ class PsychicBitmapParser:
                     # Read IP
                     ip_data = f.read(4)
                     if len(ip_data) < 4:
-                        self._log(f"ERROR: Insufficient data for IP at mapping {i}, \
-                            expected 4 bytes, got {len(ip_data)}")
+                        self._log(
+                            f"ERROR: Insufficient data for IP at mapping {i}, \
+                            expected 4 bytes, got {len(ip_data)}"
+                        )
                         break
                     ip_int = struct.unpack(">I", ip_data)[0]
 
@@ -460,8 +586,10 @@ class PsychicBitmapParser:
                                         mapping {i}, expected 2 bytes, \
                                             got {len(tag_idx_data)}"
                                 )
-                                raise ValueError(f"Insufficient data for tag index {j} \
-                                        at mapping {i}")
+                                raise ValueError(
+                                    f"Insufficient data for tag index {j} \
+                                        at mapping {i}"
+                                )
                             tag_idx = struct.unpack(">H", tag_idx_data)[0]
                             tag_indices.append(tag_idx)
                         metadata["ip_tags"][ip_int] = tag_indices
@@ -480,11 +608,15 @@ class PsychicBitmapParser:
                         for j in range(cve_count):
                             cve_idx_data = f.read(2)
                             if len(cve_idx_data) < 2:
-                                self._log(f"ERROR: Insufficient data for CVE index {j} \
+                                self._log(
+                                    f"ERROR: Insufficient data for CVE index {j} \
                                         at mapping {i}, expected 2 bytes, \
-                                            got {len(cve_idx_data)}")
-                                raise ValueError(f"Insufficient data for CVE index {j} \
-                                        at mapping {i}")
+                                            got {len(cve_idx_data)}"
+                                )
+                                raise ValueError(
+                                    f"Insufficient data for CVE index {j} \
+                                        at mapping {i}"
+                                )
                             cve_idx = struct.unpack(">H", cve_idx_data)[0]
                             cve_indices.append(cve_idx)
                         metadata["ip_cves"][ip_int] = cve_indices
@@ -808,7 +940,7 @@ class Psychic:
     compressed bitmap data downloaded from GreyNoise.
     """
 
-    PSYCHIC_BASE_URL = "https://psychic.labs.greynoise.io/v1/psychic"
+    PSYCHIC_BASE_URL = "https://api.greynoise.io/v1/psychic"
 
     def __init__(
         self,
@@ -835,9 +967,7 @@ class Psychic:
         self.auto_download = auto_download
         self.cache = PsychicCache(cache_dir, max_age_hours)
         self.session = requests.Session()
-        self.session.headers.update(
-            {"key": api_key, "User-Agent": "pygreynoise-psychic"}
-        )
+        self.session.headers.update({"key": api_key, "User-Agent": PSYCHIC_USER_AGENT})
 
         self._parser = None
         self._last_loaded_date = None
@@ -852,12 +982,13 @@ class Psychic:
 
     def _download_bitmap(self, date: str) -> bytes:
         """Download bitmap for a specific date."""
-        url = f"{self.PSYCHIC_BASE_URL}/download/{date}/{self.model}"
+        url = self.PSYCHIC_BASE_URL
+        payload = {"model": str(self.model), "date": date}
 
         logger.debug(f"Downloading bitmap from {url}")
 
-        response = self.session.get(
-            url, timeout=300
+        response = self.session.post(
+            url, json=payload, timeout=300
         )  # 5 minute timeout for large files
         response.raise_for_status()
 
@@ -866,14 +997,112 @@ class Psychic:
         else:
             raise Exception(f"Failed to download bitmap: HTTP {response.status_code}")
 
+    def _download_mmdb(self, date: str) -> bytes:
+        """Download mmdb for a specific date."""
+        url = self.PSYCHIC_BASE_URL
+        payload = {"model": str(self.model), "date": date, "format": "mmdb"}
+
+        logger.debug(f"Downloading mmdb from {url}")
+
+        response = self.session.post(
+            url, json=payload, timeout=300
+        )  # 5 minute timeout for large files
+        response.raise_for_status()
+
+        if response.status_code == 200:
+            return response.content
+        else:
+            raise Exception(f"Failed to download mmdb: HTTP {response.status_code}")
+
+    def download_mmdb(self, date: str, output_path: Optional[str] = None) -> str:
+        """
+        Download mmdb for a specific date and write it to disk.
+
+        :param date: Date in YYYY-MM-DD format
+        :param output_path: Directory to write the MMDB file (default: current directory)
+        :return: Path to the written MMDB file
+        """
+        file_path = _psychic_output_path(
+            output_path,
+            Path("."),
+            f"psychic_m{self.model}_{date}.mmdb",
+        )
+
+        logger.info(
+            "Downloading MMDB for model %s, date %s, writing to %s",
+            self.model,
+            date,
+            file_path,
+        )
+        mmdb_data = self._download_mmdb(date)
+        file_path.write_bytes(mmdb_data)
+        return str(file_path)
+
+    def download_bitmap(self, date: str, output_path: Optional[str] = None) -> str:
+        """
+        Download bitmap for a specific date and write it to disk.
+
+        :param date: Date in YYYY-MM-DD format
+        :param output_path: Directory to write the bitmap file (default: current directory)
+        :return: Path to the written bitmap file
+        """
+        file_path = _psychic_output_path(
+            output_path,
+            Path("."),
+            f"psychic_m{self.model}_{date}.bin",
+        )
+
+        logger.info(
+            "Downloading bitmap for model %s, date %s, writing to %s",
+            self.model,
+            date,
+            file_path,
+        )
+        bitmap_data = self._download_bitmap(date)
+        file_path.write_bytes(bitmap_data)
+        return str(file_path)
+
+    def download_csv(self, date: str, output_path: Optional[str] = None) -> str:
+        """Download psychic MMDB data for a date and export it to CSV."""
+        return self._download_csv(date, output_path)
+
+    def _download_csv(self, date: str, output_path: Optional[str] = None) -> str:
+        """
+        Download psychic MMDB data for a date and export it to CSV.
+
+        :param date: Date in YYYY-MM-DD format
+        :param output_path: Directory or file path for the CSV (default: current directory)
+        :return: Path to the written CSV file
+        """
+        file_path = _psychic_output_path(
+            output_path,
+            Path("."),
+            f"psychic_m{self.model}_{date}.csv",
+        )
+
+        logger.info(
+            "Downloading MMDB for model %s, date %s, exporting CSV to %s",
+            self.model,
+            date,
+            file_path,
+        )
+        mmdb_data = self._download_mmdb(date)
+        _write_mmdb_bytes_to_csv(mmdb_data, file_path, self.model)
+        return str(file_path)
+
     def _generate_bitmap(self, start_date: str, end_date: str) -> bytes:
         """Generate bitmap for a date range."""
-        url = f"{self.PSYCHIC_BASE_URL}/generate/{start_date}/{end_date}/{self.model}"
+        url = self.PSYCHIC_BASE_URL
+        payload = {
+            "model": str(self.model),
+            "start_date": start_date,
+            "end_date": end_date,
+        }
 
         logger.debug(f"Generating bitmap from {url}")
 
-        response = self.session.get(
-            url, timeout=600
+        response = self.session.post(
+            url, json=payload, timeout=600
         )  # 10 minute timeout for generation
         response.raise_for_status()
 

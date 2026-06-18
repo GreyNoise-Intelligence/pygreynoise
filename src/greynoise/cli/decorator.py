@@ -19,6 +19,19 @@ from greynoise.util import load_config
 LOGGER = logging.getLogger(__name__)
 
 
+def _txt_formatter_command_key(context):
+    """Build stable txt formatter dict key (e.g. recall-stats, callback-ip).
+
+    Click 8.x does not expose ``command.parent`` on ``Command`` objects; nested
+    paths come from ``Context.command_path`` (space-separated, prog name first).
+    """
+    raw = getattr(context, "command_path", None) or ""
+    parts = raw.split()
+    if len(parts) >= 2:
+        return "-".join(parts[1:])
+    return context.command.name
+
+
 def echo_result(function):
     """Decorator that prints subcommand results correctly formatted.
 
@@ -38,7 +51,7 @@ def echo_result(function):
         formatter = FORMATTERS[output_format]
         if isinstance(formatter, dict):
             # For the text formatter, there's a separate formatter for each subcommand
-            formatter = formatter[context.command.name]
+            formatter = formatter[_txt_formatter_command_key(context)]
         output = formatter(result, params.get("verbose", False)).strip("\n")
         click.echo(
             output, file=params.get("output_file", click.open_file("-", mode="w"))
@@ -64,14 +77,17 @@ def handle_exceptions(function):
         except RequestFailure as exception:
             status = exception.args[0]
             body = exception.args[1]
-            if "message" in body:
-                error_message = "API error: {}".format(body["message"])
-            elif "error" in body:
-                error_message = "API error: {}".format(body["error"])
-            elif not body:
-                error_message = "API error: {}".format(status)
+            if isinstance(body, dict):
+                if "message" in body:
+                    error_message = "API error: {}".format(body["message"])
+                elif "error" in body:
+                    error_message = "API error: {}".format(body["error"])
+                elif not body:
+                    error_message = "API error: {}".format(status)
+                else:
+                    error_message = "API error: {}".format(body)
             else:
-                error_message = "API error: {}".format(body)
+                error_message = "API error: {}".format(body or status)
             LOGGER.error(error_message)
             click.get_current_context().exit(-1)
         except RequestException as exception:
@@ -125,6 +141,11 @@ def pass_api_client(function):
             else:
                 offering = config["offering"]
 
+        psychic = config.get("psychic", True)
+        psychic_model = config.get("psychic_model")
+        psychic_cache_dir = config.get("psychic_cache_dir")
+        psychic_max_age_hours = config.get("psychic_max_age_hours", 1)
+
         api_config = APIConfig(
             api_key=api_key,
             api_server=config.get("api_server", "https://api.greynoise.io"),
@@ -135,6 +156,10 @@ def pass_api_client(function):
             cache_max_size=config.get("cache_max_size", 1000000),
             cache_ttl=config.get("cache_ttl", 3600),
             use_cache=config.get("use_cache", True),
+            psychic=psychic,
+            psychic_model=psychic_model,
+            psychic_cache_dir=psychic_cache_dir,
+            psychic_max_age_hours=psychic_max_age_hours,
         )
         api_client = GreyNoise(api_config)
         return function(api_client, *args, **kwargs)

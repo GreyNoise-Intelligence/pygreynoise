@@ -2,13 +2,12 @@
 
 import logging
 import re
-import sys
 import time
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Union
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 
 import cachetools
 import more_itertools
@@ -19,16 +18,24 @@ from urllib3.util.retry import Retry
 from greynoise.__version__ import __version__
 from greynoise.api.filter import Filter
 from greynoise.exceptions import RateLimitError, RequestFailure
+from greynoise.greynoise_timeline import get_greynoise_timeline
 from greynoise.util import (
+    normalize_rfc3339_datetime,
     validate_cve_id,
     validate_ip,
-    validate_similar_min_score,
     validate_timeline_days,
     validate_timeline_field_value,
     validate_timeline_granularity,
 )
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _api_request_url(api_server: Optional[str], endpoint: str) -> str:
+    """Build an absolute request URL from ``api_server`` and path ``endpoint``."""
+
+    base = (api_server or "").rstrip("/") + "/"
+    return urljoin(base, endpoint.lstrip("/"))
 
 
 @dataclass
@@ -57,17 +64,28 @@ class BaseAPIClient:
         self.config = config
         self.session = self._setup_session()
         self._setup_cache()
-        self._executor = ThreadPoolExecutor(max_workers=10)
+
+    def close(self) -> None:
+        """Close the HTTP session and release the connection pool.
+
+        Parallel batch work (:meth:`_process_batch_parallel`) uses short-lived
+        thread pools internally; this method tears down the long-lived
+        :class:`requests.Session`. Safe to call multiple times.
+        """
+        self.session.close()
 
     def _setup_session(self) -> requests.Session:
-        """Set up a session with retry logic and connection pooling."""
+        """Set up a session with retry logic and connection pooling.
+
+        urllib3 retries transient **5xx** responses only. **429 Too Many Requests** is
+        intentionally excluded.
+        """
         session = requests.Session()
 
-        # Configure retry strategy
         retry_strategy = Retry(
-            total=3,  # number of retries
-            backoff_factor=1,  # wait 1, 2, 4 seconds between retries
-            status_forcelist=[429, 500, 502, 503, 504],  # HTTP status codes to retry on
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504],
         )
 
         # Mount the adapter with retry strategy
@@ -97,8 +115,14 @@ class BaseAPIClient:
         method: str = "get",
         include_headers: bool = False,
         proxy: Optional[str] = None,
-    ) -> Union[Dict[str, Any], tuple]:
-        """Handle API requests with proper error handling and logging."""
+        extra_headers: Optional[Dict[str, Any]] = None,
+    ) -> Union[Dict[str, Any], tuple, str]:
+        """Handle API requests with proper error handling and logging.
+
+        ``extra_headers`` are merged on top of the default ``User-Agent`` and
+        ``key`` headers so callers (e.g. :meth:`GreyNoise.request`) can add or
+        override values such as ``Accept`` without reimplementing auth.
+        """
         if params is None:
             params = {}
 
@@ -109,25 +133,27 @@ class BaseAPIClient:
         if self.config.integration_name:
             user_agent_parts.append("({})".format(self.config.integration_name))
 
-        headers = {
+        req_headers = {
             "User-Agent": " ".join(user_agent_parts),
             "key": self.config.api_key,
         }
+        if extra_headers:
+            req_headers.update(extra_headers)
 
-        url = "/".join([self.config.api_server, endpoint])
+        url = _api_request_url(self.config.api_server, endpoint)
 
-        LOGGER.debug("Sending API request...URL: %s", url)
-        LOGGER.debug("Sending API request...method: %s", method)
-        LOGGER.debug("Sending API request...params: %s", params)
-        LOGGER.debug("Sending API request...files: %s", files)
-        LOGGER.debug("Sending API request...proxy: %s", proxy)
-
-        # Build full URL with params for logging
-        if params:
-            full_url = f"{url}?{urlencode(params)}"
-        else:
-            full_url = url
-        LOGGER.debug("Full request URL with parameters: %s", full_url)
+        # Avoid urlencode / large string work unless DEBUG is enabled (hot path).
+        if LOGGER.isEnabledFor(logging.DEBUG):
+            LOGGER.debug("Sending API request...URL: %s", url)
+            LOGGER.debug("Sending API request...method: %s", method)
+            LOGGER.debug("Sending API request...params: %s", params)
+            LOGGER.debug("Sending API request...files: %s", files)
+            LOGGER.debug("Sending API request...proxy: %s", proxy)
+            if params:
+                full_url = "{}?{}".format(url, urlencode(params))
+            else:
+                full_url = url
+            LOGGER.debug("Full request URL with parameters: %s", full_url)
 
         request_method = getattr(self.session, method)
         try:
@@ -135,7 +161,7 @@ class BaseAPIClient:
                 proxies = {protocol: proxy for protocol in ("http", "https")}
                 response = request_method(
                     url,
-                    headers=headers,
+                    headers=req_headers,
                     timeout=self.config.timeout,
                     params=params,
                     json=json,
@@ -145,7 +171,7 @@ class BaseAPIClient:
             else:
                 response = request_method(
                     url,
-                    headers=headers,
+                    headers=req_headers,
                     timeout=self.config.timeout,
                     params=params,
                     json=json,
@@ -153,10 +179,20 @@ class BaseAPIClient:
                 )
 
             content_type = response.headers.get("Content-Type", "")
-            headers = response.headers
+            resp_headers = response.headers
 
             if "application/json" in content_type:
-                body = response.json()
+                try:
+                    body = response.json()
+                except ValueError as exc:
+                    # Includes json.JSONDecodeError (malformed body, truncated proxy HTML, etc.)
+                    raw = response.text
+                    preview = raw if len(raw) <= 500 else raw[:500] + "..."
+                    LOGGER.error(
+                        "Response Content-Type is JSON but body could not be decoded: %s",
+                        exc,
+                    )
+                    raise RequestFailure(response.status_code, preview)
             else:
                 body = response.text
 
@@ -168,7 +204,7 @@ class BaseAPIClient:
                 raise RequestFailure(response.status_code, body)
 
             if include_headers:
-                return body, headers
+                return body, resp_headers
             else:
                 return body
 
@@ -257,23 +293,31 @@ class GreyNoise(BaseAPIClient):
     EP_IP = "v3/ip/{ip_address}"
     EP_NOISE_MULTI = "v3/ip?quick=true"
     EP_NOISE_CONTEXT_MULTI = "v3/ip"
-    EP_COMMUNITY_IP = "v3/community/{ip_address}"
-    EP_SIMILARITY_IP = "v3/similarity/ips/{ip_address}"
     EP_TIMELINE_IP = "v3/noise/ips/{ip_address}/timeline"
-    EP_TIMELINE_HOURLY_IP = "v3/noise/ips/{ip_address}/hourly-summary"
-    EP_TIMELINE_DAILY_IP = "v3/noise/ips/{ip_address}/daily-summary"
-    EP_META_METADATA = "v2/meta/metadata"
+    EP_TAGS = "v3/tags"
     EP_PING = "ping"
     EP_SENSOR_ACTIVITY = "v1/workspaces/{workspace_id}/sensors/activity"
     EP_SENSOR_LIST = "v1/workspaces/{workspace_id}/sensors"
     EP_PERSONA_DETAILS = "v1/personas/{persona_id}"
     EP_CVE_LOOKUP = "v1/cve/{cve_id}"
+    EP_CVES_BULK = "v3/cves"
     EP_ANALYZE_UPLOAD = "v2/analyze/upload"
     EP_ANALYZE = "v2/analyze/{id}"
+    EP_RECALL = "v3/gnql/timeseries"
+    EP_RECALL_STATS = "v3/gnql/timeseries/stats"
+    EP_CALLBACK_IP = "v1/callback/ip/{ip_address}"
+    EP_CALLBACK_LIST = "v1/callback/ips"
+    EP_CALLBACK_EXPORT_IPS = "v1/callback/export-ips"
+    EP_CALLBACK_OVERVIEW = "v1/callback/overview"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
 
     IP_MULTI_CHECK_CHUNK_SIZE = 10000
+    #: Max status polls after upload (inclusive of re-checking the upload response as poll 0).
+    ANALYZE_MAX_POLL_ATTEMPTS = 360
+    #: Seconds to wait between analyze job status polls.
+    ANALYZE_POLL_INTERVAL_SECONDS = 5
+    _ANALYZE_FAILED_STATES = frozenset(("failed", "error", "cancelled"))
 
     IPV4_REGEX = re.compile(
         r"(?:{octet}\.){{3}}{octet}".format(
@@ -290,14 +334,69 @@ class GreyNoise(BaseAPIClient):
         if config.psychic:
             from greynoise.psychic import Psychic
 
+            if config.psychic_model:
+                model = config.psychic_model
+            else:
+                model = 1
+
             self._psychic = Psychic(
                 api_key=config.api_key,
-                model=config.psychic_model,
+                model=model,
                 cache_dir=config.psychic_cache_dir,
                 max_age_hours=config.psychic_max_age_hours,
                 auto_download=True,
             )
             LOGGER.info("Psychic enabled")
+
+    def _get_psychic_for_download(self, model: Optional[int] = None):
+        """Return a Psychic client for download operations, creating one if needed."""
+        from greynoise.psychic import Psychic
+
+        requested_model = (
+            model if model is not None else (self.config.psychic_model or 1)
+        )
+
+        if self._psychic is None:
+            self._psychic = Psychic(
+                api_key=self.config.api_key,
+                model=requested_model,
+                cache_dir=self.config.psychic_cache_dir,
+                max_age_hours=self.config.psychic_max_age_hours,
+                auto_download=False,
+            )
+        elif model is not None:
+            self._psychic.model = requested_model
+
+        return self._psychic
+
+    def psychic_download(
+        self,
+        date: str,
+        file_format: str,
+        output_path: Optional[str] = None,
+        model: Optional[int] = None,
+    ) -> str:
+        """
+        Download a Psychic file and write it to disk.
+
+        :param date: Date in YYYY-MM-DD format
+        :param file_format: File format to download (``bin``, ``mmdb``, or ``csv``)
+        :param output_path: Directory or file path for the download (default: current directory)
+        :param model: Psychic model to use (1, 2, or 3; default: from config or 1)
+        :return: Path to the written file
+        :rtype: str
+        """
+        psychic = self._get_psychic_for_download(model)
+        directory = output_path or "."
+
+        if file_format == "bin":
+            return psychic.download_bitmap(date, directory)
+        if file_format == "mmdb":
+            return psychic.download_mmdb(date, directory)
+        if file_format == "csv":
+            return psychic.download_csv(date, directory)
+
+        raise ValueError("file_format must be 'bin', 'mmdb', or 'csv'")
 
     def request(
         self,
@@ -308,7 +407,7 @@ class GreyNoise(BaseAPIClient):
         files: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         proxy: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> Union[Dict[str, Any], str]:
         """Make a request to the GreyNoise API.
 
         Args:
@@ -317,21 +416,25 @@ class GreyNoise(BaseAPIClient):
             params: URL parameters to include
             json: JSON data to include
             files: Files to include
-            headers: Headers to include
+            headers: Extra headers merged after defaults (``User-Agent``, ``key``).
+                If omitted, ``Accept: application/json`` is set for typical API use.
             proxy: Proxy URL to use for the request
 
         Returns:
-            API response data
+            Parsed JSON (dict), or raw response body (str) for non-JSON responses.
         """
-        if headers is None:
-            headers = {"key": self.config.api_key, "Accept": "application/json"}
+        extra: Dict[str, Any] = {}
+        if headers is not None:
+            extra.update(headers)
+        if "Accept" not in extra:
+            extra["Accept"] = "application/json"
         return self._request(
             endpoint,
             method=method,
             params=params,
             json=json,
             files=files,
-            headers=headers,
+            extra_headers=extra,
             proxy=proxy,
         )
 
@@ -356,35 +459,59 @@ class GreyNoise(BaseAPIClient):
             files = {"file": text}
             upload = self._request(self.EP_ANALYZE_UPLOAD, files=files, method="post")
 
-            if "uuid" in upload:
-                uuid = upload["uuid"]
-                state = upload["state"]
-                while state != "completed":
-                    url = self.EP_ANALYZE.format(id=uuid)
-                    response = self._request(url)
-                    state = response["state"]
-                    time.sleep(5)
-                unique_ip_list = (
-                    response["details"].get("noise_ips_found", [])
-                    + response["details"].get("unknown_ips", [])
-                    + response["details"].get("riot_ips_found", [])
+            if "uuid" not in upload:
+                text_stats["message"] = upload.get(
+                    "message",
+                    "Analyze upload did not return a job identifier (uuid).",
                 )
+            else:
+                job_id = upload["uuid"]
+                response: Optional[Dict[str, Any]] = upload
+                for poll in range(self.ANALYZE_MAX_POLL_ATTEMPTS + 1):
+                    state = str(response.get("state", "")).lower()
+                    if state == "completed":
+                        break
+                    if state in self._ANALYZE_FAILED_STATES:
+                        text_stats["message"] = response.get(
+                            "message",
+                            "Analyze job failed with state {!r}.".format(
+                                response.get("state", "")
+                            ),
+                        )
+                        response = None
+                        break
+                    if poll == self.ANALYZE_MAX_POLL_ATTEMPTS:
+                        text_stats["message"] = (
+                            "Analyze job did not reach a completed state after "
+                            "{} status checks (last state {!r}).".format(
+                                self.ANALYZE_MAX_POLL_ATTEMPTS,
+                                response.get("state", ""),
+                            )
+                        )
+                        response = None
+                        break
+                    time.sleep(self.ANALYZE_POLL_INTERVAL_SECONDS)
+                    response = self._request(self.EP_ANALYZE.format(id=job_id))
 
-                text_stats["summary"] = {
-                    "ip_count": response["details"].get("unique_ips", 0),
-                    "noise_ip_count": response["details"].get("noise_ips", 0),
-                    "not_noise_ip_count": response["details"].get("non_noise_ips", 0),
-                    "riot_ip_count": response["details"].get("riot_ips", 0),
-                    "noise_ip_ratio": response["details"].get(
-                        "percentage_of_noise_ips", 0
-                    ),
-                    "riot_ip_ratio": response["details"].get(
-                        "percentage_of_riot_ips", 0
-                    ),
-                }
-                text_stats["stats"] = response.get("stats")
-                text_stats["query"] = unique_ip_list
-                text_stats["count"] = response["details"].get("unique_ips", 0)
+                if response is not None:
+                    details = response.get("details") or {}
+                    unique_ip_list = (
+                        details.get("noise_ips_found", [])
+                        + details.get("unknown_ips", [])
+                        + details.get("riot_ips_found", [])
+                    )
+
+                    text_stats["summary"] = {
+                        "ip_count": details.get("unique_ips", 0),
+                        "noise_ip_count": details.get("noise_ips", 0),
+                        "not_noise_ip_count": details.get("non_noise_ips", 0),
+                        "riot_ip_count": details.get("riot_ips", 0),
+                        "noise_ip_ratio": details.get("percentage_of_noise_ips", 0),
+                        "riot_ip_ratio": details.get("percentage_of_riot_ips", 0),
+                    }
+                    text_stats["stats"] = response.get("stats")
+                    text_stats["query"] = unique_ip_list
+                    text_stats["count"] = details.get("unique_ips", 0)
 
         return text_stats
 
@@ -411,6 +538,57 @@ class GreyNoise(BaseAPIClient):
         ):
             yield filtered_chunk
 
+    @staticmethod
+    def _ip_lookup_response_cacheable(response: Any) -> bool:
+        """Whether a raw IP lookup JSON body should be stored in ``ip_context_cache``.
+
+        Error and not-found payloads (for example HTTP 404 bodies) often carry a
+        top-level ``message`` and should not be cached: the address might later
+        appear in the dataset and a stale cached error would hide fresh data.
+        """
+        if not isinstance(response, dict):
+            return False
+        if response.get("message"):
+            return False
+        return True
+
+    @staticmethod
+    def _coerce_bulk_ip_post_response(api_result: Any) -> Dict[str, List[Any]]:
+        """Normalize POST ``/v3/ip`` (multi / quick) JSON for batch merging.
+
+        Ensures each worker returns a dict whose values are lists so
+        :meth:`_process_batch_parallel` can merge chunks without corrupting
+        results when the API returns an error object, wrong types, or omits keys.
+        """
+        if not isinstance(api_result, dict):
+            LOGGER.error(
+                "Bulk IP lookup returned %s instead of a dict; treating as empty.",
+                type(api_result).__name__,
+            )
+            return {"data": [], "request_metadata": []}
+
+        data = api_result.get("data")
+        if not isinstance(data, list):
+            if data is not None:
+                LOGGER.error(
+                    "Bulk IP lookup 'data' must be a list, not %s",
+                    type(data).__name__,
+                )
+            data = []
+
+        meta = api_result.get("request_metadata")
+        if isinstance(meta, dict):
+            meta = [meta]
+        elif not isinstance(meta, list):
+            if meta is not None:
+                LOGGER.error(
+                    "Bulk IP lookup 'request_metadata' must be a list, not %s",
+                    type(meta).__name__,
+                )
+            meta = []
+
+        return {"data": data, "request_metadata": meta}
+
     def ip(self, ip_address):  # pylint: disable=C0103
         """Get context associated with an IP address.
 
@@ -419,21 +597,23 @@ class GreyNoise(BaseAPIClient):
         :return: Context for the IP address.
         :rtype: dict
 
+        When caching is enabled, successful-looking responses are cached;
+        error-shaped bodies (typically with a ``message`` field) are not.
+
         """
         LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
 
-        if self.offering.lower() == "community":
-            endpoint = self.EP_COMMUNITY_IP.format(ip_address=ip_address)
-        else:
-            endpoint = self.EP_IP.format(ip_address=ip_address)
+        endpoint = self.EP_IP.format(ip_address=ip_address)
+
         if self.config.use_cache:
             cache = self.ip_context_cache
-            response = (
-                cache[ip_address]
-                if ip_address in cache
-                else cache.setdefault(ip_address, self._request(endpoint))
-            )
+            if ip_address in cache:
+                response = cache[ip_address]
+            else:
+                response = self._request(endpoint)
+                if self._ip_lookup_response_cacheable(response):
+                    cache[ip_address] = response
         else:
             response = self._request(endpoint)
         if "ip" not in response:
@@ -544,12 +724,12 @@ class GreyNoise(BaseAPIClient):
             if validate_ip(ip_address, strict=False, print_warning=False)
         ]
 
-        def process_chunk(chunk: List[str]) -> List[Dict[str, Any]]:
+        def process_chunk(chunk: List[str]) -> Dict[str, List[Any]]:
             """Process a chunk of IP addresses."""
             api_result = self._request(
                 self.EP_NOISE_MULTI, method="post", json={"ips": chunk}
             )
-            return api_result
+            return self._coerce_bulk_ip_post_response(api_result)
 
         # Process valid IPs in parallel batches
         if self.config.use_cache:
@@ -590,9 +770,19 @@ class GreyNoise(BaseAPIClient):
                     ip_results = values
                 if key == "request_metadata":
                     for item in values:
-                        ips_not_found.extend(item["ips_not_found"])
+                        if not isinstance(item, dict):
+                            LOGGER.warning(
+                                "Skipping non-dict request_metadata entry: %r", item
+                            )
+                            continue
+                        ips_not_found.extend(item.get("ips_not_found") or [])
 
             for result in ip_results:
+                if not isinstance(result, dict) or "ip" not in result:
+                    LOGGER.warning(
+                        "Skipping bulk quick row without dict or 'ip' key: %r", result
+                    )
+                    continue
                 ip_address = result["ip"]
                 ordered_results[ip_address] = result
                 if self.config.use_cache:
@@ -646,12 +836,12 @@ class GreyNoise(BaseAPIClient):
 
         """
 
-        def process_chunk(chunk: List[str]) -> List[Dict[str, Any]]:
+        def process_chunk(chunk: List[str]) -> Dict[str, List[Any]]:
             """Process a chunk of IP addresses."""
             api_result = self._request(
                 self.EP_NOISE_CONTEXT_MULTI, method="post", json={"ips": chunk}
             )
-            return api_result
+            return self._coerce_bulk_ip_post_response(api_result)
 
         if self.offering == "community":  # pylint: disable=R1702
             results = [
@@ -708,9 +898,21 @@ class GreyNoise(BaseAPIClient):
                         ip_results = values
                     if key == "request_metadata":
                         for item in values:
-                            ips_not_found.extend(item["ips_not_found"])
+                            if not isinstance(item, dict):
+                                LOGGER.warning(
+                                    "Skipping non-dict request_metadata entry: %r",
+                                    item,
+                                )
+                                continue
+                            ips_not_found.extend(item.get("ips_not_found") or [])
 
                 for result in ip_results:
+                    if not isinstance(result, dict) or "ip" not in result:
+                        LOGGER.warning(
+                            "Skipping bulk ip_multi row without dict or 'ip' key: %r",
+                            result,
+                        )
+                        continue
                     ip_address = result["ip"]
                     ordered_results[ip_address] = result
 
@@ -761,17 +963,43 @@ class GreyNoise(BaseAPIClient):
 
         return response
 
-    def metadata(self):
-        """Get metadata."""
-        if self.offering == "community":
-            response = {
-                "message": "Metadata lookup not supported with Community offering"
-            }
-        else:
-            LOGGER.debug("Getting metadata...")
-            response = self._request(self.EP_META_METADATA)
+    def tags(
+        self,
+        name: Optional[str] = None,
+        slug: Optional[str] = None,
+        cve: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """List tags and tag metadata (``GET /v3/tags``).
 
-        return response
+        Optional query filters match the API: partial ``name``, exact ``slug``,
+        and ``cve`` (CVE ID associated with a tag).
+
+        :param name: Filter by tag name (partial match).
+        :param slug: Filter by slug (exact match).
+        :param cve: Filter by associated CVE ID.
+        :return: API JSON body, or a dict with ``message`` for Community offering.
+        """
+        if self.offering == "community":
+            return {"message": "Tags lookup is not supported with Community offering"}
+
+        params: Dict[str, Any] = {}
+        if name is not None:
+            params["name"] = name
+        if slug is not None:
+            params["slug"] = slug
+        if cve is not None:
+            validate_cve_id(cve)
+            params["cve"] = cve
+
+        LOGGER.debug("Getting tags (filters: %s)...", params or "none")
+        return self._request(self.EP_TAGS, params=params)
+
+    def metadata(self):
+        """Get tag metadata (same as :meth:`tags` with no filters).
+
+        Retained for backwards compatibility; calls :meth:`tags` unfiltered.
+        """
+        return self.tags()
 
     def test_connection(self):
         """Test the API connection and API key."""
@@ -823,10 +1051,9 @@ class GreyNoise(BaseAPIClient):
         elif file_format == "csv":
             params = {"format": file_format}
         else:
-            LOGGER.error(
-                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            raise ValueError(
+                "file_format must be 'json' or 'csv', not {!r}".format(file_format)
             )
-            sys.exit(1)
 
         if start_time is not None:
             params["start_time"] = start_time
@@ -859,7 +1086,12 @@ class GreyNoise(BaseAPIClient):
         size=None,
         scroll=None,
     ):
-        """Get session data from sensors"""
+        """Collect distinct ``source_ip`` values from sensor activity rows.
+
+        The API is expected to return a JSON **list** of session objects. Any other
+        shape (for example an error dict) raises :class:`ValueError` so callers are
+        not misled by iterating dict keys or crashing on ``.get``.
+        """
         LOGGER.debug(
             "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
             workspace_id,
@@ -876,10 +1108,9 @@ class GreyNoise(BaseAPIClient):
         elif file_format == "csv":
             params = {"format": file_format}
         else:
-            LOGGER.error(
-                f"Value for file_format is not valid (valid: json, csv): {file_format}"
+            raise ValueError(
+                "file_format must be 'json' or 'csv', not {!r}".format(file_format)
             )
-            sys.exit(1)
 
         if start_time is not None:
             params["start_time"] = start_time
@@ -895,9 +1126,25 @@ class GreyNoise(BaseAPIClient):
             params["scroll"] = scroll
         endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
         response = self._request(endpoint, params=params)
+        if not isinstance(response, list):
+            if isinstance(response, dict):
+                detail = response.get("message") or response.get("error") or response
+                raise ValueError(
+                    "sensor_activity_ips expected a JSON list from the API; "
+                    "got a dict: {!r}".format(detail)
+                )
+            raise ValueError(
+                "sensor_activity_ips expected a JSON list from the API; "
+                "got {!r}".format(type(response).__name__)
+            )
+
         ip_list = []
         for item in response:
-            ip_list.append(item.get("source_ip", ""))
+            if isinstance(item, dict):
+                ip_list.append(item.get("source_ip", ""))
+            else:
+                LOGGER.warning("Skipping non-dict sensor activity row: %r", item)
+
         final_ip_list = list(set(ip_list))
 
         return final_ip_list
@@ -916,32 +1163,11 @@ class GreyNoise(BaseAPIClient):
 
 
         """
-        if self.offering == "community":
-            response = {
-                "message": "Similarity lookup not supported with Community offering"
-            }
-        else:
-            LOGGER.debug("Checking IP Sim results for %s...", ip_address)
-            validate_ip(ip_address)
-
-            if limit is None:
-                limit = 50
-
-            endpoint = self.EP_SIMILARITY_IP.format(ip_address=ip_address)
-            endpoint = endpoint + f"?limit={limit}"
-
-            if min_score:
-                validate_similar_min_score(min_score)
-                if min_score != 0:
-                    min_score = min_score / 100
-                endpoint = endpoint + f"&minimum_score={min_score}"
-
-            response = self._request(endpoint)
-
-            if "ip" not in response:
-                response["ip"] = ip_address
-
-        return response
+        LOGGER.warning(
+            "The similar() function is deprecated and will be removed in"
+            " a future version."
+        )
+        return False, "Function deprecated"
 
     def timeline(self, ip_address, field="classification", days=None, granularity=None):
         """Query IP on the IP TimeSeries API
@@ -1005,30 +1231,13 @@ class GreyNoise(BaseAPIClient):
 
 
         """
-        if self.offering == "community":
-            response = {
-                "message": "Timeline lookup not supported with Community offering"
-            }
-        else:
-            LOGGER.debug("Checking IP Timeline results for %s...", ip_address)
-            validate_ip(ip_address)
-            if days:
-                validate_timeline_days(days)
+        LOGGER.warning(
+            "The timelinehourly() function is deprecated and will be removed in"
+            " a future version."
+        )
+        return False, "Function deprecated"
 
-            endpoint = self.EP_TIMELINE_HOURLY_IP.format(ip_address=ip_address)
-            endpoint = endpoint + f"?limit={limit}"
-            if days:
-                endpoint = endpoint + f"&days={days}"
-            if cursor:
-                endpoint = endpoint + f"&cursor={cursor}"
-            response = self._request(endpoint)
-
-            if "ip" not in response:
-                response["ip"] = ip_address
-
-        return response
-
-    def timelinedaily(self, ip_address, days=None, cursor=None, limit=50):
+    def timelinedaily(self, ip_address, days=30):
         """Query IP on the IP TimeSeries API
 
         :param ip_address: IP address to use in the look-up.
@@ -1056,16 +1265,19 @@ class GreyNoise(BaseAPIClient):
             if days:
                 validate_timeline_days(days)
 
-            endpoint = self.EP_TIMELINE_DAILY_IP.format(ip_address=ip_address)
-            endpoint = endpoint + f"?limit={limit}"
-            if days:
-                endpoint = endpoint + f"&days={days}"
-            if cursor:
-                endpoint = endpoint + f"&cursor={cursor}"
-            response = self._request(endpoint)
+            user_agent_parts = ["greynoise-sdk-timeline-function/1.0"]
+            if self.config.integration_name:
+                user_agent_parts.append("({})".format(self.config.integration_name))
+            user_agent = " ".join(user_agent_parts)
 
-            if "ip" not in response:
-                response["ip"] = ip_address
+            response = get_greynoise_timeline(
+                ip=ip_address,
+                api_key=self.config.api_key,
+                days=days,
+                granularity="1d",
+                max_workers=4,
+                user_agent=user_agent,
+            )
 
         return response
 
@@ -1141,12 +1353,39 @@ class GreyNoise(BaseAPIClient):
 
         return response
 
-    def psychic_lookup(self, ip: str) -> Dict[str, Any]:
+    def cves(self, cve_ids: List[str]) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+        """Look up multiple CVEs in a single request.
+
+        Up to 10,000 CVE IDs per call.
+
+        :param cve_ids: CVE identifiers (e.g. ``CVE-2021-44228``).
+        :type cve_ids: list[str]
+        :return: API response: list of CVE records, or a dict with an error ``message``
+            when using the Community offering.
+        :rtype: list[dict] | dict
+        """
+        if self.offering == "community":
+            return {
+                "message": "Bulk CVE lookup is not supported with Community offering"
+            }
+
+        if not cve_ids:
+            raise ValueError("At least one CVE ID is required")
+        if len(cve_ids) > 10000:
+            raise ValueError("Maximum number of CVEs per request is 10000")
+
+        for cve_id in cve_ids:
+            validate_cve_id(cve_id)
+
+        LOGGER.debug("Bulk CVE lookup for %s IDs...", len(cve_ids))
+        return self._request(self.EP_CVES_BULK, method="post", json={"cves": cve_ids})
+
+    def psychic_lookup(self, ip_address: str) -> Dict[str, Any]:
         """
         Look up an IP address using Psychic offline bitmaps.
 
-        :param ip: IP address to look up
-        :type ip: str
+        :param ip_address: IP address to look up
+        :type ip_address: str
         :return: Dictionary with IP information from Psychic bitmap
         :rtype: dict
         :raises: RuntimeError if psychic is not enabled
@@ -1156,7 +1395,7 @@ class GreyNoise(BaseAPIClient):
                 "Psychic is not enabled. Initialize GreyNoise with psychic=True"
             )
 
-        return self._psychic.lookup_ip(ip)
+        return self._psychic.lookup_ip(ip_address)
 
     def psychic_lookup_ips(self, ips: List[str]) -> List[Dict[str, Any]]:
         """
@@ -1190,6 +1429,68 @@ class GreyNoise(BaseAPIClient):
 
         return self._psychic.get_stats()
 
+    def psychic_download_mmdb(
+        self, date: str, output_path: Optional[str] = None
+    ) -> str:
+        """
+        Download mmdb for a specific date and write it to disk.
+
+        :param date: Date to download mmdb for
+        :type date: str
+        :param output_path: Directory to write the MMDB file (default: current directory)
+        :type output_path: str
+        :return: Path to the written MMDB file
+        :rtype: str
+        """
+        return self.psychic_download(date, "mmdb", output_path)
+
+    def psychic_download_csv(self, date: str, output_path: Optional[str] = None) -> str:
+        """
+        Download psychic MMDB data for a date and export it to CSV.
+
+        :param date: Date to download data for
+        :type date: str
+        :param output_path: Directory or file path for the CSV (default: current directory)
+        :type output_path: str
+        :return: Path to the written CSV file
+        :rtype: str
+        """
+        return self.psychic_download(date, "csv", output_path)
+
+    def psychic_download_bitmap(
+        self, date: str, output_path: Optional[str] = None
+    ) -> str:
+        """
+        Download bitmap for a specific date and write it to disk.
+
+        :param date: Date to download bitmap for
+        :type date: str
+        :param output_path: Directory to write the bitmap file (default: current directory)
+        :type output_path: str
+        :return: Path to the written bitmap file
+        :rtype: str
+        """
+        return self.psychic_download(date, "bin", output_path)
+
+    def psychic_generate_bitmap(self, start_date: str, end_date: str) -> bytes:
+        """
+        Generate bitmap for a date range.
+
+        :param start_date: Start date to generate bitmap for
+        :type start_date: str
+        :param end_date: End date to generate bitmap for
+        :type end_date: str
+        :return: Bytes of the bitmap file
+        :rtype: bytes
+        :raises: RuntimeError if psychic is not enabled
+        """
+        if not self._psychic:
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True"
+            )
+
+        return self._psychic._generate_bitmap(start_date, end_date)
+
     def psychic_reload(self) -> None:
         """
         Force reload of Psychic bitmap data.
@@ -1216,3 +1517,306 @@ class GreyNoise(BaseAPIClient):
                 "Psychic is not enabled. Initialize GreyNoise with psychic=True"
             )
         return self._psychic
+
+    def recall(
+        self, query=None, start=None, end=None, format="json", limit=None, offset=None
+    ):
+        """Get Recall data for a given query
+
+        :param query: Query to use in the look-up.
+        :type query: str
+        :param start: Start of the time range (RFC 3339 after normalization).
+        :type start: str or datetime or None
+        :param end: End of the time range (RFC 3339 after normalization).
+        :type end: str or datetime or None
+        :param format: Format to return the data in.
+        :type format: str
+        :param limit: Limit the number of results returned.
+        :type limit: int
+        :param offset: Offset the results returned.
+
+        """
+        if not query:
+            raise ValueError("Query is required")
+
+        if self.offering == "community":
+            response = {
+                "message": "Recall lookup is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Recall data for query: %s...", query)
+            start_norm = normalize_rfc3339_datetime(start)
+            end_norm = normalize_rfc3339_datetime(end)
+            params: Dict[str, Any] = {"query": query, "format": format}
+            if start_norm is not None:
+                params["start"] = start_norm
+            if end_norm is not None:
+                params["end"] = end_norm
+            if limit is not None:
+                params["limit"] = limit
+            if offset is not None:
+                params["offset"] = offset
+
+            endpoint = self.EP_RECALL
+            response = self._request(endpoint, params=params)
+
+        return response
+
+    def recall_stats(
+        self, query=None, start=None, end=None, format="json", interval="hour"
+    ):
+        """Get Recall data for a given query
+
+        :param query: Query to use in the look-up.
+        :type query: str
+        :param interval: Interval to group the data by.
+        :type interval: str
+
+        """
+        if not query:
+            raise ValueError("Query is required")
+
+        if self.offering == "community":
+            response = {
+                "message": "Recall lookup is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Recall data for query: %s...", query)
+            start_norm = normalize_rfc3339_datetime(start)
+            end_norm = normalize_rfc3339_datetime(end)
+            params: Dict[str, Any] = {"query": query, "format": format}
+            if start_norm is not None:
+                params["start"] = start_norm
+            if end_norm is not None:
+                params["end"] = end_norm
+            if interval is not None:
+                params["interval"] = interval
+
+            endpoint = self.EP_RECALL_STATS
+            response = self._request(endpoint, params=params)
+
+        return response
+
+    def callback_ip(self, ip_address=None, source_workspace="all"):
+        """Get Recall data for a given query
+
+        :param ip_address: IP address to use in the look-up.
+        :type ip_address: str
+        :param source_workspace: Source workspace to use in the look-up.
+        :type source_workspace: str
+        """
+
+        if self.offering == "community":
+            response = {
+                "message": "Recall lookup is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Callback data for IP: %s...", ip_address)
+            source_workspace = source_workspace.lower()
+            endpoint = self.EP_CALLBACK_IP.format(ip_address=ip_address)
+            response = self._request(endpoint)
+
+            if source_workspace != "all" and "source_workspaces" in response:
+                workspaces_lower = {
+                    str(w).lower() for w in response["source_workspaces"]
+                }
+                if source_workspace not in workspaces_lower:
+                    response = {
+                        "message": "IP not found in source workspace %s"
+                        % source_workspace
+                    }
+
+        return response
+
+    @staticmethod
+    def _callback_filter_payload(
+        *,
+        is_stage_1: Optional[bool] = None,
+        is_stage_2: Optional[bool] = None,
+        first_seen_after: Optional[str] = None,
+        first_seen_before: Optional[str] = None,
+        last_seen_after: Optional[str] = None,
+        last_seen_before: Optional[str] = None,
+        has_files: Optional[bool] = None,
+        file_type: Optional[str] = None,
+        file_name: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        scanner_ips: Optional[List[str]] = None,
+        ips: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Build JSON body fields shared by callback list and export endpoints."""
+        return {
+            k: v
+            for k, v in (
+                ("is_stage_1", is_stage_1),
+                ("is_stage_2", is_stage_2),
+                ("first_seen_after", first_seen_after),
+                ("first_seen_before", first_seen_before),
+                ("last_seen_after", last_seen_after),
+                ("last_seen_before", last_seen_before),
+                ("has_files", has_files),
+                ("file_type", file_type),
+                ("file_name", file_name),
+                ("file_hash", file_hash),
+                ("scanner_ips", scanner_ips),
+                ("ips", ips),
+            )
+            if v is not None
+        }
+
+    def callback_list(
+        self,
+        *,
+        is_stage_1: Optional[bool] = None,
+        is_stage_2: Optional[bool] = None,
+        first_seen_after: Optional[str] = None,
+        first_seen_before: Optional[str] = None,
+        last_seen_after: Optional[str] = None,
+        last_seen_before: Optional[str] = None,
+        has_files: Optional[bool] = None,
+        file_type: Optional[str] = None,
+        file_name: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        scanner_ips: Optional[List[str]] = None,
+        ips: Optional[List[str]] = None,
+        page: Optional[int] = None,
+        page_size: Optional[int] = None,
+    ):
+        """List callback IPs (paginated).
+
+        :param is_stage_1: If true, only IPs where a file was downloaded (stage 1).
+        :param is_stage_2: If true, only IPs suspected C2 from VT/sandbox (stage 2).
+        :param first_seen_after: Only IPs first seen after this date (``YYYY-MM-DD``).
+        :param first_seen_before: Only IPs first seen before this date (``YYYY-MM-DD``).
+        :param last_seen_after: Only IPs last seen after this date (``YYYY-MM-DD``).
+        :param last_seen_before: Only IPs last seen before this date (``YYYY-MM-DD``).
+        :param has_files: If true, only IPs with malware files; if false, only without.
+        :param file_type: Filter by MIME type (e.g. ``application/x-executable``).
+        :param file_name: Filter by file name substring.
+        :param file_hash: Filter by file SHA256 hash.
+        :param scanner_ips: Only IPs associated with these scanner IPs.
+        :param ips: Restrict to this set of callback IPs.
+        :param page: Zero-indexed page (default on API: 0).
+        :param page_size: Results per page, 1–100 (default on API: 20).
+
+        """
+        if self.offering == "community":
+            response = {
+                "message": "Callback list is not supported with Community offering"
+            }
+        else:
+            LOGGER.debug("Getting Callback list...")
+            payload = self._callback_filter_payload(
+                is_stage_1=is_stage_1,
+                is_stage_2=is_stage_2,
+                first_seen_after=first_seen_after,
+                first_seen_before=first_seen_before,
+                last_seen_after=last_seen_after,
+                last_seen_before=last_seen_before,
+                has_files=has_files,
+                file_type=file_type,
+                file_name=file_name,
+                file_hash=file_hash,
+                scanner_ips=scanner_ips,
+                ips=ips,
+            )
+            if page is not None:
+                payload["page"] = page
+            if page_size is not None:
+                payload["page_size"] = page_size
+            endpoint = self.EP_CALLBACK_LIST
+            response = self._request(endpoint, method="post", json=payload or {})
+        return response
+
+    def callback_export_ips(
+        self,
+        *,
+        is_stage_1: Optional[bool] = None,
+        is_stage_2: Optional[bool] = None,
+        first_seen_after: Optional[str] = None,
+        first_seen_before: Optional[str] = None,
+        last_seen_after: Optional[str] = None,
+        last_seen_before: Optional[str] = None,
+        has_files: Optional[bool] = None,
+        file_type: Optional[str] = None,
+        file_name: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        scanner_ips: Optional[List[str]] = None,
+        ips: Optional[List[str]] = None,
+    ) -> Union[str, Dict[str, Any]]:
+        """Export callback IPs as newline-delimited text (``POST .../export-ips``).
+
+        Accepts the same filter fields as :meth:`callback_list` (not pagination).
+        On success the API returns ``text/plain``; the client returns that body
+        as a string (one IP per line).
+
+        :rtype: str | dict
+        """
+        if self.offering == "community":
+            return {
+                "message": "Callback IP export is not supported with Community offering"
+            }
+
+        LOGGER.debug("Exporting Callback IPs...")
+        payload = self._callback_filter_payload(
+            is_stage_1=is_stage_1,
+            is_stage_2=is_stage_2,
+            first_seen_after=first_seen_after,
+            first_seen_before=first_seen_before,
+            last_seen_after=last_seen_after,
+            last_seen_before=last_seen_before,
+            has_files=has_files,
+            file_type=file_type,
+            file_name=file_name,
+            file_hash=file_hash,
+            scanner_ips=scanner_ips,
+            ips=ips,
+        )
+        return self._request(
+            self.EP_CALLBACK_EXPORT_IPS, method="post", json=payload or {}
+        )
+
+    def callback_overview(
+        self,
+        *,
+        is_stage_1: Optional[bool] = None,
+        is_stage_2: Optional[bool] = None,
+        first_seen_after: Optional[str] = None,
+        first_seen_before: Optional[str] = None,
+        last_seen_after: Optional[str] = None,
+        last_seen_before: Optional[str] = None,
+        has_files: Optional[bool] = None,
+        file_type: Optional[str] = None,
+        file_name: Optional[str] = None,
+        file_hash: Optional[str] = None,
+        scanner_ips: Optional[List[str]] = None,
+        ips: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Callback IP aggregate statistics (``POST .../overview``).
+
+        Same optional filters as :meth:`callback_export_ips` and :meth:`callback_list`
+        (excluding pagination). Returns JSON (counts by stage, scanners, etc.).
+        """
+        if self.offering == "community":
+            return {
+                "message": "Callback overview is not supported with Community offering"
+            }
+
+        LOGGER.debug("Getting Callback overview...")
+        payload = self._callback_filter_payload(
+            is_stage_1=is_stage_1,
+            is_stage_2=is_stage_2,
+            first_seen_after=first_seen_after,
+            first_seen_before=first_seen_before,
+            last_seen_after=last_seen_after,
+            last_seen_before=last_seen_before,
+            has_files=has_files,
+            file_type=file_type,
+            file_name=file_name,
+            file_hash=file_hash,
+            scanner_ips=scanner_ips,
+            ips=ips,
+        )
+        return self._request(
+            self.EP_CALLBACK_OVERVIEW, method="post", json=payload or {}
+        )

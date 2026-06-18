@@ -34,36 +34,6 @@ def api_client():
             yield api_client
 
 
-class TestAccount(object):
-    """Account subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'account' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.account)
-        api_client.not_implemented.assert_called_with("account")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
-class TestAlerts(object):
-    """Alerts subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'alerts' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.alerts)
-        api_client.not_implemented.assert_called_with("alerts")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
 class TestAnalyze(object):
     """Analyze subcommand test cases."""
 
@@ -80,7 +50,8 @@ class TestAnalyze(object):
             "riot_ip_ratio": 0,
         },
     }
-    DEFAULT_OUTPUT = textwrap.dedent("""\
+    DEFAULT_OUTPUT = textwrap.dedent(
+        """\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
@@ -97,7 +68,8 @@ class TestAnalyze(object):
         - <ip_address_2>
 
         No results found for this query.
-        """)
+        """
+    )
 
     @pytest.mark.parametrize(
         "expected_output",
@@ -181,21 +153,6 @@ class TestAnalyze(object):
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
-
-
-class TestFeedback(object):
-    """Feedback subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'feedback' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.feedback)
-        api_client.not_implemented.assert_called_with("feedback")
-        assert result.exit_code == 1
-        assert result.output == expected_output
 
 
 class TestFilter(object):
@@ -387,6 +344,22 @@ class TestHelp(object):
 
 class TestIP(object):
     """IP subcommand tests."""
+
+    def test_main_ip_command_uses_context_lookup(self, api_client):
+        """The root ip command must not be shadowed by callback ip."""
+        runner = CliRunner()
+        expected_response = {"ip": "8.8.8.8"}
+
+        api_client.ip.return_value = expected_response
+
+        result = runner.invoke(main, ["ip", "-f", "json", "8.8.8.8"])
+
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps(
+            [expected_response], indent=4, sort_keys=True
+        )
+        api_client.ip.assert_called_once_with(ip_address="8.8.8.8")
+        api_client.callback_ip.assert_not_called()
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_ip(self, api_client, ip_address, expected_response):
@@ -728,7 +701,8 @@ class TestQuick(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -742,7 +716,8 @@ class TestQuick(object):
                     \t\t\t<trust_level>1</trust_level>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
             (
                 "8.8.8.8",
@@ -939,7 +914,8 @@ class TestIPMulti(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -951,7 +927,8 @@ class TestIPMulti(object):
                     \t\t\t<found>False</found>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
             (
                 "8.8.8.8",
@@ -1135,21 +1112,6 @@ class TestIPMulti(object):
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
-
-
-class TestSignature(object):
-    """Signature subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'signature' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.signature)
-        api_client.not_implemented.assert_called_with("signature")
-        assert result.exit_code == 1
-        assert result.output == expected_output
 
 
 class TestSetup(object):
@@ -1346,6 +1308,8 @@ class TestVersion(object):
 class TestSimilar(object):
     """Similar subcommand tests."""
 
+    pytestmark = pytest.mark.skip(reason="similar CLI command has been removed")
+
     DEFAULT_SIM_RESPONSE = {
         "ip": {
             "actor": "Alpha Strike Labs",
@@ -1396,7 +1360,8 @@ class TestSimilar(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1433,7 +1398,8 @@ class TestSimilar(object):
                     \t\t</similar_ips>
                     \t\t<total>1119</total>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
         ),
     )
@@ -1601,7 +1567,8 @@ class TestTimeline(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1616,7 +1583,8 @@ class TestTimeline(object):
                     \t\t</metadata>
                     \t\t<results></results>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
         ),
     )
@@ -1760,6 +1728,8 @@ class TestTimeline(object):
 class TestTimelineHourly(object):
     """TimelineHourly subcommand tests."""
 
+    pytestmark = pytest.mark.skip(reason="timelinehourly CLI command has been removed")
+
     DEFAULT_TIMELINEHOURLY_RESPONSE = {
         "activity": [
             {
@@ -1819,7 +1789,8 @@ class TestTimelineHourly(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1866,7 +1837,8 @@ class TestTimelineHourly(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
         ),
     )
@@ -2067,7 +2039,8 @@ class TestTimelineDaily(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent("""\
+                textwrap.dedent(
+                    """\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -2114,7 +2087,8 @@ class TestTimelineDaily(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""),
+                    </root>"""
+                ),
             ),
         ),
     )
@@ -2129,7 +2103,7 @@ class TestTimelineDaily(object):
         )
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -2154,7 +2128,7 @@ class TestTimelineDaily(object):
         assert result.output.strip("\n") == json.dumps(
             [expected], indent=4, sort_keys=True
         )
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -2179,7 +2153,7 @@ class TestTimelineDaily(object):
         assert result.output.strip("\n") == json.dumps(
             [expected], indent=4, sort_keys=True
         )
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -2211,7 +2185,7 @@ class TestTimelineDaily(object):
         assert result.exit_code == -1
         assert "Usage: greynoise timelinedaily" in result.output
         assert expected in result.output
-        api_client.timelinehourly.assert_not_called()
+        api_client.timelinedaily.assert_not_called()
 
     def test_invalid_ip_address_as_argument(self, api_client):
         """Quick subcommand fails when ip_address is invalid."""
@@ -2373,3 +2347,103 @@ class TestCLIIO:
         print(result.output)
         assert "8.8.8.8" in result.output
         assert "malicious" in result.output
+
+
+class TestRecallAndCallback(object):
+    """Recall and Callback CLI wiring."""
+
+    def test_recall_timeseries(self, api_client):
+        runner = CliRunner()
+        api_client.recall.return_value = {"buckets": []}
+        result = runner.invoke(main, ["recall", "timeseries", "classification:scan"])
+        assert result.exit_code == 0
+        api_client.recall.assert_called_once_with(
+            query="classification:scan",
+            start=None,
+            end=None,
+            format="json",
+            limit=None,
+            offset=None,
+        )
+
+    def test_recall_timeseries_api_options(self, api_client):
+        runner = CliRunner()
+        api_client.recall.return_value = {}
+        result = runner.invoke(
+            main,
+            [
+                "recall",
+                "timeseries",
+                "foo",
+                "--start",
+                "2024-01-01T00:00:00Z",
+                "--api-format",
+                "csv",
+                "--limit",
+                "5",
+                "--offset",
+                "10",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.recall.assert_called_once_with(
+            query="foo",
+            start="2024-01-01T00:00:00Z",
+            end=None,
+            format="csv",
+            limit=5,
+            offset=10,
+        )
+
+    def test_recall_stats(self, api_client):
+        runner = CliRunner()
+        api_client.recall_stats.return_value = {}
+        result = runner.invoke(
+            main,
+            ["recall", "stats", "bar", "--interval", "day", "--end", "2024-06-01"],
+        )
+        assert result.exit_code == 0
+        api_client.recall_stats.assert_called_once_with(
+            query="bar",
+            start=None,
+            end="2024-06-01",
+            format="json",
+            interval="day",
+        )
+
+    def test_callback_ip(self, api_client):
+        runner = CliRunner()
+        api_client.callback_ip.return_value = {"ip": "9.9.9.9"}
+        result = runner.invoke(
+            main,
+            ["callback", "ip", "9.9.9.9", "--source-workspace", "ws1"],
+        )
+        assert result.exit_code == 0
+        api_client.callback_ip.assert_called_once_with(
+            ip_address="9.9.9.9",
+            source_workspace="ws1",
+        )
+
+    def test_psychic_download_csv(self, api_client):
+        runner = CliRunner()
+        api_client.psychic_download.return_value = "./psychic_m3_2026-06-17.csv"
+        result = runner.invoke(
+            main,
+            [
+                "psychic-download",
+                "--format",
+                "csv",
+                "--date",
+                "2026-06-17",
+                "--model",
+                "3",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.psychic_download.assert_called_once_with(
+            date="2026-06-17",
+            file_format="csv",
+            output_path=".",
+            model=3,
+        )
+        assert result.output.strip() == "./psychic_m3_2026-06-17.csv"

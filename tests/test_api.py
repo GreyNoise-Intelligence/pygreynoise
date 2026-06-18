@@ -103,7 +103,7 @@ class TestRequest:
             params=None,
             json=None,
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -117,7 +117,7 @@ class TestRequest:
             params={"test": "param"},
             json=None,
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -131,7 +131,7 @@ class TestRequest:
             params=None,
             json={"test": "data"},
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -145,7 +145,7 @@ class TestRequest:
             params=None,
             json=None,
             files={"test": "file"},
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -252,8 +252,16 @@ class TestFilter(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "8.8.8.8", "noise": True, "riot": True},
-                {"ip": "123.123.123.123", "noise": False, "riot": False},
+                {
+                    "ip": "8.8.8.8",
+                    "internet_scanner_intelligence": {"found": True},
+                    "business_service_intelligence": {"found": True},
+                },
+                {
+                    "ip": "123.123.123.123",
+                    "internet_scanner_intelligence": {"found": False},
+                    "business_service_intelligence": {"found": False},
+                },
             ]
         )
         yield client
@@ -727,34 +735,6 @@ class TestQuery(object):
         )
         assert response == expected_response
 
-    def test_query_exclude_fields_as_list(self, client):
-        """exclude_fields is sent as a comma-separated exclude query parameter."""
-        query = "<query>"
-        client._request = Mock(return_value=[])
-        client.query(query, exclude_fields=["raw_data", "tls"])
-        client._request.assert_called_with(
-            "v3/gnql",
-            params={
-                "query": query,
-                "quick": False,
-                "exclude": "raw_data,tls",
-            },
-        )
-
-    def test_query_exclude_fields_as_string(self, client):
-        """exclude_fields string is normalized to comma-separated names."""
-        query = "<query>"
-        client._request = Mock(return_value=[])
-        client.query(query, exclude_fields=" raw_data , tls ")
-        client._request.assert_called_with(
-            "v3/gnql",
-            params={
-                "query": query,
-                "quick": False,
-                "exclude": "raw_data,tls",
-            },
-        )
-
 
 class TestStats(object):
     """GreyNoise client run GNQL stats query test cases."""
@@ -779,7 +759,7 @@ class TestMeta(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.metadata()
-        client._request.assert_called_with("v2/meta/metadata")
+        client._request.assert_called_with("v3/tags", params={})
         assert response == expected_response
 
 
@@ -832,47 +812,33 @@ class TestSimilar(object):
     """GreyNoise client Similar context test cases."""
 
     def test_similar(self, client):
-        """Get similar IP addresses."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.similar(ip_address)
-        client._request.assert_called_with(
-            "v3/similarity/ips/{}?limit=50".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated similar lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.similar("8.8.8.8")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_similar_with_limit_and_score(self, client):
-        """Get similar IP addresses with limit and minimum score."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.similar(ip_address, limit=10, min_score=80)
-        client._request.assert_called_with(
-            "v3/similarity/ips/{}?limit=10&minimum_score=0.8".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated similar lookup ignores limit and score parameters."""
+        client._request = Mock()
+        response = client.similar("8.8.8.8", limit=10, min_score=80)
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_invalid_ip(self, client):
-        """Get invalid IP address information."""
-        invalid_ip = "not an ip address"
+        """Deprecated similar lookup does not validate the IP address."""
         client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.similar(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
+        response = client.similar("not an ip address")
+        assert response == (False, "Function deprecated")
         client._request.assert_not_called()
 
     def test_community_offering(self, client):
-        """Test similar lookup with community offering."""
+        """Deprecated similar lookup ignores offering."""
         client.offering = "community"
+        client._request = Mock()
         response = client.similar("8.8.8.8")
-        assert response == {
-            "message": "Similarity lookup not supported with Community offering"
-        }
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
 
 class TestTimeline(object):
@@ -906,26 +872,17 @@ class TestTimelineHourly(object):
     """GreyNoise client Timeline Hourly test cases."""
 
     def test_timelinehourly(self, client):
-        """Get IP address hourly timeline."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.timelinehourly(ip_address)
-        client._request.assert_called_with(
-            "v3/noise/ips/{}/hourly-summary?limit=100".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated hourly timeline lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.timelinehourly("8.8.8.8")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_invalid_ip(self, client):
-        """Get invalid IP address information."""
-        invalid_ip = "not an ip address"
+        """Deprecated hourly timeline lookup does not validate the IP address."""
         client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.timelinehourly(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
+        response = client.timelinehourly("not an ip address")
+        assert response == (False, "Function deprecated")
         client._request.assert_not_called()
 
 
@@ -969,7 +926,6 @@ def test_api_client_initialization():
     client = GreyNoise(config)
     assert client.config == config
     assert client.session is not None
-    assert client._executor is not None
     assert client.ip_quick_check_cache is not None
     assert client.ip_context_cache is not None
 

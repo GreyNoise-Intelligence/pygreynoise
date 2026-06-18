@@ -16,10 +16,18 @@ def main():
     """GreyNoise CLI."""
 
 
+NESTED_COMMANDS = {
+    id(nested_command)
+    for subcommand_function in vars(subcommand).values()
+    if isinstance(subcommand_function, click.Group)
+    for nested_command in subcommand_function.commands.values()
+}
+
 SUBCOMMAND_FUNCTIONS = [
     subcommand_function
     for subcommand_function in vars(subcommand).values()
     if isinstance(subcommand_function, click.Command)
+    and id(subcommand_function) not in NESTED_COMMANDS
 ]
 
 for subcommand_function in SUBCOMMAND_FUNCTIONS:
