@@ -296,7 +296,6 @@ class GreyNoise(BaseAPIClient):
     EP_TIMELINE_IP = "v3/noise/ips/{ip_address}/timeline"
     EP_TAGS = "v3/tags"
     EP_PING = "ping"
-    EP_SENSOR_ACTIVITY = "v1/workspaces/{workspace_id}/sensors/activity"
     EP_SENSOR_LIST = "v1/workspaces/{workspace_id}/sensors"
     EP_PERSONA_DETAILS = "v1/personas/{persona_id}"
     EP_CVE_LOOKUP = "v1/cve/{cve_id}"
@@ -1035,45 +1034,11 @@ class GreyNoise(BaseAPIClient):
         include_headers=False,
     ):
         """Get session data from sensors"""
-        LOGGER.debug(
-            "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
-            workspace_id,
-            file_format,
-            start_time,
-            end_time,
-            persona_id,
-            source_ip,
-            size,
-            scroll,
+        LOGGER.warning(
+            "The sensor_activity() function is deprecated and will be removed in"
+            " a future version."
         )
-        if file_format is None or file_format == "json":
-            params = {"format": "json"}
-        elif file_format == "csv":
-            params = {"format": file_format}
-        else:
-            raise ValueError(
-                "file_format must be 'json' or 'csv', not {!r}".format(file_format)
-            )
-
-        if start_time is not None:
-            params["start_time"] = start_time
-        if end_time is not None:
-            params["end_time"] = end_time
-        if persona_id is not None:
-            params["persona_id"] = persona_id
-        if source_ip is not None:
-            params["source_ip"] = source_ip
-        if size is not None:
-            params["size"] = size
-        if scroll is not None:
-            params["scroll"] = scroll
-        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
-        response, headers = self._request(endpoint, params=params, include_headers=True)
-
-        if include_headers:
-            return response, headers
-        else:
-            return response
+        return False, "Function deprecated"
 
     def sensor_activity_ips(
         self,
@@ -1086,68 +1051,12 @@ class GreyNoise(BaseAPIClient):
         size=None,
         scroll=None,
     ):
-        """Collect distinct ``source_ip`` values from sensor activity rows.
-
-        The API is expected to return a JSON **list** of session objects. Any other
-        shape (for example an error dict) raises :class:`ValueError` so callers are
-        not misled by iterating dict keys or crashing on ``.get``.
-        """
-        LOGGER.debug(
-            "Running Sensor Activity: %s %s %s %s %s %s %s %s...",
-            workspace_id,
-            file_format,
-            start_time,
-            end_time,
-            persona_id,
-            source_ip,
-            size,
-            scroll,
+        """Collect distinct ``source_ip`` values from sensor activity rows."""
+        LOGGER.warning(
+            "The sensor_activity_ips() function is deprecated and will be removed in"
+            " a future version."
         )
-        if file_format is None or file_format == "json":
-            params = {"format": "json"}
-        elif file_format == "csv":
-            params = {"format": file_format}
-        else:
-            raise ValueError(
-                "file_format must be 'json' or 'csv', not {!r}".format(file_format)
-            )
-
-        if start_time is not None:
-            params["start_time"] = start_time
-        if end_time is not None:
-            params["end_time"] = end_time
-        if persona_id is not None:
-            params["persona_id"] = persona_id
-        if source_ip is not None:
-            params["source_ip"] = source_ip
-        if size is not None:
-            params["size"] = size
-        if scroll is not None:
-            params["scroll"] = scroll
-        endpoint = self.EP_SENSOR_ACTIVITY.format(workspace_id=workspace_id)
-        response = self._request(endpoint, params=params)
-        if not isinstance(response, list):
-            if isinstance(response, dict):
-                detail = response.get("message") or response.get("error") or response
-                raise ValueError(
-                    "sensor_activity_ips expected a JSON list from the API; "
-                    "got a dict: {!r}".format(detail)
-                )
-            raise ValueError(
-                "sensor_activity_ips expected a JSON list from the API; "
-                "got {!r}".format(type(response).__name__)
-            )
-
-        ip_list = []
-        for item in response:
-            if isinstance(item, dict):
-                ip_list.append(item.get("source_ip", ""))
-            else:
-                LOGGER.warning("Skipping non-dict sensor activity row: %r", item)
-
-        final_ip_list = list(set(ip_list))
-
-        return final_ip_list
+        return False, "Function deprecated"
 
     def similar(self, ip_address, limit=None, min_score=None):
         """Query IP on the IP Similarity API

@@ -8,6 +8,9 @@ Version `3.1.0`_
 
 * API client:
 
+  * The `sensor_activity` and `sensor_activity_ips` functions are deprecated and
+    will be removed in a future version.
+
 Version `3.0.3`_
 ================
 **Date**: May 15, 2026

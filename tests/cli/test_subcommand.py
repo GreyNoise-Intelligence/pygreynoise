@@ -50,8 +50,7 @@ class TestAnalyze(object):
             "riot_ip_ratio": 0,
         },
     }
-    DEFAULT_OUTPUT = textwrap.dedent(
-        """\
+    DEFAULT_OUTPUT = textwrap.dedent("""\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
@@ -68,8 +67,7 @@ class TestAnalyze(object):
         - <ip_address_2>
 
         No results found for this query.
-        """
-    )
+        """)
 
     @pytest.mark.parametrize(
         "expected_output",
@@ -701,8 +699,7 @@ class TestQuick(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -716,8 +713,7 @@ class TestQuick(object):
                     \t\t\t<trust_level>1</trust_level>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
             (
                 "8.8.8.8",
@@ -914,8 +910,7 @@ class TestIPMulti(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -927,8 +922,7 @@ class TestIPMulti(object):
                     \t\t\t<found>False</found>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
             (
                 "8.8.8.8",
@@ -1360,8 +1354,7 @@ class TestSimilar(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1398,8 +1391,7 @@ class TestSimilar(object):
                     \t\t</similar_ips>
                     \t\t<total>1119</total>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -1567,8 +1559,7 @@ class TestTimeline(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1583,8 +1574,7 @@ class TestTimeline(object):
                     \t\t</metadata>
                     \t\t<results></results>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -1789,8 +1779,7 @@ class TestTimelineHourly(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1837,8 +1826,7 @@ class TestTimelineHourly(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -2039,8 +2027,7 @@ class TestTimelineDaily(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -2087,8 +2074,7 @@ class TestTimelineDaily(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )

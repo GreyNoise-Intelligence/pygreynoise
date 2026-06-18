@@ -628,83 +628,56 @@ class TestQuick:
 class TestSensorActivity(object):
     """GreyNoise client run Sensor Activity test cases."""
 
-    @pytest.fixture
-    def client(self, client):
-        """API client fixture with analyze method mocked."""
-        client.sensor_activity = Mock(
-            return_value=[
-                {
-                    "bytes": 1,
-                    "destination_ip": "1.2.2.1",
-                    "destination_port": 1234,
-                    "http_uri": "",
-                    "packets": 3,
-                    "persona_id": "aaa-aa-aa-aa-aaaa",
-                    "protocols": ["tcp"],
-                    "sensor_id": "aaa-aa-aa-aa-aaaa",
-                    "session_id": "asdfasdfs",
-                    "source_ip": "1.2.2.1",
-                    "source_port": 1234,
-                    "start_time": "2024-06-09T23:56:57.51Z",
-                    "stop_time": "2024-06-09T23:56:58.037Z",
-                }
-            ]
-        )
-
-        yield client
-
     def test_sensor_activity(self, client):
-        """Run Sensor Activity."""
-        workspace_id = "workspace_id"
-        expected_response = [
-            {
-                "bytes": 1,
-                "destination_ip": "1.2.2.1",
-                "destination_port": 1234,
-                "http_uri": "",
-                "packets": 3,
-                "persona_id": "aaa-aa-aa-aa-aaaa",
-                "protocols": ["tcp"],
-                "sensor_id": "aaa-aa-aa-aa-aaaa",
-                "session_id": "asdfasdfs",
-                "source_ip": "1.2.2.1",
-                "source_port": 1234,
-                "start_time": "2024-06-09T23:56:57.51Z",
-                "stop_time": "2024-06-09T23:56:58.037Z",
-            }
-        ]
+        """Deprecated sensor activity lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.sensor_activity("workspace_id")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
+
+    def test_sensor_activity_with_filters(self, client):
+        """Deprecated sensor activity lookup ignores filter parameters."""
+        client._request = Mock()
         response = client.sensor_activity(
-            workspace_id=workspace_id, include_headers=False
+            "workspace_id",
+            file_format="csv",
+            start_time="2024-01-01",
+            end_time="2024-01-02",
+            persona_id="persona",
+            source_ip="1.2.3.4",
+            size=5,
+            scroll="scroll",
+            include_headers=True,
         )
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
-        assert response == expected_response
 
-    def test_query_with_size_and_scroll(self, client):
-        """Run Sensor Activity with size and scroll parameters."""
-        workspace_id = "workspace_id"
-        expected_response = [
-            {
-                "bytes": 1,
-                "destination_ip": "1.2.2.1",
-                "destination_port": 1234,
-                "http_uri": "",
-                "packets": 3,
-                "persona_id": "aaa-aa-aa-aa-aaaa",
-                "protocols": ["tcp"],
-                "sensor_id": "aaa-aa-aa-aa-aaaa",
-                "session_id": "asdfasdfs",
-                "source_ip": "1.2.2.1",
-                "source_port": 1234,
-                "start_time": "2024-06-09T23:56:57.51Z",
-                "stop_time": "2024-06-09T23:56:58.037Z",
-            }
-        ]
+class TestSensorActivityIps(object):
+    """GreyNoise client sensor activity IP list test cases."""
 
-        response = client.sensor_activity(
-            workspace_id=workspace_id, size=5, scroll="scroll"
+    def test_sensor_activity_ips(self, client):
+        """Deprecated sensor activity IP lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.sensor_activity_ips("workspace_id")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
+
+    def test_sensor_activity_ips_with_filters(self, client):
+        """Deprecated sensor activity IP lookup ignores filter parameters."""
+        client._request = Mock()
+        response = client.sensor_activity_ips(
+            "workspace_id",
+            file_format="csv",
+            start_time="2024-01-01",
+            end_time="2024-01-02",
+            persona_id="persona",
+            source_ip="1.2.3.4",
+            size=5,
+            scroll="scroll",
         )
-
-        assert response == expected_response
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
 
 class TestQuery(object):

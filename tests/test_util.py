@@ -332,8 +332,7 @@ class TestLoadConfig(object):
         """psychic_model and related keys are read from the config file."""
         os.environ = {}
         os.path.isfile.return_value = True
-        file_content = textwrap.dedent(
-            """\
+        file_content = textwrap.dedent("""\
             [greynoise]
             api_key = k
             api_server = https://api.greynoise.io
@@ -344,8 +343,7 @@ class TestLoadConfig(object):
             psychic_model = 2
             psychic_cache_dir = /tmp/psychic
             psychic_max_age_hours = 24
-            """
-        )
+            """)
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
@@ -419,14 +417,12 @@ class TestSaveConfig(object):
 
     def test_save_config_omits_empty_optional_keys_from_existing_file(self):
         """Blank optional keys are removed instead of written as empty values."""
-        existing = textwrap.dedent(
-            """\
+        existing = textwrap.dedent("""\
             [greynoise]
             api_key = old
             proxy =
             psychic_cache_dir =
-            """
-        )
+            """)
         config = {
             "api_key": "<api_key>",
             "proxy": "",
@@ -649,13 +645,11 @@ class TestConfiguration:
     def test_invalid_configuration(self, tmp_path):
         """Test handling of invalid configuration."""
         config_file = tmp_path / "config.ini"
-        config_file.write_text(
-            """
+        config_file.write_text("""
 [greynoise]
 api_key = test-key
 timeout = invalid
-"""
-        )
+""")
 
         with patch("greynoise.util.CONFIG_FILE", str(config_file)):
             config = load_config()
