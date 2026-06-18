@@ -25,9 +25,7 @@ from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 @click.command()
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@click.option(
-    "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-)
+@click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
 @click.option(
     "-f",
     "--format",
@@ -41,9 +39,7 @@ from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
 @echo_result
 @click.pass_context
 @handle_exceptions
-def analyze(
-    context, api_client, api_key, input_file, output_file, output_format, verbose
-):
+def analyze(context, api_client, api_key, input_file, output_file, output_format, verbose):
     """Analyze the IP addresses in a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
@@ -68,21 +64,13 @@ def analyze(
 @click.command()
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-@click.option(
-    "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-)
-@click.option(
-    "--noise-only", is_flag=True, help="Select lines containing noisy addresses"
-)
-@click.option(
-    "--riot-only", is_flag=True, help="Select lines containing RIOT addresses"
-)
+@click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
+@click.option("--noise-only", is_flag=True, help="Select lines containing noisy addresses")
+@click.option("--riot-only", is_flag=True, help="Select lines containing RIOT addresses")
 @pass_api_client
 @click.pass_context
 @handle_exceptions
-def filter(
-    context, api_client, api_key, input_file, output_file, noise_only, riot_only
-):
+def filter(context, api_client, api_key, input_file, output_file, noise_only, riot_only):
     """Filter the noise from a log file, stdin, etc."""
     if input_file is None:
         if sys.stdin.isatty():
@@ -100,9 +88,7 @@ def filter(
     if output_file is None:
         output_file = click.open_file("-", mode="w")
 
-    for chunk in api_client.filter(
-        input_file, noise_only=noise_only, riot_only=riot_only
-    ):
+    for chunk in api_client.filter(input_file, noise_only=noise_only, riot_only=riot_only):
         output_file.write(ANSI_MARKUP(chunk))
 
 
@@ -115,9 +101,7 @@ def help_(context):
 
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
-@click.option(
-    "-p", "--psychic", is_flag=True, help="Use Psychic to get more information"
-)
+@click.option("-p", "--psychic", is_flag=True, help="Use Psychic to get more information")
 def ip(
     context,
     api_client,
@@ -133,10 +117,7 @@ def ip(
     """Query GreyNoise for all information on a given IP."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     if psychic:
-        results = [
-            api_client.psychic_lookup(ip_address=ip_address)
-            for ip_address in ip_addresses
-        ]
+        results = [api_client.psychic_lookup(ip_address=ip_address) for ip_address in ip_addresses]
     else:
         results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
     return results
@@ -166,10 +147,7 @@ def query(
     """Run a GNQL (GreyNoise Query Language) query."""
     queries = get_queries(context, input_file, query)
     results = [
-        api_client.query(
-            query=item, size=size, scroll=scroll, exclude_fields=exclude_fields
-        )
-        for item in queries
+        api_client.query(query=item, size=size, scroll=scroll, exclude_fields=exclude_fields) for item in queries
     ]
     return results
 
@@ -222,8 +200,7 @@ def ip_multi(
 @click.option(
     "-O",
     "--offering",
-    help="Which API offering to use, enterprise or community, "
-    "defaults to enterprise",
+    help="Which API offering to use, enterprise or community, " "defaults to enterprise",
 )
 @click.option("-t", "--timeout", type=click.INT, help="API client request timeout")
 @click.option("-s", "--api-server", help="API server")
@@ -271,9 +248,7 @@ def stats(
 def version():
     """Get version and OS information for your GreyNoise commandline installation."""
     click.echo(
-        "greynoise {}\n"
-        "  Python {}\n"
-        "  {}\n".format(__version__, platform.python_version(), platform.platform())
+        "greynoise {}\n" "  Python {}\n" "  {}\n".format(__version__, platform.python_version(), platform.platform())
     )
 
 
@@ -296,10 +271,7 @@ def timeline(
 ):
     """Query GreyNoise IP Timeline for events based on a single field."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [
-        api_client.timeline(ip_address=ip_address, days=days, field=field_name)
-        for ip_address in ip_addresses
-    ]
+    results = [api_client.timeline(ip_address=ip_address, days=days, field=field_name) for ip_address in ip_addresses]
     return results
 
 
@@ -322,10 +294,7 @@ def timelinedaily(
 ):
     """Query GreyNoise IP Timeline to get daily event details."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
-    results = [
-        api_client.timelinedaily(ip_address=ip_address, days=days)
-        for ip_address in ip_addresses
-    ]
+    results = [api_client.timelinedaily(ip_address=ip_address, days=days) for ip_address in ip_addresses]
     return results
 
 
@@ -388,9 +357,7 @@ def cve(
 
 def _standard_cli_options(function):
     """Standard API key, offering, I/O, format, verbose (matches GNQL/CVE commands)."""
-    function = click.option("-v", "--verbose", count=True, help="Verbose output")(
-        function
-    )
+    function = click.option("-v", "--verbose", count=True, help="Verbose output")(function)
     function = click.option(
         "-f",
         "--format",
@@ -406,18 +373,13 @@ def _standard_cli_options(function):
         type=click.File(mode="w"),
         help="Output file",
     )(function)
-    function = click.option(
-        "-i", "--input", "input_file", type=click.File(), help="Input file"
-    )(function)
+    function = click.option("-i", "--input", "input_file", type=click.File(), help="Input file")(function)
     function = click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )(function)
-    function = click.option("-k", "--api-key", help="Key to include in API requests")(
-        function
-    )
+    function = click.option("-k", "--api-key", help="Key to include in API requests")(function)
     return function
 
 
@@ -428,9 +390,7 @@ def recall():
 
 @recall.command(name="timeseries")
 @click.argument("query", required=True)
-@click.option(
-    "--start", default=None, help="Range start (RFC 3339 or supported datetime)"
-)
+@click.option("--start", default=None, help="Range start (RFC 3339 or supported datetime)")
 @click.option("--end", default=None, help="Range end (RFC 3339 or supported datetime)")
 @click.option(
     "--api-format",
@@ -475,9 +435,7 @@ def recall_timeseries(
 
 @recall.command(name="stats")
 @click.argument("query", required=True)
-@click.option(
-    "--start", default=None, help="Range start (RFC 3339 or supported datetime)"
-)
+@click.option("--start", default=None, help="Range start (RFC 3339 or supported datetime)")
 @click.option("--end", default=None, help="Range end (RFC 3339 or supported datetime)")
 @click.option(
     "--api-format",
@@ -586,8 +544,7 @@ def callback_ip_cmd(
 @click.option(
     "-O",
     "--offering",
-    help="Which API offering to use, enterprise or community, "
-    "defaults to enterprise",
+    help="Which API offering to use, enterprise or community, " "defaults to enterprise",
 )
 @pass_api_client
 @click.pass_context
@@ -638,8 +595,7 @@ def psychic_download_cmd(
 @click.option(
     "-O",
     "--offering",
-    help="Which API offering to use, enterprise or community, "
-    "defaults to enterprise",
+    help="Which API offering to use, enterprise or community, " "defaults to enterprise",
 )
 @pass_api_client
 @click.pass_context

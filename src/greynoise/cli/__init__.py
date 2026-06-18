@@ -26,8 +26,7 @@ NESTED_COMMANDS = {
 SUBCOMMAND_FUNCTIONS = [
     subcommand_function
     for subcommand_function in vars(subcommand).values()
-    if isinstance(subcommand_function, click.Command)
-    and id(subcommand_function) not in NESTED_COMMANDS
+    if isinstance(subcommand_function, click.Command) and id(subcommand_function) not in NESTED_COMMANDS
 ]
 
 for subcommand_function in SUBCOMMAND_FUNCTIONS:

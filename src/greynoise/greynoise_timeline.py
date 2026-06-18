@@ -108,20 +108,13 @@ def fetch_tags_mapping(
 
         # Handle different possible response structures
         if isinstance(tags_data, dict):
-            tags_list = (
-                tags_data.get("tags")
-                or tags_data.get("data")
-                or tags_data.get("results")
-                or []
-            )
+            tags_list = tags_data.get("tags") or tags_data.get("data") or tags_data.get("results") or []
         elif isinstance(tags_data, list):
             tags_list = tags_data
         else:
             tags_list = []
         LOGGER.debug("Tags list: %s", tags_list)
-        return {
-            tag.get("id"): tag.get("name") for tag in tags_list if isinstance(tag, dict)
-        }
+        return {tag.get("id"): tag.get("name") for tag in tags_list if isinstance(tag, dict)}
     except Exception:
         LOGGER.warning("Failed to fetch tags mapping from %s", tags_url, exc_info=True)
         return {}
@@ -407,9 +400,7 @@ def get_greynoise_timeline(  # noqa: C901
     if tags_dict:
         LOGGER.debug("Loaded %d tag id→name mappings", len(tags_dict))
     else:
-        LOGGER.warning(
-            "Tag mapping is empty; tag_ids labels will stay as raw IDs if present"
-        )
+        LOGGER.warning("Tag mapping is empty; tag_ids labels will stay as raw IDs if present")
 
     # Dictionary to store consolidated data by timestamp
     consolidated_data = defaultdict(dict)
@@ -444,9 +435,7 @@ def get_greynoise_timeline(  # noqa: C901
                     successful_fields.append(field)
                     LOGGER.debug("Timeline field ok: %s", field)
                     # Process field data
-                    field_data = process_field_data(
-                        data, field, tags_dict, FIELD_MAPPING
-                    )
+                    field_data = process_field_data(data, field, tags_dict, FIELD_MAPPING)
 
                     # Merge into consolidated data
                     for timestamp, entries in field_data.items():

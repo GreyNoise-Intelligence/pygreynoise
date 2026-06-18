@@ -53,9 +53,7 @@ def echo_result(function):
             # For the text formatter, there's a separate formatter for each subcommand
             formatter = formatter[_txt_formatter_command_key(context)]
         output = formatter(result, params.get("verbose", False)).strip("\n")
-        click.echo(
-            output, file=params.get("output_file", click.open_file("-", mode="w"))
-        )
+        click.echo(output, file=params.get("output_file", click.open_file("-", mode="w")))
 
     return wrapper
 
@@ -128,9 +126,7 @@ def pass_api_client(function):
                     "(in order of precedence):\n"
                     "- Pass it using the -k/--api-key option.\n"
                     "- Set it in the GREYNOISE_API_KEY environment variable.\n"
-                    "- Run {!r} to save it to the configuration file.\n".format(
-                        "{} setup".format(prog_name)
-                    )
+                    "- Run {!r} to save it to the configuration file.\n".format("{} setup".format(prog_name))
                 )
                 context.exit(-1)
             api_key = config["api_key"]
@@ -178,13 +174,10 @@ def gnql_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -214,13 +207,10 @@ def ip_lookup_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -278,13 +268,10 @@ def workspace_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -314,13 +301,10 @@ def persona_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -350,13 +334,10 @@ def cve_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",

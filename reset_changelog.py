@@ -43,10 +43,9 @@ if not match:
         )
         f.seek(0)
         f.write(text)
-        LINK_STRING = (
-            ".. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/"
-            "compare/v{}...HEAD"
-        ).format(ver)
+        LINK_STRING = (".. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/" "compare/v{}...HEAD").format(
+            ver
+        )
         f.write(LINK_STRING)
         f.truncate()
 else:

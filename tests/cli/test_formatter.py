@@ -77,9 +77,7 @@ EXAMPLE_IP_CONTEXT = {
     },
 }
 
-EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
-    textwrap.dedent(
-        """\
+EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(textwrap.dedent("""\
                   <header>Internet Scanner Intelligence</header>
         -----------------------------------------------
         <key>IP</key>: <value><ip_address></value>
@@ -139,9 +137,7 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         [HASSH]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#1></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#2></value>
-        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""  # noqa
-    )
-)
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""))  # noqa
 
 
 class TestJSONFormatter(object):
@@ -198,8 +194,7 @@ class TestIPContextFormatter:
                         """))
                 + EXAMPLE_IP_CONTEXT_OUTPUT
                 + ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """
+                    textwrap.dedent("""
 
 
 
@@ -218,8 +213,7 @@ class TestIPContextFormatter:
                         ╚═══════════════════════════╝
                         IP address: <ip_address#3>
 
-                        <ip_address#3> has not been seen in scans in the past 90 days."""  # noqa
-                    )
+                        <ip_address#3> has not been seen in scans in the past 90 days.""")  # noqa
                 ),
             ),
         ),
@@ -262,10 +256,7 @@ class TestIPQuickCheckFormatter:
                         "business_service_intelligence": {"found": False},
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    "<not-noise>0.0.0.0</not-noise> is classified as <bold>"
-                    "NOT NOISE</bold>."
-                ),
+                ANSI_MARKUP.parse("<not-noise>0.0.0.0</not-noise> is classified as <bold>" "NOT NOISE</bold>."),
             ),
         ),
     )

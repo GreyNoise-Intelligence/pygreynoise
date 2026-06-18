@@ -48,9 +48,7 @@ def load_config():
     :rtype: dict
 
     """
-    config_parser = configparser.ConfigParser(
-        {key: str(value) for key, value in DEFAULT_CONFIG.items()}
-    )
+    config_parser = configparser.ConfigParser({key: str(value) for key, value in DEFAULT_CONFIG.items()})
     config_parser.add_section("greynoise")
 
     if os.path.isfile(CONFIG_FILE):
@@ -119,27 +117,19 @@ def load_config():
         try:
             int(config_parser.get("greynoise", "cache_max_size"))
         except ValueError:
-            config_parser.set(
-                "greynoise", "cache_max_size", str(DEFAULT_CONFIG["cache_max_size"])
-            )
+            config_parser.set("greynoise", "cache_max_size", str(DEFAULT_CONFIG["cache_max_size"]))
     if config_parser.get("greynoise", "cache_ttl"):
         try:
             int(config_parser.get("greynoise", "cache_ttl"))
         except ValueError:
-            config_parser.set(
-                "greynoise", "cache_ttl", str(DEFAULT_CONFIG["cache_ttl"])
-            )
+            config_parser.set("greynoise", "cache_ttl", str(DEFAULT_CONFIG["cache_ttl"]))
 
     if "GREYNOISE_PSYCHIC" in os.environ:
         config_parser.set("greynoise", "psychic", os.environ["GREYNOISE_PSYCHIC"])
     if "GREYNOISE_PSYCHIC_MODEL" in os.environ:
-        config_parser.set(
-            "greynoise", "psychic_model", os.environ["GREYNOISE_PSYCHIC_MODEL"]
-        )
+        config_parser.set("greynoise", "psychic_model", os.environ["GREYNOISE_PSYCHIC_MODEL"])
     if "GREYNOISE_PSYCHIC_CACHE_DIR" in os.environ:
-        config_parser.set(
-            "greynoise", "psychic_cache_dir", os.environ["GREYNOISE_PSYCHIC_CACHE_DIR"]
-        )
+        config_parser.set("greynoise", "psychic_cache_dir", os.environ["GREYNOISE_PSYCHIC_CACHE_DIR"])
     if "GREYNOISE_PSYCHIC_MAX_AGE_HOURS" in os.environ:
         config_parser.set(
             "greynoise",
@@ -150,9 +140,7 @@ def load_config():
     try:
         config_parser.getint("greynoise", "psychic_model")
     except ValueError:
-        config_parser.set(
-            "greynoise", "psychic_model", str(DEFAULT_CONFIG["psychic_model"])
-        )
+        config_parser.set("greynoise", "psychic_model", str(DEFAULT_CONFIG["psychic_model"]))
     try:
         config_parser.getint("greynoise", "psychic_max_age_hours")
     except ValueError:
@@ -177,9 +165,7 @@ def load_config():
         "psychic": config_parser.getboolean("greynoise", "psychic"),
         "psychic_model": config_parser.getint("greynoise", "psychic_model"),
         "psychic_cache_dir": psychic_cache_dir,
-        "psychic_max_age_hours": config_parser.getint(
-            "greynoise", "psychic_max_age_hours"
-        ),
+        "psychic_max_age_hours": config_parser.getint("greynoise", "psychic_max_age_hours"),
     }
 
 
@@ -321,9 +307,7 @@ def validate_timeline_field_value(field):
     if field in valid_field_names:
         return True
     else:
-        raise ValueError(
-            f"Field must be one of the following values: {valid_field_names}"
-        )
+        raise ValueError(f"Field must be one of the following values: {valid_field_names}")
 
 
 def validate_timeline_days(days):
@@ -334,10 +318,7 @@ def validate_timeline_days(days):
 
     """
     if isinstance(days, str):
-        raise ValueError(
-            "Days must be a valid integer between 1 and 90.  Current input is a "
-            "string."
-        )
+        raise ValueError("Days must be a valid integer between 1 and 90.  Current input is a " "string.")
     if isinstance(days, int) and 1 <= int(days) <= 90:
         return True
     else:
@@ -365,10 +346,7 @@ def validate_similar_min_score(min_score):
 
     """
     if isinstance(min_score, str):
-        raise ValueError(
-            "Min Score must be a valid integer between 0 and 100.  Current input is a "
-            "string."
-        )
+        raise ValueError("Min Score must be a valid integer between 0 and 100.  Current input is a " "string.")
     if isinstance(min_score, int) and 0 <= int(min_score) <= 100:
         return True
     else:
@@ -439,9 +417,7 @@ def normalize_rfc3339_datetime(value):
         return _format_datetime_rfc3339_utc(dt)
     if not isinstance(value, str):
         raise TypeError(
-            "start/end must be None, str, datetime, date, or numeric timestamp, not {!r}".format(
-                type(value).__name__
-            )
+            "start/end must be None, str, datetime, date, or numeric timestamp, not {!r}".format(type(value).__name__)
         )
 
     s = value.strip()
@@ -472,9 +448,7 @@ def normalize_rfc3339_datetime(value):
         except ValueError:
             continue
 
-    raise ValueError(
-        "Could not parse datetime as RFC 3339 / ISO 8601: {!r}".format(value)
-    )
+    raise ValueError("Could not parse datetime as RFC 3339 / ISO 8601: {!r}".format(value))
 
 
 def load_template(template_name: str) -> str:

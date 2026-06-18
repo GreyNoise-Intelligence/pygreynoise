@@ -116,10 +116,7 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if (
-            "internet_scanner_intelligence" in ip_context
-            and ip_context["internet_scanner_intelligence"]["found"]
-        ):
+        if "internet_scanner_intelligence" in ip_context and ip_context["internet_scanner_intelligence"]["found"]:
             metadata = ip_context["internet_scanner_intelligence"]["metadata"]
             metadata["location"] = get_location(metadata)
             template = JINJA2_ENV.get_template("ip_context.txt.j2")

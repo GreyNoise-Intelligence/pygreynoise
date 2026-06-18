@@ -114,10 +114,7 @@ def _psychic_output_path(
 def _write_mmdb_bytes_to_csv(mmdb_data: bytes, output_path: Path, model: int) -> None:
     """Iterate an MMDB file and write psychic records to CSV."""
     if maxminddb is None:
-        raise ImportError(
-            "maxminddb is required for Psychic CSV export. "
-            "Install it with: pip install maxminddb"
-        )
+        raise ImportError("maxminddb is required for Psychic CSV export. " "Install it with: pip install maxminddb")
 
     if model not in MMDB_CSV_COLUMNS:
         raise ValueError("Model must be 1, 2, or 3")
@@ -130,15 +127,14 @@ def _write_mmdb_bytes_to_csv(mmdb_data: bytes, output_path: Path, model: int) ->
         mmdb_file.write(mmdb_data)
 
     try:
-        with maxminddb.open_database(mmdb_path) as reader, open(
-            output_path, "w", newline="", encoding="utf-8"
-        ) as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=columns)
-            writer.writeheader()
-            for network, record in reader:
-                if not record:
-                    continue
-                writer.writerow(_mmdb_record_to_csv_row(network, record, columns))
+        with maxminddb.open_database(mmdb_path) as reader:
+            with open(output_path, "w", newline="", encoding="utf-8") as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=columns)
+                writer.writeheader()
+                for network, record in reader:
+                    if not record:
+                        continue
+                    writer.writerow(_mmdb_record_to_csv_row(network, record, columns))
     finally:
         os.unlink(mmdb_path)
 
@@ -169,9 +165,7 @@ class RoaringBitmapReader:
         cookie = struct.unpack("<I", cookie_data)[0]
 
         if cookie not in [self.SERIAL_COOKIE_NO_RUNCONTAINER, self.SERIAL_COOKIE]:
-            raise ValueError(
-                f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})"
-            )
+            raise ValueError(f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})")
 
         if cookie == self.SERIAL_COOKIE_NO_RUNCONTAINER:
             # Cookie followed by container count (4 bytes)
@@ -357,9 +351,7 @@ class PsychicBitmapParser:
         self.bitmaps["seen"] = RoaringBitmapReader()
         self.bitmaps["seen"].read_from(f)
 
-        self._log(
-            f"Loaded seen bitmap with {self.bitmaps['seen'].num_containers} containers"
-        )
+        self._log(f"Loaded seen bitmap with {self.bitmaps['seen'].num_containers} containers")
 
     def _parse_model2(self, f: BinaryIO):
         """Parse Model 2 data (5 bitmaps, possibly multi-date)."""
@@ -371,9 +363,7 @@ class PsychicBitmapParser:
             # Store bitmaps for each date
             for i in range(date_count):
                 date_offset = struct.unpack(">H", f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(
-                    days=date_offset
-                )
+                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
                 date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
@@ -391,9 +381,7 @@ class PsychicBitmapParser:
                     bitmap = RoaringBitmapReader()
                     bitmap.read_from(f)
                     self.date_bitmaps[date_str][name] = bitmap
-                    self._log(
-                        f"Loaded {name} bitmap with {bitmap.num_containers} containers"
-                    )
+                    self._log(f"Loaded {name} bitmap with {bitmap.num_containers} containers")
 
                 # Also store the last date's data in self.bitmaps for compatibility
                 if i == date_count - 1:
@@ -426,9 +414,7 @@ class PsychicBitmapParser:
 
             for i in range(date_count):
                 date_offset = struct.unpack(">H", f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(
-                    days=date_offset
-                )
+                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
                 date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
@@ -447,9 +433,7 @@ class PsychicBitmapParser:
                     bitmap = RoaringBitmapReader()
                     bitmap.read_from(f)
                     self.date_bitmaps[date_str][name] = bitmap
-                    self._log(
-                        f"Loaded {name} bitmap with {bitmap.num_containers} containers"
-                    )
+                    self._log(f"Loaded {name} bitmap with {bitmap.num_containers} containers")
 
                 # Parse metadata for this date
                 self._log(f"Parsing metadata for date {date_str}")
@@ -554,10 +538,8 @@ class PsychicBitmapParser:
                     # Read actor index (0xFFFF means no actor)
                     actor_data = f.read(2)
                     if len(actor_data) < 2:
-                        self._log(
-                            f"ERROR: Insufficient data for actor index at mapping {i}, \
-                                expected 2 bytes, got {len(actor_data)}"
-                        )
+                        self._log(f"ERROR: Insufficient data for actor index at mapping {i}, \
+                                expected 2 bytes, got {len(actor_data)}")
                         break
                     actor_idx = struct.unpack(">H", actor_data)[0]
                     if actor_idx != 0xFFFF and actor_idx < len(metadata["actors"]):
@@ -566,10 +548,8 @@ class PsychicBitmapParser:
                     # Read tag count and indices
                     tag_count_data = f.read(2)
                     if len(tag_count_data) < 2:
-                        self._log(
-                            f"ERROR: Insufficient data for tag count at mapping {i}, \
-                                expected 2 bytes, got {len(tag_count_data)}"
-                        )
+                        self._log(f"ERROR: Insufficient data for tag count at mapping {i}, \
+                                expected 2 bytes, got {len(tag_count_data)}")
                         break
                     tag_count = struct.unpack(">H", tag_count_data)[0]
                     if tag_count > 0:
@@ -577,11 +557,9 @@ class PsychicBitmapParser:
                         for j in range(tag_count):
                             tag_idx_data = f.read(2)
                             if len(tag_idx_data) < 2:
-                                self._log(
-                                    f"ERROR: Insufficient data for tag index {j} at \
+                                self._log(f"ERROR: Insufficient data for tag index {j} at \
                                         mapping {i}, expected 2 bytes, \
-                                            got {len(tag_idx_data)}"
-                                )
+                                            got {len(tag_idx_data)}")
                                 raise ValueError(f"Insufficient data for tag index {j} \
                                         at mapping {i}")
                             tag_idx = struct.unpack(">H", tag_idx_data)[0]
@@ -591,10 +569,8 @@ class PsychicBitmapParser:
                     # Read CVE count and indices
                     cve_count_data = f.read(2)
                     if len(cve_count_data) < 2:
-                        self._log(
-                            f"ERROR: Insufficient data for CVE count at mapping {i}, \
-                                expected 2 bytes, got {len(cve_count_data)}"
-                        )
+                        self._log(f"ERROR: Insufficient data for CVE count at mapping {i}, \
+                                expected 2 bytes, got {len(cve_count_data)}")
                         break
                     cve_count = struct.unpack(">H", cve_count_data)[0]
                     if cve_count > 0:
@@ -714,17 +690,13 @@ class PsychicBitmapParser:
 
                         if ip_int in metadata.get("ip_tags", {}):
                             tag_indices = metadata["ip_tags"][ip_int]
-                            date_result["tags"] = [
-                                metadata["tags"][idx] for idx in tag_indices
-                            ]
+                            date_result["tags"] = [metadata["tags"][idx] for idx in tag_indices]
                         else:
                             date_result["tags"] = []
 
                         if ip_int in metadata.get("ip_cves", {}):
                             cve_indices = metadata["ip_cves"][ip_int]
-                            date_result["cves"] = [
-                                metadata["cves"][idx] for idx in cve_indices
-                            ]
+                            date_result["cves"] = [metadata["cves"][idx] for idx in cve_indices]
                         else:
                             date_result["cves"] = []
 
@@ -977,9 +949,7 @@ class Psychic:
 
         logger.debug(f"Downloading bitmap from {url}")
 
-        response = self.session.post(
-            url, json=payload, timeout=300
-        )  # 5 minute timeout for large files
+        response = self.session.post(url, json=payload, timeout=300)  # 5 minute timeout for large files
         response.raise_for_status()
 
         if response.status_code == 200:
@@ -994,9 +964,7 @@ class Psychic:
 
         logger.debug(f"Downloading mmdb from {url}")
 
-        response = self.session.post(
-            url, json=payload, timeout=300
-        )  # 5 minute timeout for large files
+        response = self.session.post(url, json=payload, timeout=300)  # 5 minute timeout for large files
         response.raise_for_status()
 
         if response.status_code == 200:
@@ -1091,9 +1059,7 @@ class Psychic:
 
         logger.debug(f"Generating bitmap from {url}")
 
-        response = self.session.post(
-            url, json=payload, timeout=600
-        )  # 10 minute timeout for generation
+        response = self.session.post(url, json=payload, timeout=600)  # 10 minute timeout for generation
         response.raise_for_status()
 
         if response.status_code == 200:
@@ -1149,9 +1115,7 @@ class Psychic:
             if self.auto_download:
                 self._ensure_current_bitmap()
             else:
-                raise RuntimeError(
-                    "No bitmap loaded. Set auto_download=True or call load_bitmap()"
-                )
+                raise RuntimeError("No bitmap loaded. Set auto_download=True or call load_bitmap()")
 
         return self._parser.lookup_ip(ip)
 
@@ -1170,9 +1134,7 @@ class Psychic:
             if self.auto_download:
                 self._ensure_current_bitmap()
             else:
-                raise RuntimeError(
-                    "No bitmap loaded. Set auto_download=True or call load_bitmap()"
-                )
+                raise RuntimeError("No bitmap loaded. Set auto_download=True or call load_bitmap()")
 
         return self._parser.get_stats()
 

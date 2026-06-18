@@ -275,10 +275,7 @@ class TestFilter(object):
             ),
             (
                 "8.8.8.8 123.123.123.123\nnot an ip address",
-                (
-                    "<noise>8.8.8.8</noise> <not-noise>123.123.123.123</not-noise>\n"
-                    "not an ip address"
-                ),
+                ("<noise>8.8.8.8</noise> <not-noise>123.123.123.123</not-noise>\n" "not an ip address"),
             ),
         ],
     )
@@ -423,9 +420,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick(
-        self, client, ip_addresses, expected_request, mock_response, expected_results
-    ):
+    def test_quick(self, client, ip_addresses, expected_request, mock_response, expected_results):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
         results = client.quick(ip_addresses)
@@ -505,9 +500,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick_with_cache(
-        self, client, ip_addresses, expected_request, mock_response
-    ):
+    def test_quick_with_cache(self, client, ip_addresses, expected_request, mock_response):
         """Get IP addresses noise status with cache."""
         # First call should hit the API
         client._request = Mock(return_value=mock_response)
@@ -527,16 +520,10 @@ class TestQuick:
         # Verify cache contents
         if isinstance(ip_addresses, str):
             ip_addresses = [ip_addresses]
-        valid_ips = [
-            ip
-            for ip in ip_addresses
-            if ip != "not-an-ip" and not ip.startswith("not-an-ip")
-        ]
+        valid_ips = [ip for ip in ip_addresses if ip != "not-an-ip" and not ip.startswith("not-an-ip")]
         for ip in valid_ips:
             assert ip in client.ip_quick_check_cache
-            assert client.ip_quick_check_cache[ip] == next(
-                (item for item in first_results if item["ip"] == ip), None
-            )
+            assert client.ip_quick_check_cache[ip] == next((item for item in first_results if item["ip"] == ip), None)
 
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response",
@@ -611,9 +598,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick_without_cache(
-        self, client_without_cache, ip_addresses, expected_request, mock_response
-    ):
+    def test_quick_without_cache(self, client_without_cache, ip_addresses, expected_request, mock_response):
         """Get IP addresses noise status with cache."""
         client = client_without_cache
         client._request = Mock(return_value=mock_response)
@@ -690,9 +675,7 @@ class TestQuery(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.query(query)
-        client._request.assert_called_with(
-            "v3/gnql", params={"query": query, "quick": False}
-        )
+        client._request.assert_called_with("v3/gnql", params={"query": query, "quick": False})
         assert response == expected_response
 
     def test_query_with_size_and_scroll(self, client):
@@ -776,9 +759,7 @@ class TestCVE(object):
         """Test CVE lookup with community offering."""
         client.offering = "community"
         response = client.cve("CVE-2021-44228")
-        assert response == {
-            "message": "CVE lookup is not supported with Community offering"
-        }
+        assert response == {"message": "CVE lookup is not supported with Community offering"}
 
 
 class TestSimilar(object):
@@ -824,9 +805,7 @@ class TestTimeline(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.timeline(ip_address)
-        client._request.assert_called_with(
-            "v3/noise/ips/{}/timeline?field=classification".format(ip_address)
-        )
+        client._request.assert_called_with("v3/noise/ips/{}/timeline?field=classification".format(ip_address))
         assert response == expected_response
 
     def test_invalid_ip(self, client):
@@ -976,16 +955,12 @@ def test_api_client_parallel_processing():
         return {"data": [{"processed": item} for item in items]}
 
     items = list(range(100))
-    results = client._process_batch_parallel(
-        items, process_func, batch_size=10, max_workers=5
-    )
+    results = client._process_batch_parallel(items, process_func, batch_size=10, max_workers=5)
 
     assert isinstance(results, dict)
     assert "data" in results
     assert len(results["data"]) == 100
-    assert all(
-        isinstance(result, dict) and "processed" in result for result in results["data"]
-    )
+    assert all(isinstance(result, dict) and "processed" in result for result in results["data"])
 
 
 class TestErrorHandling:
@@ -993,9 +968,7 @@ class TestErrorHandling:
 
     def test_rate_limiting(self, client):
         """Test handling of rate limiting responses."""
-        client._request = Mock(
-            side_effect=RequestFailure(429, {"error": "Rate limit exceeded"})
-        )
+        client._request = Mock(side_effect=RequestFailure(429, {"error": "Rate limit exceeded"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 429
@@ -1003,9 +976,7 @@ class TestErrorHandling:
 
     def test_network_timeout(self, client):
         """Test handling of network timeouts."""
-        client._request = Mock(
-            side_effect=RequestFailure(504, {"error": "Gateway timeout"})
-        )
+        client._request = Mock(side_effect=RequestFailure(504, {"error": "Gateway timeout"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 504
@@ -1013,9 +984,7 @@ class TestErrorHandling:
 
     def test_invalid_api_key(self, client):
         """Test handling of invalid API key."""
-        client._request = Mock(
-            side_effect=RequestFailure(401, {"error": "Invalid API key"})
-        )
+        client._request = Mock(side_effect=RequestFailure(401, {"error": "Invalid API key"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 401
@@ -1030,9 +999,7 @@ class TestCacheBehavior:
         # Set a short TTL
         client.config.cache_ttl = 1
 
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request
         mock_response = {
@@ -1062,9 +1029,7 @@ class TestCacheBehavior:
         client.config.cache_max_size = 2
 
         # Reinitialize cache with new max_size
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request - should be cached
         mock_response1 = {
@@ -1120,9 +1085,7 @@ class TestCacheBehavior:
         client._request.assert_not_called()  # Should not make API call
 
         # Test cache miss for evicted item
-        client._request = Mock(
-            return_value=mock_response1
-        )  # Reset mock with original response
+        client._request = Mock(return_value=mock_response1)  # Reset mock with original response
         result = client.ip("8.8.8.8")  # Should be a cache miss
         assert result == mock_response1
         client._request.assert_called_once()  # Should make API call
@@ -1132,9 +1095,7 @@ class TestCacheBehavior:
         # Set a short TTL
         client.config.cache_ttl = 1
 
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request
         mock_response = {

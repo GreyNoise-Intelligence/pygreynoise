@@ -478,10 +478,7 @@ class TestValidateSimilarMinScore(object):
         """Test invalid values."""
         with pytest.raises(ValueError) as exception:
             validate_similar_min_score(min_score)
-        assert (
-            str(exception.value)
-            == "Min Score must be a valid integer between 0 and 100."
-        )
+        assert str(exception.value) == "Min Score must be a valid integer between 0 and 100."
 
     @pytest.mark.parametrize("min_score", ("0", "5", "100"))
     def test_string(self, min_score):
@@ -489,8 +486,7 @@ class TestValidateSimilarMinScore(object):
         with pytest.raises(ValueError) as exception:
             validate_similar_min_score(min_score)
         assert (
-            str(exception.value)
-            == "Min Score must be a valid integer between 0 and 100.  "
+            str(exception.value) == "Min Score must be a valid integer between 0 and 100.  "
             "Current input is a string."
         )
 
@@ -508,10 +504,7 @@ class TestValidateTimelineGranularity(object):
         """Test invalid values."""
         with pytest.raises(ValueError) as exception:
             validate_timeline_granularity(granularity)
-        assert (
-            str(exception.value)
-            == "Granularity currently only supports a value of 1d or 1h"
-        )
+        assert str(exception.value) == "Granularity currently only supports a value of 1d or 1h"
 
 
 class TestValidateTimelineDays(object):
@@ -534,18 +527,13 @@ class TestValidateTimelineDays(object):
         """Test string input values."""
         with pytest.raises(ValueError) as exception:
             validate_timeline_days(days)
-        assert (
-            str(exception.value) == "Days must be a valid integer between 1 and 90.  "
-            "Current input is a string."
-        )
+        assert str(exception.value) == "Days must be a valid integer between 1 and 90.  " "Current input is a string."
 
 
 class TestValidateTimelineField(object):
     """Timeline field utility validation test cases."""
 
-    @pytest.mark.parametrize(
-        "field", ("destination_port", "http_path", "http_user_agent")
-    )
+    @pytest.mark.parametrize("field", ("destination_port", "http_path", "http_user_agent"))
     def test_valid(self, field):
         """Test valid values."""
         validate_timeline_field_value(field)
@@ -556,8 +544,7 @@ class TestValidateTimelineField(object):
         with pytest.raises(ValueError) as exception:
             validate_timeline_field_value(field)
         assert (
-            str(exception.value)
-            == "Field must be one of the following values: ['destination_port', "
+            str(exception.value) == "Field must be one of the following values: ['destination_port', "
             "'http_path', 'http_user_agent', 'source_asn', 'source_org', "
             "'source_rdns', 'tag_ids', 'classification']"
         )

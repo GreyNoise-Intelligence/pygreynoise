@@ -14,6 +14,7 @@ repos:
         language: system
         types:
           - python
+        args: [--target-version, py310]
       - id: isort
         name: Style check (isort)
         entry: isort

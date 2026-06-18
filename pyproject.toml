@@ -63,4 +63,8 @@ greynoise = "greynoise.cli:main"
 packages = ["src/greynoise"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"src/greynoise/cli/templates/*.j2" = "greynoise/cli/templates" 
+"src/greynoise/cli/templates/*.j2" = "greynoise/cli/templates"
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
