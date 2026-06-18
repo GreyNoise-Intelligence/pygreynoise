@@ -130,10 +130,9 @@ def _write_mmdb_bytes_to_csv(mmdb_data: bytes, output_path: Path, model: int) ->
         mmdb_file.write(mmdb_data)
 
     try:
-        with (
-            maxminddb.open_database(mmdb_path) as reader,
-            open(output_path, "w", newline="", encoding="utf-8") as csv_file,
-        ):
+        with maxminddb.open_database(mmdb_path) as reader, open(
+            output_path, "w", newline="", encoding="utf-8"
+        ) as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=columns)
             writer.writeheader()
             for network, record in reader:

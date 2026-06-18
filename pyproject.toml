@@ -29,7 +29,7 @@ classifiers = [
 keywords = ["internet", "scanning", "threat intelligence", "security"]
 dependencies = [
     "Click<=8.1.8; python_version < '3.10'",
-    "Click==8.3.1; python_version >= '3.10'",
+    "Click==8.4.1; python_version >= '3.10'",
     "ansimarkup==2.2.0",
     "cachetools==5.5.2; python_version == '3.8'",
     "cachetools==6.2.6; python_version == '3.9'",
