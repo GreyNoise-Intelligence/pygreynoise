@@ -15,7 +15,6 @@ from greynoise.cli.decorator import (
     ip_lookup_command,
     pass_api_client,
     persona_command,
-    sensor_activity_command,
     workspace_command,
 )
 from greynoise.cli.formatter import ANSI_MARKUP
@@ -328,39 +327,6 @@ def timelinedaily(
         for ip_address in ip_addresses
     ]
     return results
-
-
-@sensor_activity_command
-def sensor_activity(
-    context,
-    api_client,
-    api_key,
-    input_file,
-    output_file,
-    output_format,
-    verbose,
-    workspace_id,
-    start_time,
-    end_time,
-    file_format,
-    persona_id,
-    source_ip,
-    size,
-    scroll,
-    offering,
-):
-    """Retrieve Sensor Activity."""
-    result = api_client.sensor_activity(
-        workspace_id=workspace_id,
-        start_time=start_time,
-        end_time=end_time,
-        file_format=file_format,
-        persona_id=persona_id,
-        source_ip=source_ip,
-        size=size,
-        scroll=scroll,
-    )
-    return result
 
 
 @workspace_command

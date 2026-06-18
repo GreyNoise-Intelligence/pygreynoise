@@ -8,8 +8,35 @@ Version `3.1.0`_
 
 * API client:
 
-  * The `sensor_activity` and `sensor_activity_ips` functions are deprecated and
-    will be removed in a future version.
+  * Added `psychic_lookup`, `psychic_lookup_ips`, `psychic_stats` functions to support Psychic API endpoints
+  * Added `psychic_download_mmdb`, `psychic_download_bin`, `psychic_download_csv`, `psychic_generate_bitmap` functions to support Psychic file downloads
+  * Added `cves` function to support bulk CVE lookup API endpoints
+  * Added `callback_ip`, `callback_list`, `callback_export_ips`, `callback_overview` functions to support Callback API endpoints
+  * Added `recall`, `recall_stats`, `recall_timeseries` functions to support Recall API endpoints
+  * Updated the `timeline` and `timelinehourly` function
+  * Updated the `filter` function to correctly handle v3 API response format
+  * The `tags` function is now used instead of `metadata`, but is still available for backwards compatibility.
+  * The `similar` function is deprecated and will be removed in a future version.
+  * The `sensor_activity` and `sensor_activity_ips` functions are deprecated and will be removed in a future version.
+  * The `timelinehourly` function is deprecated and will be removed in a future version.
+
+* CLI:
+  * Added `psychic-download` commands to support Psychic file downloads
+  * Updated `ip` command to support Psychic API endpoints with new `-p/--psychic` option
+  * Added `callback` commands to support Callback API endpoints
+  * Added `recall` commands to support Recall API endpoints
+  * Removed `sensor-activity` command as it is deprecated and will be removed in a future version.
+  * Removed `timelinehourly` command as it is deprecated and will be removed in a future version.
+  * Removed not implemented commands `alerts`, `account`, `feedback`, `signature`, `interesting`.
+
+* Dependencies:
+  * Updated `requests` to version 2.34.2
+  * Updated `more-itertools` to version 11.1.0
+  * Updated `cachetools` to version 7.0.5
+  * Updated `Click` to version 8.3.1
+  * Updated `ansimarkup` to version 2.2.0
+  * Updated `dict2xml` to version 1.7.8
+  * Added `maxminddb` to version 3.1.1
 
 Version `3.0.3`_
 ================

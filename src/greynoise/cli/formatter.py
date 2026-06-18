@@ -177,14 +177,6 @@ def analyze_formatter(result, verbose):
 
 
 @colored_output
-def riot_formatter(results, verbose):
-    """Convert RIOT to human-readable text."""
-    template = JINJA2_ENV.get_template("riot.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
 def timeline_formatter(results, verbose):
     """Convert Timeline to human-readable text."""
     template = JINJA2_ENV.get_template("timeline.txt.j2")
@@ -196,14 +188,6 @@ def timeline_formatter(results, verbose):
 def timelinedaily_formatter(results, verbose):
     """Convert Timeline hourly/daily to human-readable text."""
     template = JINJA2_ENV.get_template("timelinedaily.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
-def sensoractivity_formatter(results, verbose):
-    """Convert Sensor Activity to human-readable text."""
-    template = JINJA2_ENV.get_template("sensoractivity.txt.j2")
     max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
@@ -282,11 +266,9 @@ FORMATTERS = {
         "quick": ip_quick_check_formatter,
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
-        "riot": riot_formatter,
         "ip-multi": ip_multi_context_formatter,
         "timeline": timeline_formatter,
         "timelinedaily": timelinedaily_formatter,
-        "sensor-activity": sensoractivity_formatter,
         "sensor-list": sensorlist_formatter,
         "persona-details": personadetails_formatter,
         "cve": cvedetails_formatter,

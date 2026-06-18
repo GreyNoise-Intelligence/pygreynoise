@@ -752,36 +752,31 @@ subcommands, use the *--help* option::
     $ greynoise -h
     Usage: greynoise [OPTIONS] COMMAND [ARGS]...
 
-    GreyNoise CLI.
+      GreyNoise CLI.
 
     Options:
       -h, --help  Show this message and exit.
 
     Commands:
-      account          View information about your GreyNoise account.
-      alerts           List, create, delete, and manage your GreyNoise alerts.
-      analyze          Analyze the IP addresses in a log file, stdin, etc.
-      cve              Retrieve Details of a CVE.
-      feedback         Send feedback directly to the GreyNoise team.
-      filter           Filter the noise from a log file, stdin, etc.
-      help             Show this message and exit.
-      ip               Query GreyNoise for all information on a given IP.
-      ip-multi         Perform Context lookup for multiple IPs at once.
-      persona-details  Retrieve Details of a Sensor Persona.
-      query            Run a GNQL (GreyNoise Query Language) query.
-      quick            Quickly check whether or not one or many IPs are "noise".
-      repl             Start an interactive shell.
-      riot             Query GreyNoise IP to see if it is in the RIOT dataset.
-      sensor-activity  Retrieve Sensor Activity.
-      sensor-list      Retrieve list of current Sensors in Workspace.
-      setup            Configure API client.
-      signature        Submit an IDS signature to GreyNoise to be deployed to...
-      similar          Query GreyNoise IP to identify Similar IPs.
-      stats            Get aggregate stats from a given GNQL query.
-      timeline         Query GreyNoise IP Timeline for events based on a...
-      timelinedaily    Query GreyNoise IP Timeline to get daily event details.
-      timelinehourly   Query GreyNoise IP Timeline to get hourly event details.
-      version          Get version and OS information for your GreyNoise...
+      analyze           Analyze the IP addresses in a log file, stdin, etc.
+      callback          GreyNoise Callback — scanner callback intelligence...
+      cve               Retrieve Details of a CVE.
+      filter            Filter the noise from a log file, stdin, etc.
+      help              Show this message and exit.
+      ip                Query GreyNoise for all information on a given IP.
+      ip-multi          Perform Context lookup for multiple IPs at once.
+      persona-details   Retrieve Details of a Sensor Persona.
+      psychic-download  Download a Psychic bitmap (.bin), MMDB, or CSV file...
+      query             Run a GNQL (GreyNoise Query Language) query.
+      quick             Quickly check whether or not one or many IPs are...
+      recall            GreyNoise Recall — GNQL activity over time.
+      repl              Start an interactive shell.
+      sensor-list       Retrieve list of current Sensors in Workspace.
+      setup             Configure API client.
+      stats             Get aggregate stats from a given GNQL query.
+      timeline          Query GreyNoise IP Timeline for events based on a...
+      timelinedaily     Query GreyNoise IP Timeline to get daily event details.
+      version           Get version and OS information for your GreyNoise...
 
 
 Setup
