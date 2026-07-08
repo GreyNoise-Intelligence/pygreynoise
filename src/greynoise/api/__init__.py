@@ -1246,7 +1246,10 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
+                "or GREYNOISE_PSYCHIC environment variable"
+            )
 
         return self._psychic.lookup_ip(ip_address)
 
@@ -1261,7 +1264,10 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
+                "or GREYNOISE_PSYCHIC environment variable"
+            )
 
         return self._psychic.lookup_ips(ips)
 
@@ -1274,7 +1280,10 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
+                "or GREYNOISE_PSYCHIC environment variable"
+            )
 
         return self._psychic.get_stats()
 
@@ -1338,7 +1347,10 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
+                "or GREYNOISE_PSYCHIC environment variable"
+            )
 
         self._psychic.reload()
 
@@ -1351,7 +1363,10 @@ class GreyNoise(BaseAPIClient):
     def psychic(self):
         """Get direct access to the Psychic instance."""
         if not self._psychic:
-            raise RuntimeError("Psychic is not enabled. Initialize GreyNoise with psychic=True")
+            raise RuntimeError(
+                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
+                "or GREYNOISE_PSYCHIC environment variable"
+            )
         return self._psychic
 
     def recall(self, query=None, start=None, end=None, format="json", limit=None, offset=None):

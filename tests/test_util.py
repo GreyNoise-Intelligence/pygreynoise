@@ -352,6 +352,36 @@ class TestLoadConfig(object):
         assert config["psychic_cache_dir"] == "/tmp/psychic"
         assert config["psychic_max_age_hours"] == 24
 
+    @patch("greynoise.util.LOGGER")
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    def test_invalid_psychic_from_environment_variable(self, os, open, logger):
+        """Invalid GREYNOISE_PSYCHIC values warn and default to False."""
+        os.environ = {"GREYNOISE_PSYCHIC": "maybe"}
+        os.path.isfile.return_value = False
+
+        config = load_config()
+
+        assert config["psychic"] is False
+        logger.warning.assert_called_once()
+        warning_args = logger.warning.call_args[0]
+        assert "Invalid psychic value" in warning_args[0]
+        assert warning_args[1] == "maybe"
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    @pytest.mark.parametrize(
+        "psychic_value,expected", [("TRUE", True), ("FALSE", False), ("true", True), ("false", False)]
+    )
+    def test_psychic_from_environment_variable(self, os, open, psychic_value, expected):
+        """GREYNOISE_PSYCHIC TRUE/FALSE values are accepted."""
+        os.environ = {"GREYNOISE_PSYCHIC": psychic_value}
+        os.path.isfile.return_value = False
+
+        config = load_config()
+
+        assert config["psychic"] is expected
+
 
 class TestSaveConfig(object):
     """Save configuration to a file test cases."""

@@ -138,6 +138,15 @@ def load_config():
         )
 
     try:
+        config_parser.getboolean("greynoise", "psychic")
+    except ValueError:
+        invalid_psychic = config_parser.get("greynoise", "psychic")
+        LOGGER.warning(
+            "Invalid psychic value %r; expected TRUE or FALSE. Defaulting to FALSE.",
+            invalid_psychic,
+        )
+        config_parser.set("greynoise", "psychic", str(DEFAULT_CONFIG["psychic"]))
+    try:
         config_parser.getint("greynoise", "psychic_model")
     except ValueError:
         config_parser.set("greynoise", "psychic_model", str(DEFAULT_CONFIG["psychic_model"]))
