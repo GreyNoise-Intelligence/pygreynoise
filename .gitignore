@@ -89,6 +89,7 @@ celerybeat-schedule
 venv/
 venv_py2/
 venv3/
+venv312/
 ENV/
 bin/
 pyvenv.cfg
@@ -111,3 +112,5 @@ pyvenv.cfg
 workspace/
 
 .DS_Store
+.vscode/
+scratch.py

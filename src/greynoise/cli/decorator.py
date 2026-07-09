@@ -19,6 +19,19 @@ from greynoise.util import load_config
 LOGGER = logging.getLogger(__name__)
 
 
+def _txt_formatter_command_key(context):
+    """Build stable txt formatter dict key (e.g. recall-stats, callback-ip).
+
+    Click 8.x does not expose ``command.parent`` on ``Command`` objects; nested
+    paths come from ``Context.command_path`` (space-separated, prog name first).
+    """
+    raw = getattr(context, "command_path", None) or ""
+    parts = raw.split()
+    if len(parts) >= 2:
+        return "-".join(parts[1:])
+    return context.command.name
+
+
 def echo_result(function):
     """Decorator that prints subcommand results correctly formatted.
 
@@ -38,11 +51,9 @@ def echo_result(function):
         formatter = FORMATTERS[output_format]
         if isinstance(formatter, dict):
             # For the text formatter, there's a separate formatter for each subcommand
-            formatter = formatter[context.command.name]
+            formatter = formatter[_txt_formatter_command_key(context)]
         output = formatter(result, params.get("verbose", False)).strip("\n")
-        click.echo(
-            output, file=params.get("output_file", click.open_file("-", mode="w"))
-        )
+        click.echo(output, file=params.get("output_file", click.open_file("-", mode="w")))
 
     return wrapper
 
@@ -64,14 +75,17 @@ def handle_exceptions(function):
         except RequestFailure as exception:
             status = exception.args[0]
             body = exception.args[1]
-            if "message" in body:
-                error_message = "API error: {}".format(body["message"])
-            elif "error" in body:
-                error_message = "API error: {}".format(body["error"])
-            elif not body:
-                error_message = "API error: {}".format(status)
+            if isinstance(body, dict):
+                if "message" in body:
+                    error_message = "API error: {}".format(body["message"])
+                elif "error" in body:
+                    error_message = "API error: {}".format(body["error"])
+                elif not body:
+                    error_message = "API error: {}".format(status)
+                else:
+                    error_message = "API error: {}".format(body)
             else:
-                error_message = "API error: {}".format(body)
+                error_message = "API error: {}".format(body or status)
             LOGGER.error(error_message)
             click.get_current_context().exit(-1)
         except RequestException as exception:
@@ -112,9 +126,7 @@ def pass_api_client(function):
                     "(in order of precedence):\n"
                     "- Pass it using the -k/--api-key option.\n"
                     "- Set it in the GREYNOISE_API_KEY environment variable.\n"
-                    "- Run {!r} to save it to the configuration file.\n".format(
-                        "{} setup".format(prog_name)
-                    )
+                    "- Run {!r} to save it to the configuration file.\n".format("{} setup".format(prog_name))
                 )
                 context.exit(-1)
             api_key = config["api_key"]
@@ -124,6 +136,11 @@ def pass_api_client(function):
                 offering = "enterprise"
             else:
                 offering = config["offering"]
+
+        psychic = config.get("psychic", True)
+        psychic_model = config.get("psychic_model")
+        psychic_cache_dir = config.get("psychic_cache_dir")
+        psychic_max_age_hours = config.get("psychic_max_age_hours", 1)
 
         api_config = APIConfig(
             api_key=api_key,
@@ -135,6 +152,10 @@ def pass_api_client(function):
             cache_max_size=config.get("cache_max_size", 1000000),
             cache_ttl=config.get("cache_ttl", 3600),
             use_cache=config.get("use_cache", True),
+            psychic=psychic,
+            psychic_model=psychic_model,
+            psychic_cache_dir=psychic_cache_dir,
+            psychic_max_age_hours=psychic_max_age_hours,
         )
         api_client = GreyNoise(api_config)
         return function(api_client, *args, **kwargs)
@@ -153,13 +174,10 @@ def gnql_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -189,13 +207,10 @@ def ip_lookup_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -253,60 +268,10 @@ def workspace_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
-    @click.option(
-        "-f",
-        "--format",
-        "output_format",
-        type=click.Choice(["json", "txt", "xml"]),
-        default="txt",
-        help="Output format",
-    )
-    @click.option("-v", "--verbose", count=True, help="Verbose output")
-    @pass_api_client
-    @click.pass_context
-    @echo_result
-    @handle_exceptions
-    @functools.wraps(function)
-    def wrapper(*args, **kwargs):
-        return function(*args, **kwargs)
-
-    return wrapper
-
-
-def sensor_activity_command(function):
-    """Decorator that groups decorators common to sensor activity subcommands."""
-
-    @click.command()
-    @click.argument("workspace_id", required=True)
-    @click.option(
-        "--start_time", "start_time", help="Earliest session start time to return"
-    )
-    @click.option("--end_time", "end_time", help="Latest session start time to return")
-    @click.option(
-        "--file_format", "file_format", help="Format for output file", default="json"
-    )
-    @click.option("--persona_id", "persona_id", help="Id for the desired persona")
-    @click.option("--source_ip", "source_ip", help="Ip for the desired source")
-    @click.option("--size", "size", help="Max number of results to return")
-    @click.option("--scroll", "scroll", help="Scroll token for pagination")
-    @click.option("-k", "--api-key", help="Key to include in API requests")
-    @click.option(
-        "-O",
-        "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
-    )
-    @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -336,13 +301,10 @@ def persona_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",
@@ -372,13 +334,10 @@ def cve_command(function):
     @click.option(
         "-O",
         "--offering",
-        help="Which API offering to use, enterprise or community, "
-        "defaults to enterprise",
+        help="Which API offering to use, enterprise or community, " "defaults to enterprise",
     )
     @click.option("-i", "--input", "input_file", type=click.File(), help="Input file")
-    @click.option(
-        "-o", "--output", "output_file", type=click.File(mode="w"), help="Output file"
-    )
+    @click.option("-o", "--output", "output_file", type=click.File(mode="w"), help="Output file")
     @click.option(
         "-f",
         "--format",

@@ -34,36 +34,6 @@ def api_client():
             yield api_client
 
 
-class TestAccount(object):
-    """Account subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'account' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.account)
-        api_client.not_implemented.assert_called_with("account")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
-class TestAlerts(object):
-    """Alerts subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'alerts' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.alerts)
-        api_client.not_implemented.assert_called_with("alerts")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
 class TestAnalyze(object):
     """Analyze subcommand test cases."""
 
@@ -80,8 +50,7 @@ class TestAnalyze(object):
             "riot_ip_ratio": 0,
         },
     }
-    DEFAULT_OUTPUT = textwrap.dedent(
-        """\
+    DEFAULT_OUTPUT = textwrap.dedent("""\
         ╔═══════════════════════════╗
         ║          Analyze          ║
         ╚═══════════════════════════╝
@@ -98,8 +67,7 @@ class TestAnalyze(object):
         - <ip_address_2>
 
         No results found for this query.
-        """
-    )
+        """)
 
     @pytest.mark.parametrize(
         "expected_output",
@@ -185,21 +153,6 @@ class TestAnalyze(object):
             assert "Error: API key not found" in result.output
 
 
-class TestFeedback(object):
-    """Feedback subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'feedback' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.feedback)
-        api_client.not_implemented.assert_called_with("feedback")
-        assert result.exit_code == 1
-        assert result.output == expected_output
-
-
 class TestFilter(object):
     """Filter subcommand test cases."""
 
@@ -242,9 +195,7 @@ class TestFilter(object):
         result = runner.invoke(subcommand.filter, ["-i", input_text])
         assert result.exit_code == 0
         assert result.output == "".join(expected_output)
-        api_client.filter.assert_called_with(
-            input_text, noise_only=False, riot_only=False
-        )
+        api_client.filter.assert_called_with(input_text, noise_only=False, riot_only=False)
 
     @pytest.mark.parametrize(
         "text, expected_output",
@@ -338,9 +289,7 @@ class TestFilter(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.filter.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.filter.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.filter, input="some text")
@@ -380,15 +329,27 @@ class TestHelp(object):
         runner = CliRunner()
         expected_output = "Usage: greynoise [OPTIONS] COMMAND [ARGS]..."
 
-        result = runner.invoke(
-            subcommand.help_, parent=Context(main, info_name="greynoise")
-        )
+        result = runner.invoke(subcommand.help_, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == 0
         assert expected_output in result.output
 
 
 class TestIP(object):
     """IP subcommand tests."""
+
+    def test_main_ip_command_uses_context_lookup(self, api_client):
+        """The root ip command must not be shadowed by callback ip."""
+        runner = CliRunner()
+        expected_response = {"ip": "8.8.8.8"}
+
+        api_client.ip.return_value = expected_response
+
+        result = runner.invoke(main, ["ip", "-f", "json", "8.8.8.8"])
+
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
+        api_client.ip.assert_called_once_with(ip_address="8.8.8.8")
+        api_client.callback_ip.assert_not_called()
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_ip(self, api_client, ip_address, expected_response):
@@ -399,9 +360,7 @@ class TestIP(object):
 
         result = runner.invoke(subcommand.ip, ["-f", "json", ip_address])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected_response], indent=4, sort_keys=True
-        )
+        assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
         api_client.ip.assert_called_with(ip_address=ip_address)
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
@@ -411,13 +370,9 @@ class TestIP(object):
 
         api_client.ip.return_value = expected_response
 
-        result = runner.invoke(
-            subcommand.ip, ["-f", "json", "-i", StringIO(ip_address)]
-        )
+        result = runner.invoke(subcommand.ip, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected_response], indent=4, sort_keys=True
-        )
+        assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
         api_client.ip.assert_called_with(ip_address=ip_address)
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
@@ -429,9 +384,7 @@ class TestIP(object):
 
         result = runner.invoke(subcommand.ip, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected_response], indent=4, sort_keys=True
-        )
+        assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
         api_client.ip.assert_called_with(ip_address=ip_address)
 
     def test_no_ip_address_passed(self, api_client):
@@ -440,9 +393,7 @@ class TestIP(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.ip, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.ip, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise ip" in result.output
         api_client.ip.assert_not_called()
@@ -482,9 +433,7 @@ class TestIP(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.ip.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.ip.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.ip, ["8.8.8.8"])
@@ -507,66 +456,7 @@ class TestIP(object):
 
         with patch("greynoise.cli.decorator.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
-            result = runner.invoke(
-                subcommand.ip, ["8.8.8.8"], parent=Context(main, info_name="greynoise")
-            )
-            assert result.exit_code == -1
-            assert "Error: API key not found" in result.output
-
-
-class TestSensorActivity(object):
-    """Sensor Activity subcommand tests."""
-
-    def test_sensor_activity(self, api_client):
-        """Run sensor activity."""
-        runner = CliRunner()
-
-        workspace_id = "workspace_id"
-        api_client.sensor_activity.return_value = {}
-        expected = "{}"
-
-        result = runner.invoke(subcommand.sensor_activity, ["-f", "json", workspace_id])
-
-        assert result.exit_code == 0
-        assert result.output.strip("\n") == expected
-        api_client.sensor_activity.assert_called_with(
-            workspace_id=workspace_id,
-            file_format="json",
-            start_time=None,
-            end_time=None,
-            persona_id=None,
-            source_ip=None,
-            size=None,
-            scroll=None,
-        )
-
-    def test_request_failure(self, api_client, caplog):
-        """Error is displayed on API request failure."""
-        runner = CliRunner()
-
-        workspace_id = "workspace_id"
-        api_client.sensor_activity.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
-        expected = "API error: forbidden"
-
-        result = runner.invoke(subcommand.sensor_activity, ["-f", "json", workspace_id])
-        assert result.exit_code == -1
-        assert caplog.records[0].message == expected
-
-    def test_api_key_not_found(self):
-        """Error is displayed if API key is not found."""
-        runner = CliRunner()
-
-        workspace_id = "workspace_id"
-
-        with patch("greynoise.cli.decorator.load_config") as load_config:
-            load_config.return_value = {"api_key": ""}
-            result = runner.invoke(
-                subcommand.sensor_activity,
-                ["-f", "json", workspace_id],
-                parent=Context(main, info_name="greynoise"),
-            )
+            result = runner.invoke(subcommand.ip, ["8.8.8.8"], parent=Context(main, info_name="greynoise"))
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
 
@@ -585,9 +475,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", query])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(
-            query=query, size=None, scroll=None, exclude_fields=None
-        )
+        api_client.query.assert_called_with(query=query, size=None, scroll=None, exclude_fields=None)
 
     def test_input_file(self, api_client):
         """Run query from input file."""
@@ -600,9 +488,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json", "-i", StringIO(query)])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(
-            query=query, size=None, scroll=None, exclude_fields=None
-        )
+        api_client.query.assert_called_with(query=query, size=None, scroll=None, exclude_fields=None)
 
     def test_stdin_input(self, api_client):
         """Run query from stdin."""
@@ -615,9 +501,7 @@ class TestQuery(object):
         result = runner.invoke(subcommand.query, ["-f", "json"], input=query)
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.query.assert_called_with(
-            query=query, size=None, scroll=None, exclude_fields=None
-        )
+        api_client.query.assert_called_with(query=query, size=None, scroll=None, exclude_fields=None)
 
     def test_query_with_exclude(self, api_client):
         """Run query with --exclude forwarded to the client."""
@@ -646,9 +530,7 @@ class TestQuery(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.query, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.query, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise query" in result.output
         api_client.query.assert_not_called()
@@ -676,9 +558,7 @@ class TestQuery(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.query.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.query.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.query, ["<query>"])
@@ -730,8 +610,7 @@ class TestQuick(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -745,8 +624,7 @@ class TestQuick(object):
                     \t\t\t<trust_level>1</trust_level>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
             (
                 "8.8.8.8",
@@ -807,9 +685,7 @@ class TestQuick(object):
 
         api_client.quick.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.quick, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))]
-        )
+        result = runner.invoke(subcommand.quick, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
@@ -840,9 +716,7 @@ class TestQuick(object):
 
         api_client.quick.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.quick, ["-f", "json"], input="\n".join(ip_addresses)
-        )
+        result = runner.invoke(subcommand.quick, ["-f", "json"], input="\n".join(ip_addresses))
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.quick.assert_called_with(ip_addresses=ip_addresses)
@@ -853,9 +727,7 @@ class TestQuick(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.quick, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.quick, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise quick" in result.output
         api_client.quick.assert_not_called()
@@ -895,9 +767,7 @@ class TestQuick(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.quick.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.quick.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.quick, ["8.8.8.8"])
@@ -943,8 +813,7 @@ class TestIPMulti(object):
             (
                 "8.8.8.8",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -956,8 +825,7 @@ class TestIPMulti(object):
                     \t\t\t<found>False</found>
                     \t\t</business_service_intelligence>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
             (
                 "8.8.8.8",
@@ -1031,9 +899,7 @@ class TestIPMulti(object):
 
         api_client.ip_multi.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.ip_multi, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))]
-        )
+        result = runner.invoke(subcommand.ip_multi, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
@@ -1064,9 +930,7 @@ class TestIPMulti(object):
 
         api_client.ip_multi.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.ip_multi, ["-f", "json"], input="\n".join(ip_addresses)
-        )
+        result = runner.invoke(subcommand.ip_multi, ["-f", "json"], input="\n".join(ip_addresses))
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
@@ -1077,9 +941,7 @@ class TestIPMulti(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.ip_multi, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.ip_multi, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise ip-multi" in result.output
         api_client.ip_multi.assert_not_called()
@@ -1119,9 +981,7 @@ class TestIPMulti(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.ip_multi.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.ip_multi.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.ip_multi, ["8.8.8.8"])
@@ -1141,21 +1001,6 @@ class TestIPMulti(object):
             )
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
-
-
-class TestSignature(object):
-    """Signature subcommand test cases."""
-
-    def test_not_implemented(self, api_client):
-        """Not implemented error message returned."""
-        runner = CliRunner()
-        expected_output = "Error: 'signature' subcommand is not implemented yet.\n"
-
-        api_client.not_implemented.side_effect = RequestFailure(501)
-        result = runner.invoke(subcommand.signature)
-        api_client.not_implemented.assert_called_with("signature")
-        assert result.exit_code == 1
-        assert result.output == expected_output
 
 
 class TestSetup(object):
@@ -1186,9 +1031,7 @@ class TestSetup(object):
     @pytest.mark.parametrize("timeout_option", ["-t", "--timeout"])
     @pytest.mark.parametrize("proxy_option", ["-p", "--proxy"])
     @pytest.mark.parametrize("offering_option", ["-O", "--offering"])
-    def test_save_api_key_and_timeout(
-        self, key_option, server_option, timeout_option, proxy_option, offering_option
-    ):
+    def test_save_api_key_and_timeout(self, key_option, server_option, timeout_option, proxy_option, offering_option):
         """Save API key and timeout to configuration file."""
         runner = CliRunner()
         api_key = "<api_key>"
@@ -1284,9 +1127,7 @@ class TestStats(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.stats, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.stats, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise stats" in result.output
         api_client.stats.assert_not_called()
@@ -1314,9 +1155,7 @@ class TestStats(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.stats.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.stats.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.stats, ["-f", "json", "some query"])
@@ -1329,9 +1168,7 @@ class TestStats(object):
 
         with patch("greynoise.cli.decorator.load_config") as load_config:
             load_config.return_value = {"api_key": ""}
-            result = runner.invoke(
-                subcommand.stats, ["query"], parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.stats, ["query"], parent=Context(main, info_name="greynoise"))
             assert result.exit_code == -1
             assert "Error: API key not found" in result.output
 
@@ -1351,6 +1188,8 @@ class TestVersion(object):
 
 class TestSimilar(object):
     """Similar subcommand tests."""
+
+    pytestmark = pytest.mark.skip(reason="similar CLI command has been removed")
 
     DEFAULT_SIM_RESPONSE = {
         "ip": {
@@ -1402,8 +1241,7 @@ class TestSimilar(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1440,8 +1278,7 @@ class TestSimilar(object):
                     \t\t</similar_ips>
                     \t\t<total>1119</total>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -1454,9 +1291,7 @@ class TestSimilar(object):
         result = runner.invoke(subcommand.similar, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.similar.assert_called_with(
-            ip_address=ip_address, limit=None, min_score=None
-        )
+        api_client.similar.assert_called_with(ip_address=ip_address, limit=None, min_score=None)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -1474,16 +1309,10 @@ class TestSimilar(object):
 
         api_client.similar.return_value = expected
 
-        result = runner.invoke(
-            subcommand.similar, ["-f", "json", "-i", StringIO(ip_address)]
-        )
+        result = runner.invoke(subcommand.similar, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.similar.assert_called_with(
-            ip_address=ip_address, limit=None, min_score=None
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.similar.assert_called_with(ip_address=ip_address, limit=None, min_score=None)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -1503,12 +1332,8 @@ class TestSimilar(object):
 
         result = runner.invoke(subcommand.similar, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.similar.assert_called_with(
-            ip_address=ip_address, limit=None, min_score=None
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.similar.assert_called_with(ip_address=ip_address, limit=None, min_score=None)
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -1516,9 +1341,7 @@ class TestSimilar(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.similar, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.similar, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise similar" in result.output
         api_client.similar.assert_not_called()
@@ -1558,9 +1381,7 @@ class TestSimilar(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.similar.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.similar.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.similar, ["8.8.8.8"])
@@ -1609,8 +1430,7 @@ class TestTimeline(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1625,8 +1445,7 @@ class TestTimeline(object):
                     \t\t</metadata>
                     \t\t<results></results>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -1639,9 +1458,7 @@ class TestTimeline(object):
         result = runner.invoke(subcommand.timeline, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.timeline.assert_called_with(
-            ip_address=ip_address, days=None, field=None
-        )
+        api_client.timeline.assert_called_with(ip_address=ip_address, days=None, field=None)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -1659,16 +1476,10 @@ class TestTimeline(object):
 
         api_client.timeline.return_value = expected
 
-        result = runner.invoke(
-            subcommand.timeline, ["-f", "json", "-i", StringIO(ip_address)]
-        )
+        result = runner.invoke(subcommand.timeline, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.timeline.assert_called_with(
-            ip_address=ip_address, days=None, field=None
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.timeline.assert_called_with(ip_address=ip_address, days=None, field=None)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -1688,12 +1499,8 @@ class TestTimeline(object):
 
         result = runner.invoke(subcommand.timeline, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.timeline.assert_called_with(
-            ip_address=ip_address, days=None, field=None
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.timeline.assert_called_with(ip_address=ip_address, days=None, field=None)
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -1701,9 +1508,7 @@ class TestTimeline(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.timeline, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.timeline, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise timeline" in result.output
         api_client.timeline.assert_not_called()
@@ -1743,9 +1548,7 @@ class TestTimeline(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.timeline.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.timeline.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.timeline, ["8.8.8.8"])
@@ -1769,6 +1572,8 @@ class TestTimeline(object):
 
 class TestTimelineHourly(object):
     """TimelineHourly subcommand tests."""
+
+    pytestmark = pytest.mark.skip(reason="timelinehourly CLI command has been removed")
 
     DEFAULT_TIMELINEHOURLY_RESPONSE = {
         "activity": [
@@ -1829,8 +1634,7 @@ class TestTimelineHourly(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -1877,8 +1681,7 @@ class TestTimelineHourly(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -1888,9 +1691,7 @@ class TestTimelineHourly(object):
 
         api_client.timelinehourly.return_value = self.DEFAULT_TIMELINEHOURLY_RESPONSE
 
-        result = runner.invoke(
-            subcommand.timelinehourly, ["-f", output_format, ip_address]
-        )
+        result = runner.invoke(subcommand.timelinehourly, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
         api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
@@ -1911,13 +1712,9 @@ class TestTimelineHourly(object):
 
         api_client.timelinehourly.return_value = expected
 
-        result = runner.invoke(
-            subcommand.timelinehourly, ["-f", "json", "-i", StringIO(ip_address)]
-        )
+        result = runner.invoke(subcommand.timelinehourly, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
         api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
 
     @pytest.mark.parametrize(
@@ -1936,13 +1733,9 @@ class TestTimelineHourly(object):
 
         api_client.timelinehourly.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.timelinehourly, ["-f", "json"], input=ip_address
-        )
+        result = runner.invoke(subcommand.timelinehourly, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
         api_client.timelinehourly.assert_called_with(ip_address=ip_address, days=None)
 
     def test_no_ip_address_passed(self, api_client):
@@ -1951,9 +1744,7 @@ class TestTimelineHourly(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.timelinehourly, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.timelinehourly, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise timelinehourly" in result.output
         api_client.timelinehourly.assert_not_called()
@@ -1993,9 +1784,7 @@ class TestTimelineHourly(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.timelinehourly.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.timelinehourly.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.timelinehourly, ["8.8.8.8"])
@@ -2079,8 +1868,7 @@ class TestTimelineDaily(object):
             (
                 "45.83.66.65",
                 "xml",
-                textwrap.dedent(
-                    """\
+                textwrap.dedent("""\
                     <?xml version="1.0" ?>
                     <root>
                     \t<item>
@@ -2127,8 +1915,7 @@ class TestTimelineDaily(object):
                     \t\t\t<start_time>2023-01-08T00:00:00Z</start_time>
                     \t\t</metadata>
                     \t</item>
-                    </root>"""
-                ),
+                    </root>"""),
             ),
         ),
     )
@@ -2138,12 +1925,10 @@ class TestTimelineDaily(object):
 
         api_client.timelinedaily.return_value = self.DEFAULT_TIMELINEDAILY_RESPONSE
 
-        result = runner.invoke(
-            subcommand.timelinedaily, ["-f", output_format, ip_address]
-        )
+        result = runner.invoke(subcommand.timelinedaily, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -2161,14 +1946,10 @@ class TestTimelineDaily(object):
 
         api_client.timelinedaily.return_value = expected
 
-        result = runner.invoke(
-            subcommand.timelinedaily, ["-f", "json", "-i", StringIO(ip_address)]
-        )
+        result = runner.invoke(subcommand.timelinedaily, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     @pytest.mark.parametrize(
         "ip_address, mock_response, expected",
@@ -2186,14 +1967,10 @@ class TestTimelineDaily(object):
 
         api_client.timelinedaily.return_value = mock_response
 
-        result = runner.invoke(
-            subcommand.timelinedaily, ["-f", "json"], input=ip_address
-        )
+        result = runner.invoke(subcommand.timelinedaily, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
-        assert result.output.strip("\n") == json.dumps(
-            [expected], indent=4, sort_keys=True
-        )
-        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=None)
+        assert result.output.strip("\n") == json.dumps([expected], indent=4, sort_keys=True)
+        api_client.timelinedaily.assert_called_with(ip_address=ip_address, days=30)
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -2201,9 +1978,7 @@ class TestTimelineDaily(object):
 
         with patch("greynoise.cli.helper.sys") as sys:
             sys.stdin.isatty.return_value = True
-            result = runner.invoke(
-                subcommand.timelinedaily, parent=Context(main, info_name="greynoise")
-            )
+            result = runner.invoke(subcommand.timelinedaily, parent=Context(main, info_name="greynoise"))
         assert result.exit_code == -1
         assert "Usage: greynoise timelinedaily" in result.output
         api_client.timelinedaily.assert_not_called()
@@ -2225,7 +2000,7 @@ class TestTimelineDaily(object):
         assert result.exit_code == -1
         assert "Usage: greynoise timelinedaily" in result.output
         assert expected in result.output
-        api_client.timelinehourly.assert_not_called()
+        api_client.timelinedaily.assert_not_called()
 
     def test_invalid_ip_address_as_argument(self, api_client):
         """Quick subcommand fails when ip_address is invalid."""
@@ -2243,9 +2018,7 @@ class TestTimelineDaily(object):
         """Error is displayed on API request failure."""
         runner = CliRunner()
 
-        api_client.timelinedaily.side_effect = RequestFailure(
-            401, {"message": "forbidden", "status": "error"}
-        )
+        api_client.timelinedaily.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
 
         result = runner.invoke(subcommand.timelinedaily, ["8.8.8.8"])
@@ -2301,9 +2074,7 @@ class TestCLIIO:
             },
         ]
 
-        result = runner.invoke(
-            subcommand.ip_multi, ["-f", "json", "-i", str(input_file)]
-        )
+        result = runner.invoke(subcommand.ip_multi, ["-f", "json", "-i", str(input_file)])
         assert result.exit_code == 0
         assert "8.8.8.8" in result.output
         assert "1.1.1.1" in result.output
@@ -2387,3 +2158,127 @@ class TestCLIIO:
         print(result.output)
         assert "8.8.8.8" in result.output
         assert "malicious" in result.output
+
+
+class TestRecallAndCallback(object):
+    """Recall and Callback CLI wiring."""
+
+    def test_recall_timeseries(self, api_client):
+        runner = CliRunner()
+        api_client.recall.return_value = {"buckets": []}
+        result = runner.invoke(main, ["recall", "timeseries", "classification:scan"])
+        assert result.exit_code == 0
+        api_client.recall.assert_called_once_with(
+            query="classification:scan",
+            start=None,
+            end=None,
+            format="json",
+            limit=None,
+            offset=None,
+        )
+
+    def test_recall_timeseries_api_options(self, api_client):
+        runner = CliRunner()
+        api_client.recall.return_value = {}
+        result = runner.invoke(
+            main,
+            [
+                "recall",
+                "timeseries",
+                "foo",
+                "--start",
+                "2024-01-01T00:00:00Z",
+                "--api-format",
+                "csv",
+                "--limit",
+                "5",
+                "--offset",
+                "10",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.recall.assert_called_once_with(
+            query="foo",
+            start="2024-01-01T00:00:00Z",
+            end=None,
+            format="csv",
+            limit=5,
+            offset=10,
+        )
+
+    def test_recall_stats(self, api_client):
+        runner = CliRunner()
+        api_client.recall_stats.return_value = {}
+        result = runner.invoke(
+            main,
+            ["recall", "stats", "bar", "--interval", "day", "--end", "2024-06-01"],
+        )
+        assert result.exit_code == 0
+        api_client.recall_stats.assert_called_once_with(
+            query="bar",
+            start=None,
+            end="2024-06-01",
+            format="json",
+            interval="day",
+        )
+
+    def test_callback_ip(self, api_client):
+        runner = CliRunner()
+        api_client.callback_ip.return_value = {"ip": "9.9.9.9"}
+        result = runner.invoke(
+            main,
+            ["callback", "ip", "9.9.9.9", "--source-workspace", "ws1"],
+        )
+        assert result.exit_code == 0
+        api_client.callback_ip.assert_called_once_with(
+            ip_address="9.9.9.9",
+            source_workspace="ws1",
+        )
+
+    def test_psychic_download_csv(self, api_client):
+        runner = CliRunner()
+        api_client.psychic_download.return_value = "./psychic_m3_2026-06-17.csv"
+        result = runner.invoke(
+            main,
+            [
+                "psychic-download",
+                "--format",
+                "csv",
+                "--date",
+                "2026-06-17",
+                "--model",
+                "3",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.psychic_download.assert_called_once_with(
+            date="2026-06-17",
+            file_format="csv",
+            output_path=".",
+            model=3,
+        )
+        assert result.output.strip() == "./psychic_m3_2026-06-17.csv"
+
+    def test_psychic_generate(self, api_client):
+        runner = CliRunner()
+        api_client.psychic_generate.return_value = "./psychic_m3_2026-06-01_2026-06-12.bin"
+        result = runner.invoke(
+            main,
+            [
+                "psychic-generate",
+                "--start-date",
+                "2026-06-01",
+                "--end-date",
+                "2026-06-12",
+                "--model",
+                "3",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.psychic_generate.assert_called_once_with(
+            start_date="2026-06-01",
+            end_date="2026-06-12",
+            output_path=".",
+            model=3,
+        )
+        assert result.output.strip() == "./psychic_m3_2026-06-01_2026-06-12.bin"

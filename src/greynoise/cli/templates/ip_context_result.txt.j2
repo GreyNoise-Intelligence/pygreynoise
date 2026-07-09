@@ -1,5 +1,5 @@
 {% import "macros.txt.j2" as macros with context %}
-{%- if ip_context.internet_scanner_intelligence.found or ip_context.business_service_intelligence.found%}
+{%- if 'internet_scanner_intelligence' in ip_context %}
 {%- if ip_context.business_service_intelligence.found %}
 
           <header>Business Service Intelligence</header>
@@ -106,7 +106,19 @@
 - <key>Port</key>: <value>{{ hassh.port }}</value>, <key>Fingerprint</key>: <value>{{ hassh.fingerprint }}</value>
 {% endcall -%}
 {%- endif %}
+{% elif not ip_context.internet_scanner_intelligence.found and not ip_context.business_service_intelligence.found %}
+{{ ip_context.ip }} has not been seen in scans in the past 90 days.
 {% endif %}
+{% elif ip_context.seen %}
+          <header>Psychic Intelligence</header>
+-----------------------------------------------
+<key>Seen</key>: <value>{{ ip_context.seen }}</value>
+{% if ip_context.date -%}<key>Last Seen</key>: <value>{{ ip_context.date }}</value>{% endif %}
+{% if ip_context['3wh_completed'] -%}<key>Spoofable</key>: <value>{{ ip_context['3wh_completed']}}</value>{% endif %}
+{% if ip_context.classification -%}<key>Classification</key>: <value>{{ ip_context.classification }}</value>{% endif %}
+{% if ip_context.actor -%}<key>Actor</key>: <value>{{ ip_context.actor }}</value>{% endif %}
+{% if ip_context.tags -%}<key>Tags</key>: <value>{{ ip_context.tags | join(", ") }}</value>{% endif %}
+{% if ip_context.cves -%}<key>CVE</key>: <value>{{ ip_context.cves | join(", ") }}</value>{% endif %}
 {% else %}
 {{ ip_context.ip }} has not been seen in scans in the past 90 days.
 {% endif %}

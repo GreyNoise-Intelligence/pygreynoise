@@ -103,7 +103,7 @@ class TestRequest:
             params=None,
             json=None,
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -117,7 +117,7 @@ class TestRequest:
             params={"test": "param"},
             json=None,
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -131,7 +131,7 @@ class TestRequest:
             params=None,
             json={"test": "data"},
             files=None,
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -145,7 +145,7 @@ class TestRequest:
             params=None,
             json=None,
             files={"test": "file"},
-            headers={"key": client.config.api_key, "Accept": "application/json"},
+            extra_headers={"Accept": "application/json"},
             proxy=None,
         )
 
@@ -252,8 +252,16 @@ class TestFilter(object):
         """API client fixture with quick method mocked."""
         client.quick = Mock(
             return_value=[
-                {"ip": "8.8.8.8", "noise": True, "riot": True},
-                {"ip": "123.123.123.123", "noise": False, "riot": False},
+                {
+                    "ip": "8.8.8.8",
+                    "internet_scanner_intelligence": {"found": True},
+                    "business_service_intelligence": {"found": True},
+                },
+                {
+                    "ip": "123.123.123.123",
+                    "internet_scanner_intelligence": {"found": False},
+                    "business_service_intelligence": {"found": False},
+                },
             ]
         )
         yield client
@@ -267,10 +275,7 @@ class TestFilter(object):
             ),
             (
                 "8.8.8.8 123.123.123.123\nnot an ip address",
-                (
-                    "<noise>8.8.8.8</noise> <not-noise>123.123.123.123</not-noise>\n"
-                    "not an ip address"
-                ),
+                ("<noise>8.8.8.8</noise> <not-noise>123.123.123.123</not-noise>\n" "not an ip address"),
             ),
         ],
     )
@@ -415,9 +420,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick(
-        self, client, ip_addresses, expected_request, mock_response, expected_results
-    ):
+    def test_quick(self, client, ip_addresses, expected_request, mock_response, expected_results):
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
         results = client.quick(ip_addresses)
@@ -497,9 +500,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick_with_cache(
-        self, client, ip_addresses, expected_request, mock_response
-    ):
+    def test_quick_with_cache(self, client, ip_addresses, expected_request, mock_response):
         """Get IP addresses noise status with cache."""
         # First call should hit the API
         client._request = Mock(return_value=mock_response)
@@ -519,16 +520,10 @@ class TestQuick:
         # Verify cache contents
         if isinstance(ip_addresses, str):
             ip_addresses = [ip_addresses]
-        valid_ips = [
-            ip
-            for ip in ip_addresses
-            if ip != "not-an-ip" and not ip.startswith("not-an-ip")
-        ]
+        valid_ips = [ip for ip in ip_addresses if ip != "not-an-ip" and not ip.startswith("not-an-ip")]
         for ip in valid_ips:
             assert ip in client.ip_quick_check_cache
-            assert client.ip_quick_check_cache[ip] == next(
-                (item for item in first_results if item["ip"] == ip), None
-            )
+            assert client.ip_quick_check_cache[ip] == next((item for item in first_results if item["ip"] == ip), None)
 
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response",
@@ -603,9 +598,7 @@ class TestQuick:
             ),
         ),
     )
-    def test_quick_without_cache(
-        self, client_without_cache, ip_addresses, expected_request, mock_response
-    ):
+    def test_quick_without_cache(self, client_without_cache, ip_addresses, expected_request, mock_response):
         """Get IP addresses noise status with cache."""
         client = client_without_cache
         client._request = Mock(return_value=mock_response)
@@ -620,83 +613,56 @@ class TestQuick:
 class TestSensorActivity(object):
     """GreyNoise client run Sensor Activity test cases."""
 
-    @pytest.fixture
-    def client(self, client):
-        """API client fixture with analyze method mocked."""
-        client.sensor_activity = Mock(
-            return_value=[
-                {
-                    "bytes": 1,
-                    "destination_ip": "1.2.2.1",
-                    "destination_port": 1234,
-                    "http_uri": "",
-                    "packets": 3,
-                    "persona_id": "aaa-aa-aa-aa-aaaa",
-                    "protocols": ["tcp"],
-                    "sensor_id": "aaa-aa-aa-aa-aaaa",
-                    "session_id": "asdfasdfs",
-                    "source_ip": "1.2.2.1",
-                    "source_port": 1234,
-                    "start_time": "2024-06-09T23:56:57.51Z",
-                    "stop_time": "2024-06-09T23:56:58.037Z",
-                }
-            ]
-        )
-
-        yield client
-
     def test_sensor_activity(self, client):
-        """Run Sensor Activity."""
-        workspace_id = "workspace_id"
-        expected_response = [
-            {
-                "bytes": 1,
-                "destination_ip": "1.2.2.1",
-                "destination_port": 1234,
-                "http_uri": "",
-                "packets": 3,
-                "persona_id": "aaa-aa-aa-aa-aaaa",
-                "protocols": ["tcp"],
-                "sensor_id": "aaa-aa-aa-aa-aaaa",
-                "session_id": "asdfasdfs",
-                "source_ip": "1.2.2.1",
-                "source_port": 1234,
-                "start_time": "2024-06-09T23:56:57.51Z",
-                "stop_time": "2024-06-09T23:56:58.037Z",
-            }
-        ]
+        """Deprecated sensor activity lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.sensor_activity("workspace_id")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
+
+    def test_sensor_activity_with_filters(self, client):
+        """Deprecated sensor activity lookup ignores filter parameters."""
+        client._request = Mock()
         response = client.sensor_activity(
-            workspace_id=workspace_id, include_headers=False
+            "workspace_id",
+            file_format="csv",
+            start_time="2024-01-01",
+            end_time="2024-01-02",
+            persona_id="persona",
+            source_ip="1.2.3.4",
+            size=5,
+            scroll="scroll",
+            include_headers=True,
         )
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
-        assert response == expected_response
 
-    def test_query_with_size_and_scroll(self, client):
-        """Run Sensor Activity with size and scroll parameters."""
-        workspace_id = "workspace_id"
-        expected_response = [
-            {
-                "bytes": 1,
-                "destination_ip": "1.2.2.1",
-                "destination_port": 1234,
-                "http_uri": "",
-                "packets": 3,
-                "persona_id": "aaa-aa-aa-aa-aaaa",
-                "protocols": ["tcp"],
-                "sensor_id": "aaa-aa-aa-aa-aaaa",
-                "session_id": "asdfasdfs",
-                "source_ip": "1.2.2.1",
-                "source_port": 1234,
-                "start_time": "2024-06-09T23:56:57.51Z",
-                "stop_time": "2024-06-09T23:56:58.037Z",
-            }
-        ]
+class TestSensorActivityIps(object):
+    """GreyNoise client sensor activity IP list test cases."""
 
-        response = client.sensor_activity(
-            workspace_id=workspace_id, size=5, scroll="scroll"
+    def test_sensor_activity_ips(self, client):
+        """Deprecated sensor activity IP lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.sensor_activity_ips("workspace_id")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
+
+    def test_sensor_activity_ips_with_filters(self, client):
+        """Deprecated sensor activity IP lookup ignores filter parameters."""
+        client._request = Mock()
+        response = client.sensor_activity_ips(
+            "workspace_id",
+            file_format="csv",
+            start_time="2024-01-01",
+            end_time="2024-01-02",
+            persona_id="persona",
+            source_ip="1.2.3.4",
+            size=5,
+            scroll="scroll",
         )
-
-        assert response == expected_response
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
 
 class TestQuery(object):
@@ -709,9 +675,7 @@ class TestQuery(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.query(query)
-        client._request.assert_called_with(
-            "v3/gnql", params={"query": query, "quick": False}
-        )
+        client._request.assert_called_with("v3/gnql", params={"query": query, "quick": False})
         assert response == expected_response
 
     def test_query_with_size_and_scroll(self, client):
@@ -726,34 +690,6 @@ class TestQuery(object):
             params={"query": query, "quick": False, "size": 5, "scroll": "scroll"},
         )
         assert response == expected_response
-
-    def test_query_exclude_fields_as_list(self, client):
-        """exclude_fields is sent as a comma-separated exclude query parameter."""
-        query = "<query>"
-        client._request = Mock(return_value=[])
-        client.query(query, exclude_fields=["raw_data", "tls"])
-        client._request.assert_called_with(
-            "v3/gnql",
-            params={
-                "query": query,
-                "quick": False,
-                "exclude": "raw_data,tls",
-            },
-        )
-
-    def test_query_exclude_fields_as_string(self, client):
-        """exclude_fields string is normalized to comma-separated names."""
-        query = "<query>"
-        client._request = Mock(return_value=[])
-        client.query(query, exclude_fields=" raw_data , tls ")
-        client._request.assert_called_with(
-            "v3/gnql",
-            params={
-                "query": query,
-                "quick": False,
-                "exclude": "raw_data,tls",
-            },
-        )
 
 
 class TestStats(object):
@@ -779,7 +715,7 @@ class TestMeta(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.metadata()
-        client._request.assert_called_with("v2/meta/metadata")
+        client._request.assert_called_with("v3/tags", params={})
         assert response == expected_response
 
 
@@ -823,56 +759,40 @@ class TestCVE(object):
         """Test CVE lookup with community offering."""
         client.offering = "community"
         response = client.cve("CVE-2021-44228")
-        assert response == {
-            "message": "CVE lookup is not supported with Community offering"
-        }
+        assert response == {"message": "CVE lookup is not supported with Community offering"}
 
 
 class TestSimilar(object):
     """GreyNoise client Similar context test cases."""
 
     def test_similar(self, client):
-        """Get similar IP addresses."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.similar(ip_address)
-        client._request.assert_called_with(
-            "v3/similarity/ips/{}?limit=50".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated similar lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.similar("8.8.8.8")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_similar_with_limit_and_score(self, client):
-        """Get similar IP addresses with limit and minimum score."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.similar(ip_address, limit=10, min_score=80)
-        client._request.assert_called_with(
-            "v3/similarity/ips/{}?limit=10&minimum_score=0.8".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated similar lookup ignores limit and score parameters."""
+        client._request = Mock()
+        response = client.similar("8.8.8.8", limit=10, min_score=80)
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_invalid_ip(self, client):
-        """Get invalid IP address information."""
-        invalid_ip = "not an ip address"
+        """Deprecated similar lookup does not validate the IP address."""
         client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.similar(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
+        response = client.similar("not an ip address")
+        assert response == (False, "Function deprecated")
         client._request.assert_not_called()
 
     def test_community_offering(self, client):
-        """Test similar lookup with community offering."""
+        """Deprecated similar lookup ignores offering."""
         client.offering = "community"
+        client._request = Mock()
         response = client.similar("8.8.8.8")
-        assert response == {
-            "message": "Similarity lookup not supported with Community offering"
-        }
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
 
 class TestTimeline(object):
@@ -885,9 +805,7 @@ class TestTimeline(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.timeline(ip_address)
-        client._request.assert_called_with(
-            "v3/noise/ips/{}/timeline?field=classification".format(ip_address)
-        )
+        client._request.assert_called_with("v3/noise/ips/{}/timeline?field=classification".format(ip_address))
         assert response == expected_response
 
     def test_invalid_ip(self, client):
@@ -906,26 +824,17 @@ class TestTimelineHourly(object):
     """GreyNoise client Timeline Hourly test cases."""
 
     def test_timelinehourly(self, client):
-        """Get IP address hourly timeline."""
-        ip_address = "8.8.8.8"
-        expected_response = {}
-
-        client._request = Mock(return_value=expected_response)
-        response = client.timelinehourly(ip_address)
-        client._request.assert_called_with(
-            "v3/noise/ips/{}/hourly-summary?limit=100".format(ip_address)
-        )
-        assert response == expected_response
+        """Deprecated hourly timeline lookup returns a deprecation sentinel."""
+        client._request = Mock()
+        response = client.timelinehourly("8.8.8.8")
+        assert response == (False, "Function deprecated")
+        client._request.assert_not_called()
 
     def test_invalid_ip(self, client):
-        """Get invalid IP address information."""
-        invalid_ip = "not an ip address"
+        """Deprecated hourly timeline lookup does not validate the IP address."""
         client._request = Mock()
-
-        with pytest.raises(ValueError) as exception:
-            client.timelinehourly(invalid_ip)
-        assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
-
+        response = client.timelinehourly("not an ip address")
+        assert response == (False, "Function deprecated")
         client._request.assert_not_called()
 
 
@@ -969,7 +878,6 @@ def test_api_client_initialization():
     client = GreyNoise(config)
     assert client.config == config
     assert client.session is not None
-    assert client._executor is not None
     assert client.ip_quick_check_cache is not None
     assert client.ip_context_cache is not None
 
@@ -1047,16 +955,12 @@ def test_api_client_parallel_processing():
         return {"data": [{"processed": item} for item in items]}
 
     items = list(range(100))
-    results = client._process_batch_parallel(
-        items, process_func, batch_size=10, max_workers=5
-    )
+    results = client._process_batch_parallel(items, process_func, batch_size=10, max_workers=5)
 
     assert isinstance(results, dict)
     assert "data" in results
     assert len(results["data"]) == 100
-    assert all(
-        isinstance(result, dict) and "processed" in result for result in results["data"]
-    )
+    assert all(isinstance(result, dict) and "processed" in result for result in results["data"])
 
 
 class TestErrorHandling:
@@ -1064,9 +968,7 @@ class TestErrorHandling:
 
     def test_rate_limiting(self, client):
         """Test handling of rate limiting responses."""
-        client._request = Mock(
-            side_effect=RequestFailure(429, {"error": "Rate limit exceeded"})
-        )
+        client._request = Mock(side_effect=RequestFailure(429, {"error": "Rate limit exceeded"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 429
@@ -1074,9 +976,7 @@ class TestErrorHandling:
 
     def test_network_timeout(self, client):
         """Test handling of network timeouts."""
-        client._request = Mock(
-            side_effect=RequestFailure(504, {"error": "Gateway timeout"})
-        )
+        client._request = Mock(side_effect=RequestFailure(504, {"error": "Gateway timeout"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 504
@@ -1084,9 +984,7 @@ class TestErrorHandling:
 
     def test_invalid_api_key(self, client):
         """Test handling of invalid API key."""
-        client._request = Mock(
-            side_effect=RequestFailure(401, {"error": "Invalid API key"})
-        )
+        client._request = Mock(side_effect=RequestFailure(401, {"error": "Invalid API key"}))
         with pytest.raises(RequestFailure) as exc_info:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 401
@@ -1101,9 +999,7 @@ class TestCacheBehavior:
         # Set a short TTL
         client.config.cache_ttl = 1
 
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request
         mock_response = {
@@ -1133,9 +1029,7 @@ class TestCacheBehavior:
         client.config.cache_max_size = 2
 
         # Reinitialize cache with new max_size
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request - should be cached
         mock_response1 = {
@@ -1191,9 +1085,7 @@ class TestCacheBehavior:
         client._request.assert_not_called()  # Should not make API call
 
         # Test cache miss for evicted item
-        client._request = Mock(
-            return_value=mock_response1
-        )  # Reset mock with original response
+        client._request = Mock(return_value=mock_response1)  # Reset mock with original response
         result = client.ip("8.8.8.8")  # Should be a cache miss
         assert result == mock_response1
         client._request.assert_called_once()  # Should make API call
@@ -1203,9 +1095,7 @@ class TestCacheBehavior:
         # Set a short TTL
         client.config.cache_ttl = 1
 
-        client.ip_context_cache = cachetools.TTLCache(
-            maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl
-        )
+        client.ip_context_cache = cachetools.TTLCache(maxsize=client.config.cache_max_size, ttl=client.config.cache_ttl)
 
         # First request
         mock_response = {

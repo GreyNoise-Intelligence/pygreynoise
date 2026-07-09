@@ -2,6 +2,7 @@
 
 import os
 import textwrap
+from datetime import date, datetime
 from unittest.mock import patch
 
 import pytest
@@ -10,6 +11,7 @@ from six import StringIO
 from greynoise.util import (
     CONFIG_FILE,
     load_config,
+    normalize_rfc3339_datetime,
     save_config,
     validate_ip,
     validate_similar_min_score,
@@ -17,6 +19,59 @@ from greynoise.util import (
     validate_timeline_field_value,
     validate_timeline_granularity,
 )
+
+
+class TestNormalizeRfc3339Datetime(object):
+    """RFC 3339 normalization for Recall (and similar) parameters."""
+
+    def test_none(self):
+        assert normalize_rfc3339_datetime(None) is None
+
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("2024-01-15", "2024-01-15T00:00:00Z"),
+            ("2024-01-15T12:30:45Z", "2024-01-15T12:30:45Z"),
+            ("2024-01-15T12:30:45+00:00", "2024-01-15T12:30:45Z"),
+            ("2024-01-15 12:30:45", "2024-01-15T12:30:45Z"),
+        ],
+    )
+    def test_string_forms(self, raw, expected):
+        assert normalize_rfc3339_datetime(raw) == expected
+
+    def test_string_with_offset_converts_to_z(self):
+        out = normalize_rfc3339_datetime("2024-06-01T10:00:00-05:00")
+        assert out == "2024-06-01T15:00:00Z"
+
+    def test_datetime_naive_utc(self):
+        out = normalize_rfc3339_datetime(datetime(2024, 3, 21, 8, 0, 0))
+        assert out == "2024-03-21T08:00:00Z"
+
+    def test_date_midnight_utc(self):
+        out = normalize_rfc3339_datetime(date(2024, 3, 21))
+        assert out == "2024-03-21T00:00:00Z"
+
+    def test_unix_timestamp(self):
+        out = normalize_rfc3339_datetime(0)
+        assert out == "1970-01-01T00:00:00Z"
+
+    def test_invalid_string(self):
+        with pytest.raises(ValueError):
+            normalize_rfc3339_datetime("not-a-date")
+
+    def test_bool_rejected(self):
+        with pytest.raises(TypeError):
+            normalize_rfc3339_datetime(True)
+
+
+def _psychic_defaults():
+    """Keys load_config always returns (defaults match DEFAULT_CONFIG)."""
+    return {
+        "psychic": False,
+        "psychic_model": 1,
+        "psychic_cache_dir": None,
+        "psychic_max_age_hours": 1,
+    }
 
 
 class TestLoadConfig(object):
@@ -38,6 +93,7 @@ class TestLoadConfig(object):
             "cache_max_size": 1000000,
             "cache_ttl": 3600,
             "use_cache": True,
+            **_psychic_defaults(),
         }
 
     @patch("greynoise.util.open")
@@ -46,7 +102,7 @@ class TestLoadConfig(object):
         """Values retrieved from configuration file."""
         expected = {
             "api_key": "<api_key>",
-            "api_server": "<api_server",
+            "api_server": "<api_server>",
             "timeout": 123456,
             "proxy": "",
             "offering": "enterprise",
@@ -76,7 +132,7 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
 
     @patch("greynoise.util.open")
@@ -114,7 +170,7 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
 
     @patch("greynoise.util.open")
@@ -152,7 +208,7 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
 
     @patch("greynoise.util.open")
@@ -190,7 +246,7 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
 
     @patch("greynoise.util.open")
@@ -228,7 +284,7 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
 
     @patch("greynoise.util.open")
@@ -267,8 +323,64 @@ class TestLoadConfig(object):
         open().__enter__.return_value = StringIO(file_content)
 
         config = load_config()
-        assert config == expected
+        assert config == {**expected, **_psychic_defaults()}
         open().__enter__.assert_called()
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    def test_psychic_model_from_configuration_file(self, os, open):
+        """psychic_model and related keys are read from the config file."""
+        os.environ = {}
+        os.path.isfile.return_value = True
+        file_content = textwrap.dedent("""\
+            [greynoise]
+            api_key = k
+            api_server = https://api.greynoise.io
+            timeout = 60
+            proxy =
+            offering = enterprise
+            psychic = false
+            psychic_model = 2
+            psychic_cache_dir = /tmp/psychic
+            psychic_max_age_hours = 24
+            """)
+        open().__enter__.return_value = StringIO(file_content)
+
+        config = load_config()
+        assert config["psychic"] is False
+        assert config["psychic_model"] == 2
+        assert config["psychic_cache_dir"] == "/tmp/psychic"
+        assert config["psychic_max_age_hours"] == 24
+
+    @patch("greynoise.util.LOGGER")
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    def test_invalid_psychic_from_environment_variable(self, os, open, logger):
+        """Invalid GREYNOISE_PSYCHIC values warn and default to False."""
+        os.environ = {"GREYNOISE_PSYCHIC": "maybe"}
+        os.path.isfile.return_value = False
+
+        config = load_config()
+
+        assert config["psychic"] is False
+        logger.warning.assert_called_once()
+        warning_args = logger.warning.call_args[0]
+        assert "Invalid psychic value" in warning_args[0]
+        assert warning_args[1] == "maybe"
+
+    @patch("greynoise.util.open")
+    @patch("greynoise.util.os")
+    @pytest.mark.parametrize(
+        "psychic_value,expected", [("TRUE", True), ("FALSE", False), ("true", True), ("false", False)]
+    )
+    def test_psychic_from_environment_variable(self, os, open, psychic_value, expected):
+        """GREYNOISE_PSYCHIC TRUE/FALSE values are accepted."""
+        os.environ = {"GREYNOISE_PSYCHIC": psychic_value}
+        os.path.isfile.return_value = False
+
+        config = load_config()
+
+        assert config["psychic"] is expected
 
 
 class TestSaveConfig(object):
@@ -286,6 +398,7 @@ class TestSaveConfig(object):
 
         with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
             os.path.isdir.return_value = False
+            os.path.isfile.return_value = False
             config_file = StringIO()
             open_().__enter__.return_value = config_file
             save_config(config)
@@ -307,24 +420,56 @@ class TestSaveConfig(object):
             api_key = {}
             api_server = {}
             timeout = {}
-            proxy = {}
-            offering = {}\n
+            offering = {}
+            cache_max_size = 1000000
+            cache_ttl = 3600
+            use_cache = True
+            psychic = False
+            psychic_model = 1
+            psychic_max_age_hours = 1
+
             """.format(
                 config["api_key"],
                 config["api_server"],
                 config["timeout"],
-                config["proxy"],
                 config["offering"],
             )
         )
 
         with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
             os.path.isdir.return_value = True
+            os.path.isfile.return_value = False
             config_file = StringIO()
             open_().__enter__.return_value = config_file
             save_config(config)
 
         assert config_file.getvalue() == expected
+
+    def test_save_config_omits_empty_optional_keys_from_existing_file(self):
+        """Blank optional keys are removed instead of written as empty values."""
+        existing = textwrap.dedent("""\
+            [greynoise]
+            api_key = old
+            proxy =
+            psychic_cache_dir =
+            """)
+        config = {
+            "api_key": "<api_key>",
+            "proxy": "",
+            "psychic_cache_dir": "",
+        }
+
+        with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
+            os.path.isdir.return_value = True
+            os.path.isfile.return_value = True
+            config_file = StringIO(existing)
+            open_().__enter__.return_value = config_file
+            save_config(config)
+
+        written = config_file.getvalue()
+        assert "proxy =" not in written
+        assert "psychic_cache_dir =" not in written
+        assert "api_key = <api_key>" in written
 
 
 class TestValidateIP(object):
@@ -363,10 +508,7 @@ class TestValidateSimilarMinScore(object):
         """Test invalid values."""
         with pytest.raises(ValueError) as exception:
             validate_similar_min_score(min_score)
-        assert (
-            str(exception.value)
-            == "Min Score must be a valid integer between 0 and 100."
-        )
+        assert str(exception.value) == "Min Score must be a valid integer between 0 and 100."
 
     @pytest.mark.parametrize("min_score", ("0", "5", "100"))
     def test_string(self, min_score):
@@ -374,8 +516,7 @@ class TestValidateSimilarMinScore(object):
         with pytest.raises(ValueError) as exception:
             validate_similar_min_score(min_score)
         assert (
-            str(exception.value)
-            == "Min Score must be a valid integer between 0 and 100.  "
+            str(exception.value) == "Min Score must be a valid integer between 0 and 100.  "
             "Current input is a string."
         )
 
@@ -393,10 +534,7 @@ class TestValidateTimelineGranularity(object):
         """Test invalid values."""
         with pytest.raises(ValueError) as exception:
             validate_timeline_granularity(granularity)
-        assert (
-            str(exception.value)
-            == "Granularity currently only supports a value of 1d or 1h"
-        )
+        assert str(exception.value) == "Granularity currently only supports a value of 1d or 1h"
 
 
 class TestValidateTimelineDays(object):
@@ -419,18 +557,13 @@ class TestValidateTimelineDays(object):
         """Test string input values."""
         with pytest.raises(ValueError) as exception:
             validate_timeline_days(days)
-        assert (
-            str(exception.value) == "Days must be a valid integer between 1 and 90.  "
-            "Current input is a string."
-        )
+        assert str(exception.value) == "Days must be a valid integer between 1 and 90.  " "Current input is a string."
 
 
 class TestValidateTimelineField(object):
     """Timeline field utility validation test cases."""
 
-    @pytest.mark.parametrize(
-        "field", ("destination_port", "http_path", "http_user_agent")
-    )
+    @pytest.mark.parametrize("field", ("destination_port", "http_path", "http_user_agent"))
     def test_valid(self, field):
         """Test valid values."""
         validate_timeline_field_value(field)
@@ -441,8 +574,7 @@ class TestValidateTimelineField(object):
         with pytest.raises(ValueError) as exception:
             validate_timeline_field_value(field)
         assert (
-            str(exception.value)
-            == "Field must be one of the following values: ['destination_port', "
+            str(exception.value) == "Field must be one of the following values: ['destination_port', "
             "'http_path', 'http_user_agent', 'source_asn', 'source_org', "
             "'source_rdns', 'tag_ids', 'classification']"
         )
@@ -479,15 +611,18 @@ def test_save_config_cache_settings():
         api_key = {}
         api_server = {}
         timeout = {}
-        proxy = {}
         offering = {}
         cache_max_size = {}
-        cache_ttl = {}\n
+        cache_ttl = {}
+        use_cache = True
+        psychic = False
+        psychic_model = 1
+        psychic_max_age_hours = 1
+
         """.format(
             config["api_key"],
             config["api_server"],
             config["timeout"],
-            config["proxy"],
             config["offering"],
             config["cache_max_size"],
             config["cache_ttl"],
@@ -496,6 +631,7 @@ def test_save_config_cache_settings():
 
     with patch("greynoise.util.os") as os, patch("greynoise.util.open") as open_:
         os.path.isdir.return_value = True
+        os.path.isfile.return_value = False
         config_file = StringIO()
         open_().__enter__.return_value = config_file
         save_config(config)
@@ -526,20 +662,14 @@ class TestConfiguration:
     def test_invalid_configuration(self, tmp_path):
         """Test handling of invalid configuration."""
         config_file = tmp_path / "config.ini"
-        config_file.write_text(
-            """
+        config_file.write_text("""
 [greynoise]
 api_key = test-key
 timeout = invalid
-"""
-        )
+""")
 
         with patch("greynoise.util.CONFIG_FILE", str(config_file)):
-            print("CONFIG_FILE")
-            print(CONFIG_FILE)
             config = load_config()
-            print("config")
-            print(config)
             assert config["timeout"] == 60  # Should use default value
 
             # Test invalid timeout

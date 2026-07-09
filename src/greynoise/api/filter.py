@@ -63,9 +63,9 @@ class Filter(object):
         riot_ip_addresses = []
 
         for result in self.api.quick(text_ip_addresses):
-            if result["noise"]:
+            if result.get("internet_scanner_intelligence", {}).get("found", False):
                 noise_ip_addresses.append(result["ip"])
-            if result["riot"]:
+            if result.get("business_service_intelligence", {}).get("found", False):
                 riot_ip_addresses.append(result["ip"])
 
         def all_ip_addresses_noisy(line):
@@ -79,8 +79,7 @@ class Filter(object):
             """
             line_ip_addresses = self.api.IPV4_REGEX.findall(line)
             return line_ip_addresses and all(
-                line_ip_address in noise_ip_addresses
-                for line_ip_address in line_ip_addresses
+                line_ip_address in noise_ip_addresses for line_ip_address in line_ip_addresses
             )
 
         def all_ip_addresses_riot(line):
@@ -94,8 +93,7 @@ class Filter(object):
             """
             line_ip_addresses = self.api.IPV4_REGEX.findall(line)
             return line_ip_addresses and all(
-                line_ip_address in riot_ip_addresses
-                for line_ip_address in line_ip_addresses
+                line_ip_address in riot_ip_addresses for line_ip_address in line_ip_addresses
             )
 
         def add_markup(match):
@@ -132,13 +130,9 @@ class Filter(object):
                 :rtype: bool
 
                 """
-                return not all_ip_addresses_noisy(line) and not all_ip_addresses_riot(
-                    line
-                )
+                return not all_ip_addresses_noisy(line) and not all_ip_addresses_riot(line)
 
         filtered_lines = [
-            self.api.IPV4_REGEX.subn(add_markup, input_line)[0]
-            for input_line in text
-            if line_matches(input_line)
+            self.api.IPV4_REGEX.subn(add_markup, input_line)[0] for input_line in text if line_matches(input_line)
         ]
         return "".join(filtered_lines)

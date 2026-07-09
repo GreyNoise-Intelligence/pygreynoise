@@ -17,6 +17,16 @@ JINJA2_ENV = Environment(
     autoescape=select_autoescape(disabled_extensions=["txt.j2"]),
 )
 
+
+def _tojson_filter(value):
+    try:
+        return json.dumps(value, indent=2, sort_keys=True)
+    except TypeError:
+        return str(value)
+
+
+JINJA2_ENV.filters["tojson"] = _tojson_filter
+
 colorama.init()
 DIM = "<dim>"
 ANSI_MARKUP = ansimarkup.AnsiMarkup(
@@ -56,6 +66,8 @@ def colored_output(function):
 
 def json_formatter(result, _verbose):
     """Format result as json."""
+    if isinstance(result, str):
+        return result
     if result is None or result == []:
         return "No results found"
     if isinstance(result, list) and "data" in result[0]:
@@ -69,6 +81,8 @@ def json_formatter(result, _verbose):
 
 def xml_formatter(result, _verbose):
     """Format result as xml."""
+    if isinstance(result, str):
+        return result
     xml_formatted = ""
     if result is None or result == []:
         return "No results found"
@@ -102,10 +116,7 @@ def get_location(metadata):
 def ip_context_formatter(results, verbose):
     """Convert IP context result into human-readable text."""
     for ip_context in results:
-        if (
-            "internet_scanner_intelligence" in ip_context
-            and ip_context["internet_scanner_intelligence"]["found"]
-        ):
+        if "internet_scanner_intelligence" in ip_context and ip_context["internet_scanner_intelligence"]["found"]:
             metadata = ip_context["internet_scanner_intelligence"]["metadata"]
             metadata["location"] = get_location(metadata)
             template = JINJA2_ENV.get_template("ip_context.txt.j2")
@@ -163,22 +174,6 @@ def analyze_formatter(result, verbose):
 
 
 @colored_output
-def riot_formatter(results, verbose):
-    """Convert RIOT to human-readable text."""
-    template = JINJA2_ENV.get_template("riot.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
-def similar_formatter(results, verbose):
-    """Convert IP Sim to human-readable text."""
-    template = JINJA2_ENV.get_template("similarity.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
 def timeline_formatter(results, verbose):
     """Convert Timeline to human-readable text."""
     template = JINJA2_ENV.get_template("timeline.txt.j2")
@@ -187,17 +182,9 @@ def timeline_formatter(results, verbose):
 
 
 @colored_output
-def timelinehourly_formatter(results, verbose):
+def timelinedaily_formatter(results, verbose):
     """Convert Timeline hourly/daily to human-readable text."""
-    template = JINJA2_ENV.get_template("timelinehourly.txt.j2")
-    max_width, _ = shutil.get_terminal_size()
-    return template.render(results=results, verbose=verbose, max_width=max_width)
-
-
-@colored_output
-def sensoractivity_formatter(results, verbose):
-    """Convert Sensor Activity to human-readable text."""
-    template = JINJA2_ENV.get_template("sensoractivity.txt.j2")
+    template = JINJA2_ENV.get_template("timelinedaily.txt.j2")
     max_width, _ = shutil.get_terminal_size()
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
@@ -226,6 +213,47 @@ def cvedetails_formatter(results, verbose):
     return template.render(results=results, verbose=verbose, max_width=max_width)
 
 
+def _normalize_recall_payload(result):
+    """Recall endpoints may return a bare list; wrap for templates."""
+    if isinstance(result, list):
+        return {"data": result}
+    return result
+
+
+@colored_output
+def recall_timeseries_formatter(result, verbose):
+    """Format Recall time-series API payload for the terminal."""
+    if isinstance(result, str):
+        return result
+    template = JINJA2_ENV.get_template("recall_timeseries.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    payload = _normalize_recall_payload(result)
+    return template.render(result=payload, verbose=verbose, max_width=max_width)
+
+
+@colored_output
+def recall_stats_formatter(result, verbose):
+    """Format Recall stats API payload for the terminal."""
+    if isinstance(result, str):
+        return result
+    template = JINJA2_ENV.get_template("recall_stats.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    payload = _normalize_recall_payload(result)
+    return template.render(result=payload, verbose=verbose, max_width=max_width)
+
+
+@colored_output
+def callback_ip_formatter(result, verbose):
+    """Format Callback IP lookup for the terminal."""
+    template = JINJA2_ENV.get_template("callback_ip.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    if isinstance(result, str):
+        return result
+    if not isinstance(result, dict):
+        result = {"payload": result}
+    return template.render(result=result, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -235,15 +263,14 @@ FORMATTERS = {
         "quick": ip_quick_check_formatter,
         "query": gnql_query_formatter,
         "stats": gnql_stats_formatter,
-        "riot": riot_formatter,
         "ip-multi": ip_multi_context_formatter,
-        "similar": similar_formatter,
         "timeline": timeline_formatter,
-        "timelinehourly": timelinehourly_formatter,
-        "timelinedaily": timelinehourly_formatter,
-        "sensor-activity": sensoractivity_formatter,
+        "timelinedaily": timelinedaily_formatter,
         "sensor-list": sensorlist_formatter,
         "persona-details": personadetails_formatter,
         "cve": cvedetails_formatter,
+        "recall-timeseries": recall_timeseries_formatter,
+        "recall-stats": recall_stats_formatter,
+        "callback-ip": callback_ip_formatter,
     },
 }

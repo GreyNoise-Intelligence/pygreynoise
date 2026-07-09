@@ -1,0 +1,38 @@
+{% import "macros.txt.j2" as macros with context %}
+{%- set max_rows = 100 if verbose else 25 %}
+{%- if result is string %}
+{{ result }}
+{%- elif result is mapping and result.get("message") %}
+{{ result.message }}
+{%- elif result is mapping %}
+----------------------------
+  <header>Recall — Time Series</header>
+----------------------------
+{%- for mk in ["query", "start", "end", "format", "limit", "offset", "total", "count", "next", "cursor"] %}
+{%- if result.get(mk) is not none %}
+<key>{{ mk | replace("_", " ") | title }}</key>: <value>{{ result.get(mk) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- set rows = result.get("data") or result.get("results") or result.get("points") or result.get("series") or [] %}
+{%- if rows is iterable and rows is not string and rows is not mapping and rows | length > 0 %}
+<header>Series</header>
+{%- for row in rows[:max_rows] %}
+{%- if row is mapping %}
+  <value>{{ loop.index }}</value>. {% for rk, rv in row | dictsort %}<key>{{ rk }}</key>: <value>{{ rv }}</value>{% if not loop.last %} | {% endif %}{% endfor %}
+
+{%- else %}
+  <value>{{ loop.index }}</value>. <value>{{ row }}</value>
+{%- endif %}
+{%- endfor %}
+{%- if rows | length > max_rows %}
+<dim>Showing {{ max_rows }} of {{ rows | length }} rows. Use -v for more (up to 100), or -f json for machine-readable output.</dim>
+{%- endif %}
+{%- elif verbose %}
+<header>Full response</header>
+{{ result | tojson }}
+{%- else %}
+<dim>No tabular series in this response. Use -v for the full payload or -f json.</dim>
+{%- endif %}
+{%- else %}
+{{ result | tojson }}
+{%- endif %}

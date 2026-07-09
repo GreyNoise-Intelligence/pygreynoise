@@ -12,7 +12,6 @@ from greynoise.cli.formatter import (
     ip_context_formatter,
     ip_quick_check_formatter,
     json_formatter,
-    riot_formatter,
     xml_formatter,
 )
 
@@ -78,9 +77,7 @@ EXAMPLE_IP_CONTEXT = {
     },
 }
 
-EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
-    textwrap.dedent(
-        """\
+EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(textwrap.dedent("""\
                   <header>Internet Scanner Intelligence</header>
         -----------------------------------------------
         <key>IP</key>: <value><ip_address></value>
@@ -140,9 +137,7 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(
         [HASSH]
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#1></value>
         - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#2></value>
-        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""  # noqa
-    )
-)
+        - <key>Port</key>: <value>123456</value>, <key>Fingerprint</key>: <value><hassh#3></value>"""))  # noqa
 
 
 class TestJSONFormatter(object):
@@ -150,12 +145,10 @@ class TestJSONFormatter(object):
 
     def test_json_format(self):
         """Format to json."""
-        assert json_formatter({"a": "result"}, _verbose=False) == textwrap.dedent(
-            """\
+        assert json_formatter({"a": "result"}, _verbose=False) == textwrap.dedent("""\
             {
                 "a": "result"
-            }"""
-        )
+            }""")
 
 
 class TestXMLFormatter(object):
@@ -163,13 +156,11 @@ class TestXMLFormatter(object):
 
     def test_xml_format(self):
         """Format to xml."""
-        assert xml_formatter({"a": "result"}, _verbose=False) == textwrap.dedent(
-            """\
+        assert xml_formatter({"a": "result"}, _verbose=False) == textwrap.dedent("""\
             <?xml version="1.0" ?>
             <root>
                <a>result</a>
-            </root>"""
-        )
+            </root>""")
 
 
 class TestIPContextFormatter:
@@ -193,22 +184,17 @@ class TestIPContextFormatter:
                         "business_service_intelligence": {"found": False},
                     },
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>     Context 1 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address>
 
 
-                        """
-                    )
-                )
+                        """))
                 + EXAMPLE_IP_CONTEXT_OUTPUT
                 + ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """
+                    textwrap.dedent("""
 
 
 
@@ -221,13 +207,13 @@ class TestIPContextFormatter:
                         <ip_address#2> has not been seen in scans in the past 90 days.
 
 
+
                         ╔═══════════════════════════╗
                         ║ <header>     Context 3 of 3      </header> ║
                         ╚═══════════════════════════╝
                         IP address: <ip_address#3>
 
-                        <ip_address#3> has not been seen in scans in the past 90 days."""  # noqa
-                    )
+                        <ip_address#3> has not been seen in scans in the past 90 days.""")  # noqa
                 ),
             ),
         ),
@@ -270,10 +256,7 @@ class TestIPQuickCheckFormatter:
                         "business_service_intelligence": {"found": False},
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    "<not-noise>0.0.0.0</not-noise> is classified as <bold>"
-                    "NOT NOISE</bold>."
-                ),
+                ANSI_MARKUP.parse("<not-noise>0.0.0.0</not-noise> is classified as <bold>" "NOT NOISE</bold>."),
             ),
         ),
     )
@@ -303,9 +286,7 @@ class TestGNQLQueryFormatter(object):
                         },
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -318,10 +299,7 @@ class TestGNQLQueryFormatter(object):
                         └───────────────────────────┘
 
 
-                    """
-                    )
-                )
-                + EXAMPLE_IP_CONTEXT_OUTPUT,
+                    """)) + EXAMPLE_IP_CONTEXT_OUTPUT,
             ),
         ),
     )
@@ -397,9 +375,7 @@ class TestGNQLStatsFormatter(object):
                         },
                     }
                 ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
+                ANSI_MARKUP.parse(textwrap.dedent("""\
                         ╔═══════════════════════════╗
                         ║ <header>      Query 1 of 1       </header> ║
                         ╚═══════════════════════════╝
@@ -443,116 +419,10 @@ class TestGNQLStatsFormatter(object):
 
                         <header>Tags</header>:
                         - <key><tag>     </key> <value>1</value>
-                        - <key><long_tag></key> <value>1</value>"""
-                    )
-                ),
+                        - <key><long_tag></key> <value>1</value>""")),
             ),
         ),
     )
     def test_format_gnql_stats(self, result, expected):
         """Format GNQL stats."""
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
-
-
-class TestRIOTFormatter:
-    """Test RIOT formatter."""
-
-    @pytest.mark.parametrize(
-        "result, expected_output",
-        (
-            (
-                {
-                    "ip": "0.0.0.0",
-                    "business_service_intelligence": {
-                        "found": True,
-                        "name": "<name>",
-                        "category": "<category>",
-                        "trust_level": "<trust_level>",
-                        "last_updated": "<last_updated>",
-                    },
-                    "internet_scanner_intelligence": {
-                        "actor": "",
-                        "bot": False,
-                        "classification": "",
-                    },
-                },
-                ANSI_MARKUP.parse(
-                    "<riot>0.0.0.0</riot> is in <bold><blue>RIOT</blue></bold>"
-                    " dataset. Name: <green><name></green> "
-                    "Category: <green><category></green> "
-                    "Trust Level: <green><trust_level></green> "
-                    "Last Updated: <green><last_updated></green>"
-                ),
-            ),
-            (
-                {
-                    "ip": "0.0.0.0",
-                    "business_service_intelligence": {"found": False},
-                    "internet_scanner_intelligence": {
-                        "actor": "",
-                        "bot": False,
-                        "classification": "",
-                    },
-                },
-                ANSI_MARKUP.parse(
-                    "<not-riot>0.0.0.0</not-riot> is <red>"
-                    "<bold>NOT FOUND</bold></red> in RIOT dataset."
-                ),
-            ),
-        ),
-    )
-    def test_format_riot(self, result, expected_output):
-        """Test RIOT formatter."""
-        formatter = riot_formatter([result], verbose=False)
-        assert formatter.strip("\n") == expected_output
-
-    @pytest.mark.parametrize(
-        "result, expected_output",
-        (
-            (
-                [
-                    {
-                        "business_service_intelligence": {
-                            "found": True,
-                            "category": "<category>",
-                            "name": "<name>",
-                            "description": "<description>",
-                            "explanation": "<explanation>",
-                            "last_updated": "<last_updated>",
-                            "reference": "<reference>",
-                            "trust_level": "<trust_level>",
-                        },
-                        "internet_scanner_intelligence": {
-                            "actor": "",
-                            "bot": False,
-                            "classification": "",
-                        },
-                        "ip": "0.0.0.0",
-                        "request_metadata": {"restricted_fields": []},
-                    }
-                ],
-                ANSI_MARKUP.parse(
-                    textwrap.dedent(
-                        """\
-                    <riot>0.0.0.0</riot> is in RIOT dataset.
-
-                              <header>OVERVIEW</header>
-                    ----------------------------
-                    <key>IP</key>: <value>0.0.0.0</value>
-                    <key>RIOT</key>: <value>True</value>
-                    <key>Category</key>: <value><category></value>
-                    <key>Trust Level</key>: <value><trust_level></value>
-                    <key>Name</key>: <value><name></value>
-                    <key>Description</key>: <value><description></value>
-                    <key>Explanation</key>: <value><explanation></value>
-                    <key>Last Updated</key>: <value><last_updated></value>
-                    <key>Reference</key>: <value><reference></value>"""
-                    )
-                ),
-            ),
-        ),
-    )
-    def test_format_riot_verbose(self, result, expected_output):
-        """Format IP quick check."""
-        formatter = riot_formatter(result, verbose=True)
-        assert formatter.strip("\n") == expected_output

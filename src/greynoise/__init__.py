@@ -10,4 +10,10 @@ from greynoise.__version__ import (  # noqa
     __status__,
     __version__,
 )
+
+USER_AGENT = "GreyNoise/{}".format(__version__)
+PSYCHIC_USER_AGENT = "{} (psychic)".format(USER_AGENT)
+
 from greynoise.api import GreyNoise  # noqa
+from greynoise.greynoise_timeline import get_greynoise_timeline  # noqa
+from greynoise.psychic import Psychic  # noqa

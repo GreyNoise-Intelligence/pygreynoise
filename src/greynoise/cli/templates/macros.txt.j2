@@ -118,3 +118,14 @@ Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 Showing results 1 - {{ max_elements }}. Run again with -v for full output.
 {% endif -%}
 {% endmacro %}
+
+{% macro simple_list(list_data) %}
+{%- set max_elements = 20 %}
+{%- set elements_slice = list_data[:max_elements if verbose < 1 else None] %}
+{%- for element in elements_slice %}
+{{- caller(element) -}}
+{%- endfor %}
+{% if list_data | length > max_elements and verbose < 1 -%}
+Showing results 1 - {{ max_elements }}. Run again with -v for full output.
+{% endif -%}
+{% endmacro %}
