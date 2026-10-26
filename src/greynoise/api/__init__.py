@@ -3,6 +3,7 @@
 import logging
 import re
 import time
+import uuid
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -21,6 +22,7 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.greynoise_timeline import get_greynoise_timeline
 from greynoise.util import (
     normalize_rfc3339_datetime,
+    request_proxies,
     validate_cve_id,
     validate_ip,
     validate_timeline_days,
@@ -79,6 +81,11 @@ class BaseAPIClient:
 
         urllib3 retries transient **5xx** responses only. **429 Too Many Requests** is
         intentionally excluded.
+
+        When ``config.proxy`` is set, it is applied to ``session.proxies`` so every
+        request on this session uses it. An empty or unset proxy leaves the session
+        alone so ``HTTP_PROXY`` / ``HTTPS_PROXY`` from the environment still apply
+        (``trust_env`` remains enabled).
         """
         session = requests.Session()
 
@@ -92,6 +99,10 @@ class BaseAPIClient:
         adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=10)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
+
+        proxies = request_proxies(self.config.proxy)
+        if proxies is not None:
+            session.proxies.update(proxies)
 
         return session
 
@@ -120,8 +131,15 @@ class BaseAPIClient:
         if params is None:
             params = {}
 
-        # Use config proxy when no proxy is explicitly passed
-        proxy = proxy or self.config.proxy
+        # Default proxy lives on session.proxies (set in _setup_session). An explicit
+        # *proxy* argument overrides for this call only. Never pass an empty proxies
+        # dict — that can suppress HTTP_PROXY / HTTPS_PROXY from the environment.
+        if proxy is not None:
+            effective_proxy = proxy
+            proxies = request_proxies(proxy)
+        else:
+            effective_proxy = self.config.proxy
+            proxies = None
 
         user_agent_parts = ["GreyNoise/{}".format(__version__)]
         if self.config.integration_name:
@@ -142,35 +160,26 @@ class BaseAPIClient:
             LOGGER.debug("Sending API request...method: %s", method)
             LOGGER.debug("Sending API request...params: %s", params)
             LOGGER.debug("Sending API request...files: %s", files)
-            LOGGER.debug("Sending API request...proxy: %s", proxy)
+            LOGGER.debug("Sending API request...proxy: %s", effective_proxy)
             if params:
                 full_url = "{}?{}".format(url, urlencode(params))
             else:
                 full_url = url
             LOGGER.debug("Full request URL with parameters: %s", full_url)
 
+        request_kwargs = {
+            "headers": req_headers,
+            "timeout": self.config.timeout,
+            "params": params,
+            "json": json,
+            "files": files,
+        }
+        if proxies is not None:
+            request_kwargs["proxies"] = proxies
+
         request_method = getattr(self.session, method)
         try:
-            if proxy:
-                proxies = {protocol: proxy for protocol in ("http", "https")}
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                    proxies=proxies,
-                )
-            else:
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                )
+            response = request_method(url, **request_kwargs)
 
             content_type = response.headers.get("Content-Type", "")
             resp_headers = response.headers
@@ -193,7 +202,7 @@ class BaseAPIClient:
             LOGGER.debug("API response received %s", response.status_code)
 
             if response.status_code == 429:
-                raise RateLimitError()
+                raise RateLimitError(response.status_code, body)
             if response.status_code >= 400 and response.status_code != 404:
                 raise RequestFailure(response.status_code, body)
 
@@ -264,6 +273,67 @@ def initialize_cache(cache_max_size, cache_ttl):
     return cache
 
 
+_FEED_EVENT_TYPES = frozenset(
+    {
+        "ip-classification-change",
+        "cve-status-change",
+        "cve-activity-spike",
+        "vendor-cve-spike",
+        "tag-spike",
+        "new-callback-ip",
+        "new-callback-file",
+        "credential-observed",
+    }
+)
+_FEED_CONSUMER_ACTIONS = frozenset({"list", "create", "reset", "delete"})
+_FEED_CONSUMER_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def _validate_feed_id(feed_id):
+    """Require a feed UUID."""
+    if feed_id is None or not str(feed_id).strip():
+        raise ValueError("feed_id is required")
+    try:
+        uuid.UUID(str(feed_id))
+    except ValueError:
+        raise ValueError("feed_id must be a UUID")
+    return str(feed_id)
+
+
+def _validate_feed_consumer(consumer, required=True):
+    """Require a durable consumer name when *required* is true."""
+    if consumer is None or str(consumer).strip() == "":
+        if required:
+            raise ValueError("consumer is required")
+        return None
+    name = str(consumer)
+    if len(name) > 128 or not _FEED_CONSUMER_NAME.match(name):
+        raise ValueError(
+            "consumer must be 1-128 characters, start with a letter or number, "
+            "and contain only letters, numbers, periods, underscores, or hyphens"
+        )
+    return name
+
+
+def _validate_feed_limit(limit):
+    """Accept a page size of 1 to 1000."""
+    if limit is None:
+        return None
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1 or limit > 1000:
+        raise ValueError("limit must be an integer from 1 to 1000")
+    return limit
+
+
+def _validate_feed_event_types(event_types):
+    """Accept retained event type names."""
+    if not event_types:
+        return None
+    unknown = [event_type for event_type in event_types if event_type not in _FEED_EVENT_TYPES]
+    if unknown:
+        raise ValueError("Unknown event type: {}".format(", ".join(unknown)))
+    return list(event_types)
+
+
 class GreyNoise(BaseAPIClient):
     """GreyNoise API client.
 
@@ -298,6 +368,12 @@ class GreyNoise(BaseAPIClient):
     EP_CALLBACK_LIST = "v1/callback/ips"
     EP_CALLBACK_EXPORT_IPS = "v1/callback/export-ips"
     EP_CALLBACK_OVERVIEW = "v1/callback/overview"
+    EP_FEED_SEARCH = "v3/feeds/events/search"
+    EP_FEED_EVENTS = "v3/feeds/{feed_id}/events"
+    EP_FEED_ACK = "v3/feeds/{feed_id}/events/ack"
+    EP_FEED_CONSUMERS = "v3/feeds/{feed_id}/consumers"
+    EP_FEED_CONSUMER = "v3/feeds/{feed_id}/consumers/{consumer}"
+    EP_FEED_CONSUMER_RESET = "v3/feeds/{feed_id}/consumers/{consumer}/reset"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
 
@@ -330,12 +406,14 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=config.psychic_cache_dir,
                 max_age_hours=config.psychic_max_age_hours,
                 auto_download=True,
+                proxy=config.proxy,
+                api_server=config.api_server,
             )
             LOGGER.info("Psychic enabled")
 
     def _get_psychic_for_download(self, model: Optional[int] = None):
         """Return a Psychic client for download operations, creating one if needed."""
-        from greynoise.psychic import Psychic
+        from greynoise.psychic import Psychic, warn_unknown_psychic_model
 
         requested_model = model if model is not None else (self.config.psychic_model or 1)
 
@@ -346,11 +424,46 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=self.config.psychic_cache_dir,
                 max_age_hours=self.config.psychic_max_age_hours,
                 auto_download=False,
+                proxy=self.config.proxy,
+                api_server=self.config.api_server,
             )
         elif model is not None:
+            warn_unknown_psychic_model(model)
             self._psychic.model = requested_model
 
         return self._psychic
+
+    def _ensure_psychic_enabled(self, auto_download: bool = True):
+        """Initialize Psychic client on demand (e.g. CLI ``--psychic``)."""
+        if self._psychic is not None:
+            return self._psychic
+
+        from greynoise.psychic import Psychic
+
+        model = self.config.psychic_model or 1
+        self._psychic = Psychic(
+            api_key=self.config.api_key,
+            model=model,
+            cache_dir=self.config.psychic_cache_dir,
+            max_age_hours=self.config.psychic_max_age_hours,
+            auto_download=auto_download,
+            proxy=self.config.proxy,
+            api_server=self.config.api_server,
+        )
+        LOGGER.info("Psychic enabled")
+        return self._psychic
+
+    def psychic_load_days(self, days: int) -> None:
+        """
+        Generate and load a Psychic bitmap for the last *days* through today.
+
+        :param days: Number of days to include, counting today
+        :type days: int
+        :raises: RuntimeError if Psychic cannot be initialized
+        :raises: ValueError if *days* is less than 1
+        """
+        psychic = self._ensure_psychic_enabled(auto_download=False)
+        psychic.load_generated_bitmap_for_days(days)
 
     def psychic_download(
         self,
@@ -1133,13 +1246,16 @@ class GreyNoise(BaseAPIClient):
                 user_agent_parts.append("({})".format(self.config.integration_name))
             user_agent = " ".join(user_agent_parts)
 
+            api_server = (self.config.api_server or "https://api.greynoise.io").rstrip("/")
             response = get_greynoise_timeline(
                 ip=ip_address,
                 api_key=self.config.api_key,
                 days=days,
                 granularity="1d",
                 max_workers=4,
+                base_url="{}/v3".format(api_server),
                 user_agent=user_agent,
+                proxy=self.config.proxy,
             )
 
         return response
@@ -1246,10 +1362,7 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError(
-                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
-                "or GREYNOISE_PSYCHIC environment variable"
-            )
+            self._ensure_psychic_enabled()
 
         return self._psychic.lookup_ip(ip_address)
 
@@ -1646,3 +1759,139 @@ class GreyNoise(BaseAPIClient):
             ips=ips,
         )
         return self._request(self.EP_CALLBACK_OVERVIEW, method="post", json=payload or {})
+
+    def feed_search(
+        self,
+        feed_ids=None,
+        event_types=None,
+        ip=None,
+        cve=None,
+        tag=None,
+        classification=None,
+        from_time=None,
+        to=None,
+        cursor=None,
+        limit=None,
+    ):
+        """Search retained feed events without moving a pull checkpoint.
+
+        An empty call searches enabled non-session feeds over the previous hour.
+        Pass ``cursor`` alone (plus optional ``limit``) to continue a previous page.
+        See https://docs.greynoise.io/reference/searchfeedevents
+        """
+        if self.offering == "community":
+            return {"message": "Event feed search is not supported with Community offering"}
+
+        limit = _validate_feed_limit(limit)
+        criteria = {
+            "feed_ids": list(feed_ids) if feed_ids else None,
+            "event_types": _validate_feed_event_types(event_types),
+            "ip": ip or None,
+            "cve": cve or None,
+            "tag": tag or None,
+            "classification": classification or None,
+            "from": from_time or None,
+            "to": to or None,
+        }
+        if cursor:
+            if any(value for value in criteria.values()):
+                raise ValueError("A search cursor cannot be combined with other search filters")
+            payload = {"cursor": cursor}
+        else:
+            if criteria["feed_ids"] is not None:
+                if len(criteria["feed_ids"]) > 100:
+                    raise ValueError("feed_ids accepts at most 100 ids")
+                criteria["feed_ids"] = [_validate_feed_id(feed_id) for feed_id in criteria["feed_ids"]]
+            payload = {key: value for key, value in criteria.items() if value is not None}
+        if limit is not None:
+            payload["limit"] = limit
+
+        LOGGER.debug("Searching retained feed events...")
+        return self._request(self.EP_FEED_SEARCH, method="post", json=payload)
+
+    def feed_pull(self, feed_id, consumer="default", limit=None, ack=False, cursor=None):
+        """Fetch the next feed batch, or acknowledge a batch that was already fetched.
+
+        Fetching does not move the consumer checkpoint. Pass ``ack=True`` to
+        acknowledge the cursor returned by this fetch after the batch is in hand.
+        Pass ``cursor`` to acknowledge a previously fetched batch without fetching again.
+        See https://docs.greynoise.io/docs/using-the-feeds-api-to-retrieve-events
+        """
+        if self.offering == "community":
+            return {"message": "Event feed pull is not supported with Community offering"}
+
+        feed_id = _validate_feed_id(feed_id)
+        consumer_name = _validate_feed_consumer(consumer or "default")
+        limit = _validate_feed_limit(limit)
+        if cursor:
+            return self._feed_acknowledge(feed_id, cursor, consumer_name)
+
+        params = {"consumer": consumer_name}
+        if limit is not None:
+            params["limit"] = limit
+        LOGGER.debug("Fetching feed events feed_id=%s consumer=%s", feed_id, consumer_name)
+        response = self._request(self.EP_FEED_EVENTS.format(feed_id=feed_id), params=params)
+        if not ack or not isinstance(response, dict):
+            return response
+
+        fetched_cursor = response.get("cursor")
+        response = dict(response)
+        if fetched_cursor:
+            response["acknowledgement"] = self._feed_acknowledge(feed_id, fetched_cursor, consumer_name)
+        else:
+            response["acknowledgement"] = {
+                "advanced": False,
+                "message": "No cursor was returned to acknowledge",
+            }
+        return response
+
+    def _feed_acknowledge(self, feed_id, cursor, consumer):
+        """Advance a consumer checkpoint to a fetch cursor."""
+        if not cursor or not str(cursor).strip():
+            raise ValueError("cursor is required to acknowledge a feed batch")
+        payload = {"cursor": cursor, "consumer": consumer}
+        return self._request(
+            self.EP_FEED_ACK.format(feed_id=feed_id),
+            method="post",
+            json=payload,
+        )
+
+    def feed_consumers(self, feed_id, action="list", consumer=None):
+        """List, create, reset, or delete durable feed consumers.
+
+        ``list`` is the default and does not need ``consumer``. ``create``,
+        ``reset``, and ``delete`` require a consumer name. A new consumer starts
+        at the beginning of retained history. Reset replays that history. Delete
+        removes one checkpoint and does not affect other consumers.
+        """
+        if self.offering == "community":
+            return {"message": "Event feed consumers are not supported with Community offering"}
+
+        feed_id = _validate_feed_id(feed_id)
+        action_name = (action or "list").lower()
+        if action_name not in _FEED_CONSUMER_ACTIONS:
+            raise ValueError("action must be one of: list, create, reset, delete")
+
+        if action_name == "list":
+            return self._request(self.EP_FEED_CONSUMERS.format(feed_id=feed_id))
+
+        consumer_name = _validate_feed_consumer(consumer)
+        if action_name == "create":
+            return self._request(
+                self.EP_FEED_CONSUMERS.format(feed_id=feed_id),
+                method="post",
+                json={"consumer": consumer_name},
+            )
+        if action_name == "reset":
+            return self._request(
+                self.EP_FEED_CONSUMER_RESET.format(feed_id=feed_id, consumer=consumer_name),
+                method="post",
+            )
+
+        response = self._request(
+            self.EP_FEED_CONSUMER.format(feed_id=feed_id, consumer=consumer_name),
+            method="delete",
+        )
+        if response == "" or response is None:
+            return {"feed_id": feed_id, "consumer": consumer_name, "deleted": True}
+        return response

@@ -254,6 +254,26 @@ def callback_ip_formatter(result, verbose):
     return template.render(result=result, verbose=verbose, max_width=max_width)
 
 
+@colored_output
+def feeds_events_formatter(result, verbose):
+    """Format feed search and pull results for the terminal."""
+    template = JINJA2_ENV.get_template("feeds_events.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    if isinstance(result, str):
+        return result
+    return template.render(result=result, verbose=verbose, max_width=max_width)
+
+
+@colored_output
+def feeds_consumers_formatter(result, verbose):
+    """Format feed consumer results for the terminal."""
+    template = JINJA2_ENV.get_template("feeds_consumers.txt.j2")
+    max_width, _ = shutil.get_terminal_size()
+    if isinstance(result, str):
+        return result
+    return template.render(result=result, verbose=verbose, max_width=max_width)
+
+
 FORMATTERS = {
     "json": json_formatter,
     "xml": xml_formatter,
@@ -272,5 +292,8 @@ FORMATTERS = {
         "recall-timeseries": recall_timeseries_formatter,
         "recall-stats": recall_stats_formatter,
         "callback-ip": callback_ip_formatter,
+        "feeds-search": feeds_events_formatter,
+        "feeds-pull": feeds_events_formatter,
+        "feeds-consumers": feeds_consumers_formatter,
     },
 }

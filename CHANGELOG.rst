@@ -2,9 +2,36 @@
 Changelog
 =========
 
+Version `3.2.0`_
+================
+**Date**: October 26, 2026
+
+* API client:
+
+  * Corrected proxy settings for Psychic downloads/generation and IP Timeline
+  * Psychic downloads and daily timeline lookups use the configured API server
+  * `RateLimitError` now includes the API's 429 explanation, and the CLI prints it
+  * Added Event Feed search, pull (fetch and optional acknowledge), and consumer management
+
+* CLI:
+
+  * `feeds search` searches retained feed history without moving a consumer checkpoint
+  * `feeds pull` fetches the next batch for a feed consumer and can acknowledge that batch
+  * `feeds consumers` lists consumers, or creates, resets, or deletes one checkpoint
+  * `ip --psychic --days` looks up an IP in a Psychic bitmap covering the last N days
+  * Psychic text output shows the bitmap date, and says when the IP was not in that file
+
+* Dependencies:
+
+  * Updated `Click` to 8.5.0 on Python 3.10 and newer (8.1.8 remains the latest release for Python 3.8 and 3.9)
+  * Updated `click-repl` to 0.4.1 on Python 3.9 and newer
+  * Updated `cachetools` to 7.2.5 on Python 3.10 and newer
+  * Updated `maxminddb` to 3.2.0 on Python 3.10 and newer
+  * Updated `more-itertools` to 11.2.1 on Python 3.11 and newer
+
 Version `3.1.0`_
 ================
-**Date**: unreleased
+**Date**: July 9, 2026
 
 * API client:
 
@@ -529,4 +556,5 @@ Version `0.2.0`_
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
 .. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...v3.0.2
 .. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...v3.0.3
-.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...HEAD
+.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...v3.1.0
+.. _`3.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.1.0...3.2.0

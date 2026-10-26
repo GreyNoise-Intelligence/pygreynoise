@@ -7,6 +7,8 @@ import pytest
 
 from greynoise.cli.formatter import (
     ANSI_MARKUP,
+    feeds_consumers_formatter,
+    feeds_events_formatter,
     gnql_query_formatter,
     gnql_stats_formatter,
     ip_context_formatter,
@@ -222,6 +224,67 @@ class TestIPContextFormatter:
         """Format IP context."""
         assert ip_context_formatter(result, verbose=False).strip("\n") == expected
 
+    @pytest.mark.parametrize(
+        "result, expected",
+        (
+            (
+                [
+                    {
+                        "ip": "202.89.66.67",
+                        "seen": False,
+                        "psychic_file_date": "2026-09-01",
+                        "date": "2026-09-01",
+                        "classification": "unknown",
+                    }
+                ],
+                ANSI_MARKUP.parse(textwrap.dedent("""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: 202.89.66.67
+
+                                  <header>Psychic Intelligence</header>
+                        -----------------------------------------------
+                        <key>Psychic File Date</key>: <value>2026-09-01</value>
+                        <key>Seen</key>: <value>False</value>
+                        202.89.66.67 was not found in the current Psychic lookup file.""")),
+            ),
+            (
+                [
+                    {
+                        "ip": "1.2.3.4",
+                        "seen": True,
+                        "psychic_file_date": "2026-09-01",
+                        "date": "2026-08-30",
+                        "3wh_completed": True,
+                        "classification": "malicious",
+                        "actor": "unknown",
+                        "tags": ["scanner"],
+                        "cves": [],
+                    }
+                ],
+                ANSI_MARKUP.parse(textwrap.dedent("""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: 1.2.3.4
+
+                                  <header>Psychic Intelligence</header>
+                        -----------------------------------------------
+                        <key>Psychic File Date</key>: <value>2026-09-01</value>
+                        <key>Seen</key>: <value>True</value>
+                        <key>Last Seen</key>: <value>2026-08-30</value>
+                        <key>Spoofable</key>: <value>True</value>
+                        <key>Classification</key>: <value>malicious</value>
+                        <key>Actor</key>: <value>unknown</value>
+                        <key>Tags</key>: <value>scanner</value>""")),
+            ),
+        ),
+    )
+    def test_format_psychic_ip_context(self, result, expected):
+        """Format Psychic IP lookup results with file date."""
+        assert ip_context_formatter(result, verbose=False).strip("\n") == expected
+
 
 class TestIPQuickCheckFormatter:
     """Test IP quick check formatter."""
@@ -426,3 +489,29 @@ class TestGNQLStatsFormatter(object):
     def test_format_gnql_stats(self, result, expected):
         """Format GNQL stats."""
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
+
+
+def test_format_feed_events_and_consumers():
+    """Feed text output includes event fields and consumer names."""
+    events = feeds_events_formatter(
+        {
+            "events": [
+                {
+                    "event_type": "tag-spike",
+                    "created_at": "2026-10-26T00:00:00Z",
+                    "payload": {"ip": "8.8.8.8", "tag": "Example"},
+                }
+            ],
+            "has_more": False,
+            "consumer": "default",
+        },
+        verbose=False,
+    )
+    assert "tag-spike" in events
+    assert "8.8.8.8" in events
+
+    consumers = feeds_consumers_formatter(
+        {"consumers": [{"name": "worker-1", "status": "active", "approximate_lag": 3}]},
+        verbose=False,
+    )
+    assert "worker-1" in consumers

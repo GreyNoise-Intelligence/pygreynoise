@@ -19,7 +19,21 @@ from greynoise.cli.decorator import (
 )
 from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
+from greynoise.psychic import KNOWN_PSYCHIC_MODELS
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
+
+
+def _warn_unknown_psychic_model_cli(model):
+    """Warn on stderr when a non-standard Psychic model is requested."""
+    if model is None or model in KNOWN_PSYCHIC_MODELS:
+        return
+    click.echo(
+        "Warning: Current Psychic models are {}; other model {} will be attempted.".format(
+            ", ".join(str(value) for value in KNOWN_PSYCHIC_MODELS),
+            model,
+        ),
+        err=True,
+    )
 
 
 @click.command()
@@ -102,6 +116,12 @@ def help_(context):
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 @click.option("-p", "--psychic", is_flag=True, help="Use Psychic to get more information")
+@click.option(
+    "-d",
+    "--days",
+    type=click.IntRange(1),
+    help="Generate Psychic bitmap for the last N days through today (requires --psychic)",
+)
 def ip(
     context,
     api_client,
@@ -113,10 +133,16 @@ def ip(
     ip_address,
     offering,
     psychic,
+    days,
 ):
     """Query GreyNoise for all information on a given IP."""
+    if days is not None and not psychic:
+        raise click.UsageError("--days requires --psychic")
+
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     if psychic:
+        if days is not None:
+            api_client.psychic_load_days(days)
         results = [api_client.psychic_lookup(ip_address=ip_address) for ip_address in ip_addresses]
     else:
         results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
@@ -537,8 +563,8 @@ def callback_ip_cmd(
 @click.option(
     "-m",
     "--model",
-    type=click.Choice(["1", "2", "3"]),
-    help="Psychic model to use (default: from config or 1)",
+    type=click.INT,
+    help="Psychic model to use (default: from config or 1; currently 1, 2, or 3)",
 )
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
@@ -562,12 +588,13 @@ def psychic_download_cmd(
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")
 
-    model_int = int(model) if model is not None else None
+    if model is not None:
+        _warn_unknown_psychic_model_cli(model)
     path = api_client.psychic_download(
         date=date,
         file_format=file_format,
         output_path=".",
-        model=model_int,
+        model=model,
     )
     click.echo(path)
 
@@ -588,8 +615,8 @@ def psychic_download_cmd(
 @click.option(
     "-m",
     "--model",
-    type=click.Choice(["1", "2", "3"]),
-    help="Psychic model to use (default: from config or 1)",
+    type=click.INT,
+    help="Psychic model to use (default: from config or 1; currently 1, 2, or 3)",
 )
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
@@ -610,11 +637,139 @@ def psychic_generate_cmd(
     model,
 ):
     """Generate a Psychic bitmap (.bin) for a date range and write it to the current directory."""
-    model_int = int(model) if model is not None else None
+    if model is not None:
+        _warn_unknown_psychic_model_cli(model)
     path = api_client.psychic_generate(
         start_date=start_date,
         end_date=end_date,
         output_path=".",
-        model=model_int,
+        model=model,
     )
     click.echo(path)
+
+
+@click.group(name="feeds")
+def feeds():
+    """Search retained feed events, pull a batch, or manage consumers.
+
+    Feeds are created in the GreyNoise Visualizer. Search does not move a
+    consumer checkpoint. Pull reads the next batch for one consumer, and
+    --ack advances that checkpoint only after the batch is returned.
+    """
+
+
+@feeds.command(name="search")
+@click.option("--feed-id", "feed_ids", multiple=True, help="Limit the search to one or more feed UUIDs.")
+@click.option("--event-type", "event_types", multiple=True, help="Retained event type. Repeat to search several types.")
+@click.option("--ip", help="Filter events for an IP address.")
+@click.option("--cve", help="Filter events for a CVE identifier.")
+@click.option("--tag", help="Filter events for a GreyNoise tag.")
+@click.option("--classification", help="Filter events for a classification.")
+@click.option("--from", "from_time", help="Start time: relative (1h, 7d), UTC date, or RFC3339.")
+@click.option("--to", help="Exclusive end time: UTC date or RFC3339. Defaults to now.")
+@click.option("--cursor", help="Continue a previous search. Do not combine with other filters.")
+@click.option("--limit", type=click.IntRange(1, 1000), help="Page size from 1 to 1000. Defaults to 100.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_search(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_ids,
+    event_types,
+    ip,
+    cve,
+    tag,
+    classification,
+    from_time,
+    to,
+    cursor,
+    limit,
+):
+    """Search retained feed history. This does not move a pull checkpoint."""
+    return api_client.feed_search(
+        feed_ids=list(feed_ids) or None,
+        event_types=list(event_types) or None,
+        ip=ip,
+        cve=cve,
+        tag=tag,
+        classification=classification,
+        from_time=from_time,
+        to=to,
+        cursor=cursor,
+        limit=limit,
+    )
+
+
+@feeds.command(name="pull")
+@click.argument("feed_id")
+@click.option(
+    "--consumer", default="default", show_default=True, help="Durable consumer checkpoint to read or acknowledge."
+)
+@click.option("--limit", type=click.IntRange(1, 1000), help="Maximum events to fetch, from 1 to 1000.")
+@click.option("--ack", is_flag=True, help="Acknowledge the cursor returned by this fetch.")
+@click.option("--cursor", help="Acknowledge a previously fetched cursor without fetching again.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_pull(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_id,
+    consumer,
+    limit,
+    ack,
+    cursor,
+):
+    """Fetch the next batch for a feed consumer, or acknowledge a cursor."""
+    return api_client.feed_pull(feed_id, consumer=consumer, limit=limit, ack=ack, cursor=cursor)
+
+
+@feeds.command(name="consumers")
+@click.argument("feed_id")
+@click.option(
+    "--action",
+    type=click.Choice(["list", "create", "reset", "delete"]),
+    default="list",
+    show_default=True,
+    help="List consumers, or create, reset, or delete one checkpoint.",
+)
+@click.option("--consumer", help="Consumer name. Required for create, reset, and delete.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_consumers(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_id,
+    action,
+    consumer,
+):
+    """List feed consumers, or create, reset, or delete one checkpoint."""
+    if action != "list" and not consumer:
+        raise click.UsageError("--consumer is required when --action is create, reset, or delete")
+    return api_client.feed_consumers(feed_id, action=action, consumer=consumer)

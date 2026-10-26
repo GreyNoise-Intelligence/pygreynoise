@@ -1,17 +1,26 @@
 """Psychic client test cases."""
 
 import csv
+import io
 import ipaddress
+import struct
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from greynoise import PSYCHIC_USER_AGENT
+from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.psychic import (
     Psychic,
+    PsychicBitmapParser,
+    RoaringBitmapReader,
+    _ensure_psychic_response_ok,
     _mmdb_record_to_csv_row,
     _mmdb_record_value,
     _psychic_output_path,
     _write_mmdb_bytes_to_csv,
+    warn_unknown_psychic_model,
 )
 
 
@@ -29,6 +38,194 @@ def test_psychic_user_agent_from_package(tmp_path):
         psychic.session.close()
 
 
+def test_psychic_applies_proxy_to_session(tmp_path):
+    """Configured proxy is stored on the Psychic session for downloads."""
+    psychic = Psychic(
+        api_key="<api_key>",
+        cache_dir=str(tmp_path),
+        auto_download=False,
+        proxy="http://proxy.example.com:8080",
+    )
+
+    try:
+        assert psychic.session.proxies == {
+            "http": "http://proxy.example.com:8080",
+            "https": "http://proxy.example.com:8080",
+        }
+    finally:
+        psychic.session.close()
+
+
+def test_psychic_empty_proxy_leaves_session_proxies_unset(tmp_path):
+    """Empty proxy must not set session.proxies or disable trust_env."""
+    psychic = Psychic(
+        api_key="<api_key>",
+        cache_dir=str(tmp_path),
+        auto_download=False,
+        proxy="",
+    )
+
+    try:
+        assert psychic.session.proxies == {}
+        assert psychic.session.trust_env is True
+    finally:
+        psychic.session.close()
+
+
+def test_psychic_uses_custom_api_server(tmp_path):
+    """Psychic download URL is built from the configured api_server."""
+    psychic = Psychic(
+        api_key="<api_key>",
+        cache_dir=str(tmp_path),
+        auto_download=False,
+        api_server="https://custom.greynoise.example/",
+    )
+
+    try:
+        assert psychic.base_url == "https://custom.greynoise.example/v1/psychic"
+        mock_response = Mock(status_code=200, content=b"bitmap")
+        with patch.object(psychic.session, "post", return_value=mock_response) as mock_post:
+            psychic._download_bitmap("2026-06-12")
+            mock_post.assert_called_once()
+            assert mock_post.call_args.args[0] == "https://custom.greynoise.example/v1/psychic"
+    finally:
+        psychic.session.close()
+
+
+def test_warn_unknown_psychic_model(caplog):
+    """Unknown Psychic models emit a warning instead of failing immediately."""
+    with caplog.at_level("WARNING"):
+        warn_unknown_psychic_model(4)
+    assert "Current Psychic models are 1, 2, 3" in caplog.text
+    assert "other model 4 will be attempted" in caplog.text
+
+
+def test_psychic_accepts_unknown_model(tmp_path, caplog):
+    """Psychic initialization accepts unknown models with a warning."""
+    with caplog.at_level("WARNING"):
+        psychic = Psychic(
+            api_key="<api_key>",
+            model=4,
+            cache_dir=str(tmp_path),
+            auto_download=False,
+        )
+    try:
+        assert psychic.model == 4
+        assert "other model 4 will be attempted" in caplog.text
+    finally:
+        psychic.session.close()
+
+
+def test_ensure_psychic_response_ok_raises_request_failure():
+    """Psychic HTTP helpers surface the API response body."""
+    response = Mock(status_code=400)
+    response.json.return_value = {"message": "invalid model"}
+    try:
+        _ensure_psychic_response_ok(response, "download bitmap")
+        assert False, "expected RequestFailure"
+    except RequestFailure as exc:
+        assert exc.args[0] == 400
+        assert exc.args[1] == {"message": "invalid model"}
+
+
+def test_ensure_psychic_response_ok_raises_rate_limit_error():
+    """A throttled Psychic request surfaces the API explanation."""
+    response = Mock(status_code=429)
+    response.json.return_value = {"message": "daily quota exhausted"}
+    try:
+        _ensure_psychic_response_ok(response, "download bitmap")
+        assert False, "expected RateLimitError"
+    except RateLimitError as exc:
+        assert exc.status_code == 429
+        assert exc.body == {"message": "daily quota exhausted"}
+        assert str(exc) == "rate limit exceeded (HTTP 429): daily quota exhausted"
+
+
+def test_lookup_ip_includes_psychic_file_date(tmp_path):
+    """Psychic lookup results include the loaded bitmap file date."""
+    psychic = Psychic(
+        api_key="<api_key>",
+        cache_dir=str(tmp_path),
+        auto_download=False,
+    )
+    psychic._parser = Mock()
+    psychic._parser.lookup_ip.return_value = {
+        "ip": "1.2.3.4",
+        "seen": False,
+        "date": "2026-09-01",
+    }
+    psychic._last_loaded_date = "2026-09-01"
+
+    try:
+        result = psychic.lookup_ip("1.2.3.4")
+        assert result["psychic_file_date"] == "2026-09-01"
+        assert result["seen"] is False
+    finally:
+        psychic.session.close()
+
+
+def test_load_generated_bitmap_for_days(tmp_path):
+    """Psychic can generate and load a bitmap for a date range."""
+    psychic = Psychic(
+        api_key="<api_key>",
+        model=3,
+        cache_dir=str(tmp_path),
+        auto_download=False,
+    )
+    psychic._generate_bitmap = Mock(return_value=b"generated-bitmap")
+    psychic._parser = None
+
+    try:
+        with patch("greynoise.psychic.PsychicBitmapParser") as parser_cls:
+            psychic.load_generated_bitmap_for_days(7)
+
+        psychic._generate_bitmap.assert_called_once()
+        start_date, end_date = psychic._generate_bitmap.call_args[0]
+        assert start_date <= end_date
+        parser_cls.assert_called_once_with(b"generated-bitmap")
+        assert psychic._last_loaded_start_date == start_date
+        assert psychic._last_loaded_end_date == end_date
+        assert psychic._psychic_file_date_label() == f"{start_date} to {end_date}"
+    finally:
+        psychic.session.close()
+
+
+def test_parse_metadata_uses_version0_mappings_for_multi_date_blocks():
+    """Multi-date generated files keep version 0 IP mapping sections per date."""
+    parser = PsychicBitmapParser.__new__(PsychicBitmapParser)
+    parser.version = 2
+    parser.verbose = False
+
+    actor_count = 1
+    actor = b"actor-a"
+    tag_count = 0
+    cve_count = 0
+    ip_actor_count = 1
+    ip_int = 0x01020304
+    actor_idx = 0
+    ip_tag_count = 0
+    ip_cve_count = 0
+
+    payload = b"".join(
+        [
+            struct.pack(">H", actor_count),
+            struct.pack(">H", len(actor)),
+            actor,
+            struct.pack(">H", tag_count),
+            struct.pack(">H", cve_count),
+            struct.pack(">I", ip_actor_count),
+            struct.pack(">I", ip_int),
+            struct.pack(">H", actor_idx),
+            struct.pack(">I", ip_tag_count),
+            struct.pack(">I", ip_cve_count),
+        ]
+    )
+
+    metadata = parser._parse_metadata(io.BytesIO(payload), ip_mapping_version=0)
+    assert metadata["actors"] == ["actor-a"]
+    assert metadata["ip_actors"][ip_int] == actor_idx
+
+
 def test_download_bitmap_posts_model_and_date(tmp_path):
     """Psychic downloads bitmaps with model/date in the POST body."""
     psychic = Psychic(
@@ -38,7 +235,6 @@ def test_download_bitmap_posts_model_and_date(tmp_path):
         auto_download=False,
     )
     response = Mock(status_code=200, content=b"bitmap-data")
-    response.raise_for_status = Mock()
     psychic.session.post = Mock(return_value=response)
 
     try:
@@ -48,7 +244,6 @@ def test_download_bitmap_posts_model_and_date(tmp_path):
             json={"model": "3", "date": "2026-06-12"},
             timeout=300,
         )
-        response.raise_for_status.assert_called_once_with()
     finally:
         psychic.session.close()
 
@@ -270,3 +465,125 @@ def test_write_mmdb_bytes_to_csv_requires_maxminddb(tmp_path, monkeypatch):
         assert "maxminddb is required" in str(exc)
     else:
         raise AssertionError("Expected ImportError when maxminddb is unavailable")
+
+
+@pytest.mark.parametrize(
+    "data, expected",
+    [
+        (bytes.fromhex("3a300000 00000000"), set()),
+        (
+            bytes.fromhex("3a300000 01000000 01000100 10000000 01000300"),
+            {65537, 65539},
+        ),
+        (
+            bytes.fromhex("3b300000 01 01000200 010005000200"),
+            {65541, 65542, 65543},
+        ),
+        (
+            bytes.fromhex("3b300000 01 07000500 0200000001000a000300"),
+            {458752, 458753, 458762, 458763, 458764, 458765},
+        ),
+        (
+            bytes.fromhex("3b300000 00 01000100 01000300"),
+            {65537, 65539},
+        ),
+        (
+            bytes.fromhex("3b300200 02 01000000 02000200 03000000 0900 010005000200 0a00"),
+            {65545, 131077, 131078, 131079, 196618},
+        ),
+        (
+            bytes.fromhex("3b300300 09 01000200 02000100 03000010 0400ffff")
+            + struct.pack("<4I", 37, 43, 47, 8239)
+            + bytes.fromhex("010005000200 02000900")
+            + b"\xff" * 512
+            + b"\x01"
+            + bytes(7679)
+            + bytes.fromhex("01000000ffff"),
+            {65541, 65542, 65543, 131074, 131081} | set(range(196608, 200705)) | set(range(262144, 327680)),
+        ),
+        (
+            bytes.fromhex("3b300800 0001")
+            + b"".join(struct.pack("<HH", key, 0) for key in range(8))
+            + bytes.fromhex("08000200")
+            + struct.pack("<9I", 78, 80, 82, 84, 86, 88, 90, 92, 94)
+            + bytes.fromhex("0100") * 8
+            + bytes.fromhex("010005000200"),
+            {1, 65537, 131073, 196609, 262145, 327681, 393217, 458753, 524293, 524294, 524295},
+        ),
+    ],
+    ids=[
+        "empty",
+        "no-run-with-offset",
+        "run-without-offset",
+        "multiple-runs",
+        "run-layout-array",
+        "three-containers",
+        "mixed",
+        "nine-containers",
+    ],
+)
+def test_roaring_reader_preserves_values_and_stream_position(data, expected):
+    """Both layouts decode their values without consuming the following section."""
+    stream = io.BytesIO(data + b"next-section")
+    reader = RoaringBitmapReader()
+
+    reader.read_from(stream)
+
+    assert reader.get_all_values() == expected
+    assert stream.read() == b"next-section"
+
+
+@pytest.mark.parametrize(
+    "data, message",
+    [
+        (bytes.fromhex("3b300000"), "run flags"),
+        (bytes.fromhex("3b300000 01 01000200"), "run count"),
+        (bytes.fromhex("3b300000 01 01000200 01000500"), "run container"),
+        (bytes.fromhex("3b300000 01 01000200 0100ffff0200"), "Invalid run"),
+        (bytes.fromhex("3b300000 01 01000200 010005000100"), "cardinality"),
+        (bytes.fromhex("3b300000 01 01000300 02000500010006000100"), "Invalid run"),
+    ],
+    ids=["missing-flags", "missing-count", "truncated-run", "overflow", "wrong-cardinality", "overlap"],
+)
+def test_roaring_reader_rejects_malformed_runs(data, message):
+    """Malformed run data fails explicitly instead of shifting subsequent sections."""
+    with pytest.raises(ValueError, match=message):
+        RoaringBitmapReader().read_from(io.BytesIO(data))
+
+
+@pytest.mark.parametrize("model", [1, 2, 3])
+def test_psychic_parser_reads_run_bitmap_before_other_sections(model):
+    """Run compression preserves the remaining bitmaps and Model 3 metadata."""
+    header = b"GN" + bytes([model - 1, 0]) + bytes(30)
+    seen = bytes.fromhex("3b300000 01 01000200 010005000200")
+    empty_bitmap = bytes.fromhex("3a300000 00000000")
+    body = seen
+    if model > 1:
+        body += empty_bitmap * 4
+    if model == 3:
+        body += (
+            bytes.fromhex("0001 0007")
+            + b"Scanner"
+            + bytes.fromhex("0001 0003")
+            + b"Tag"
+            + bytes.fromhex("0001 000a")
+            + b"CVE-2026-1"
+            + bytes.fromhex("00000001 00010005 0000")
+            + bytes.fromhex("00000001 00010005 0001 0000")
+            + bytes.fromhex("00000001 00010005 0001 0000")
+        )
+
+    parser = PsychicBitmapParser(header + body)
+
+    assert parser.bitmaps["seen"].get_all_values() == {65541, 65542, 65543}
+    if model > 1:
+        assert parser.bitmaps["3wh_completed"].get_all_values() == set()
+    if model == 3:
+        assert parser.metadata == {
+            "actors": ["Scanner"],
+            "tags": ["Tag"],
+            "cves": ["CVE-2026-1"],
+            "ip_actors": {65541: 0},
+            "ip_tags": {65541: [0]},
+            "ip_cves": {65541: [0]},
+        }

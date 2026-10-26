@@ -13,7 +13,7 @@ from requests.exceptions import RequestException
 from greynoise.api import APIConfig, GreyNoise
 from greynoise.cli.formatter import FORMATTERS
 from greynoise.cli.parameter import ip_addresses_parameter
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import load_config
 
 LOGGER = logging.getLogger(__name__)
@@ -72,6 +72,10 @@ def handle_exceptions(function):
     def wrapper(*args, **kwargs):
         try:
             return function(*args, **kwargs)
+        except RateLimitError as exception:
+            error_message = "API error: {}".format(exception)
+            LOGGER.error(error_message)
+            click.get_current_context().exit(-1)
         except RequestFailure as exception:
             status = exception.args[0]
             body = exception.args[1]
@@ -146,7 +150,8 @@ def pass_api_client(function):
             api_key=api_key,
             api_server=config.get("api_server", "https://api.greynoise.io"),
             timeout=config.get("timeout", 60),
-            proxy=config.get("proxy"),
+            # Empty string from config must not become a fake proxy URL.
+            proxy=config.get("proxy") or None,
             offering=offering,
             integration_name="cli",
             cache_max_size=config.get("cache_max_size", 1000000),

@@ -14,7 +14,7 @@ from requests.exceptions import RequestException
 
 from greynoise.__version__ import __version__
 from greynoise.cli import main, subcommand
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG
 
 
@@ -363,6 +363,30 @@ class TestIP(object):
         assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
         api_client.ip.assert_called_with(ip_address=ip_address)
 
+    def test_ip_psychic_with_days(self, api_client):
+        """Psychic IP lookup generates a bitmap for the requested day range."""
+        runner = CliRunner()
+        expected_response = {"ip": "8.8.8.8", "seen": False}
+
+        api_client.psychic_lookup.return_value = expected_response
+
+        result = runner.invoke(subcommand.ip, ["-f", "json", "--psychic", "--days", "7", "8.8.8.8"])
+        assert result.exit_code == 0
+        assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
+        api_client.psychic_load_days.assert_called_once_with(7)
+        api_client.psychic_lookup.assert_called_once_with(ip_address="8.8.8.8")
+        api_client.ip.assert_not_called()
+
+    def test_ip_days_requires_psychic(self, api_client):
+        """--days without --psychic returns a usage error."""
+        runner = CliRunner()
+
+        result = runner.invoke(subcommand.ip, ["-f", "json", "--days", "7", "8.8.8.8"])
+        assert result.exit_code == 2
+        assert "--days requires --psychic" in result.output
+        api_client.psychic_load_days.assert_not_called()
+        api_client.psychic_lookup.assert_not_called()
+
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_input_file(self, api_client, ip_address, expected_response):
         """Get IP address information from input file."""
@@ -435,6 +459,17 @@ class TestIP(object):
 
         api_client.ip.side_effect = RequestFailure(401, {"message": "forbidden", "status": "error"})
         expected = "API error: forbidden"
+
+        result = runner.invoke(subcommand.ip, ["8.8.8.8"])
+        assert result.exit_code == -1
+        assert caplog.records[0].message == expected
+
+    def test_rate_limit_failure(self, api_client, caplog):
+        """Rate limit error is displayed along with the API explanation."""
+        runner = CliRunner()
+
+        api_client.ip.side_effect = RateLimitError(429, {"message": "daily quota exhausted"})
+        expected = "API error: rate limit exceeded (HTTP 429): daily quota exhausted"
 
         result = runner.invoke(subcommand.ip, ["8.8.8.8"])
         assert result.exit_code == -1
@@ -2259,6 +2294,40 @@ class TestRecallAndCallback(object):
         )
         assert result.output.strip() == "./psychic_m3_2026-06-17.csv"
 
+    def test_psychic_download_unknown_model_warns_and_calls_api(self, api_client, caplog):
+        """Unknown models warn and still attempt the Psychic API call."""
+        runner = CliRunner()
+        from greynoise.exceptions import RequestFailure
+
+        api_client.psychic_download.side_effect = RequestFailure(
+            400,
+            {"message": "invalid model"},
+        )
+        result = runner.invoke(
+            main,
+            [
+                "psychic-download",
+                "--format",
+                "bin",
+                "--date",
+                "2026-06-17",
+                "--model",
+                "4",
+            ],
+        )
+        assert result.exit_code == -1
+        # Click 8.1 leaves stderr mixed into output unless mix_stderr=False, and
+        # reading result.stderr raises. Click 8.2+ puts the same text in output.
+        assert "Current Psychic models are 1, 2, 3" in result.output
+        assert "other model 4 will be attempted" in result.output
+        assert any(record.message == "API error: invalid model" for record in caplog.records)
+        api_client.psychic_download.assert_called_once_with(
+            date="2026-06-17",
+            file_format="bin",
+            output_path=".",
+            model=4,
+        )
+
     def test_psychic_generate(self, api_client):
         runner = CliRunner()
         api_client.psychic_generate.return_value = "./psychic_m3_2026-06-01_2026-06-12.bin"
@@ -2282,3 +2351,97 @@ class TestRecallAndCallback(object):
             model=3,
         )
         assert result.output.strip() == "./psychic_m3_2026-06-01_2026-06-12.bin"
+
+
+FEED_ID = "11111111-1111-4111-8111-111111111111"
+
+
+class TestFeeds(object):
+    """Event Feed CLI commands."""
+
+    def test_search(self, api_client):
+        runner = CliRunner()
+        api_client.feed_search.return_value = {"events": [], "has_more": False}
+        result = runner.invoke(
+            main,
+            [
+                "feeds",
+                "search",
+                "--feed-id",
+                FEED_ID,
+                "--event-type",
+                "tag-spike",
+                "--from",
+                "24h",
+                "--limit",
+                "10",
+            ],
+        )
+        assert result.exit_code == 0
+        api_client.feed_search.assert_called_once_with(
+            feed_ids=[FEED_ID],
+            event_types=["tag-spike"],
+            ip=None,
+            cve=None,
+            tag=None,
+            classification=None,
+            from_time="24h",
+            to=None,
+            cursor=None,
+            limit=10,
+        )
+
+    def test_pull_with_ack(self, api_client):
+        runner = CliRunner()
+        api_client.feed_pull.return_value = {"events": [], "cursor": "abc"}
+        result = runner.invoke(
+            main,
+            ["feeds", "pull", FEED_ID, "--consumer", "worker-1", "--limit", "50", "--ack"],
+        )
+        assert result.exit_code == 0
+        api_client.feed_pull.assert_called_once_with(
+            FEED_ID,
+            consumer="worker-1",
+            limit=50,
+            ack=True,
+            cursor=None,
+        )
+
+    def test_pull_cursor_acknowledges(self, api_client):
+        runner = CliRunner()
+        api_client.feed_pull.return_value = {"advanced": True, "consumer": "default"}
+        result = runner.invoke(main, ["feeds", "pull", FEED_ID, "--cursor", "abc"])
+        assert result.exit_code == 0
+        api_client.feed_pull.assert_called_once_with(
+            FEED_ID,
+            consumer="default",
+            limit=None,
+            ack=False,
+            cursor="abc",
+        )
+
+    def test_consumers_list_and_reset(self, api_client):
+        runner = CliRunner()
+        api_client.feed_consumers.return_value = {"consumers": []}
+        listed = runner.invoke(main, ["feeds", "consumers", FEED_ID])
+        assert listed.exit_code == 0
+        api_client.feed_consumers.assert_called_with(FEED_ID, action="list", consumer=None)
+
+        reset = runner.invoke(
+            main,
+            ["feeds", "consumers", FEED_ID, "--action", "reset", "--consumer", "worker-1"],
+        )
+        assert reset.exit_code == 0
+        api_client.feed_consumers.assert_called_with(FEED_ID, action="reset", consumer="worker-1")
+
+    def test_consumers_require_a_name_to_change(self, api_client):
+        runner = CliRunner()
+        result = runner.invoke(main, ["feeds", "consumers", FEED_ID, "--action", "delete"])
+        assert result.exit_code != 0
+        try:
+            message = result.output + result.stderr
+        except ValueError:
+            # Click 8.1 mixes stderr into output and refuses result.stderr.
+            message = result.output
+        assert "consumer" in message
+        api_client.feed_consumers.assert_not_called()

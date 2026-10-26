@@ -6,7 +6,7 @@ import cachetools
 import pytest
 
 from greynoise.api import APIConfig, GreyNoise
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 
 
 @pytest.fixture
@@ -878,8 +878,120 @@ def test_api_client_initialization():
     client = GreyNoise(config)
     assert client.config == config
     assert client.session is not None
+    assert client.session.proxies == {
+        "http": "http://proxy.example.com",
+        "https": "http://proxy.example.com",
+    }
     assert client.ip_quick_check_cache is not None
     assert client.ip_context_cache is not None
+
+
+def test_api_client_empty_proxy_leaves_session_proxies_unset():
+    """An empty configured proxy must not clear environment proxy support."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+    assert client.session.proxies == {}
+    assert client.session.trust_env is True
+
+
+def test_api_client_request_omits_empty_proxies_kwarg():
+    """_request must not pass proxies={} when no proxy is configured."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy=None,
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping")
+        assert mock_get.call_count == 1
+        _, kwargs = mock_get.call_args
+        assert "proxies" not in kwargs
+
+
+def test_api_client_request_proxy_override():
+    """An explicit proxy argument overrides the session for that request."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://session-proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping", proxy="http://override-proxy.example.com")
+        _, kwargs = mock_get.call_args
+        assert kwargs["proxies"] == {
+            "http": "http://override-proxy.example.com",
+            "https": "http://override-proxy.example.com",
+        }
+
+
+def test_psychic_receives_proxy_and_api_server_from_config():
+    """GreyNoise must pass configured proxy and api_server into Psychic."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        psychic=False,
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.psychic.Psychic") as mock_psychic:
+        mock_psychic.return_value = Mock()
+        client._ensure_psychic_enabled(auto_download=False)
+        mock_psychic.assert_called_once()
+        kwargs = mock_psychic.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["api_server"] == "https://custom.greynoise.example"
+
+
+def test_timelinedaily_passes_proxy_and_base_url():
+    """Daily timeline fetches must honor configured proxy and api_server."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.api.get_greynoise_timeline", return_value={"data": []}) as mock_timeline:
+        client.timelinedaily("8.8.8.8", days=7)
+        mock_timeline.assert_called_once()
+        kwargs = mock_timeline.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["base_url"] == "https://custom.greynoise.example/v3"
+        assert kwargs["days"] == 7
 
 
 def test_api_client_request_retry():
@@ -973,6 +1085,25 @@ class TestErrorHandling:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 429
         assert exc_info.value.args[1] == {"error": "Rate limit exceeded"}
+
+    def test_rate_limit_error_carries_response_body(self, client):
+        """A 429 response surfaces the explanation the API sent."""
+        body = {"message": "Your plan does not include this endpoint", "status": "error"}
+
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.json = Mock(return_value=body)
+
+        with patch.object(client.session, "get", return_value=mock_response):
+            with pytest.raises(RateLimitError) as exc_info:
+                client._request("test-endpoint")
+
+        error = exc_info.value
+        assert error.status_code == 429
+        assert error.body == body
+        assert error.message == "Your plan does not include this endpoint"
+        assert str(error) == "rate limit exceeded (HTTP 429): Your plan does not include this endpoint"
 
     def test_network_timeout(self, client):
         """Test handling of network timeouts."""
@@ -1116,3 +1247,126 @@ class TestCacheBehavior:
         second_result = client.ip("8.8.8.8")
         assert second_result == mock_response
         assert client._request.call_count == 2
+
+
+FEED_ID = "11111111-1111-4111-8111-111111111111"
+
+
+class TestFeeds(object):
+    """Event Feed API methods."""
+
+    def test_search_sends_filters(self, client):
+        client._request = Mock(return_value={"events": [], "has_more": False})
+        result = client.feed_search(
+            feed_ids=[FEED_ID],
+            event_types=["tag-spike"],
+            ip="8.8.8.8",
+            from_time="24h",
+            limit=10,
+        )
+        assert result["has_more"] is False
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={
+                "feed_ids": [FEED_ID],
+                "event_types": ["tag-spike"],
+                "ip": "8.8.8.8",
+                "from": "24h",
+                "limit": 10,
+            },
+        )
+
+    def test_search_cursor_is_sent_alone(self, client):
+        client._request = Mock(return_value={"events": []})
+        client.feed_search(cursor="next-page", limit=25)
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={"cursor": "next-page", "limit": 25},
+        )
+
+    def test_search_cursor_rejects_other_filters(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="search cursor"):
+            client.feed_search(cursor="next-page", ip="8.8.8.8")
+        client._request.assert_not_called()
+
+    def test_pull_fetches_without_acknowledging(self, client):
+        client._request = Mock(return_value={"events": [{"event_type": "tag-spike"}], "cursor": "abc"})
+        result = client.feed_pull(FEED_ID, consumer="worker-1", limit=5)
+        assert "acknowledgement" not in result
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events".format(FEED_ID),
+            params={"consumer": "worker-1", "limit": 5},
+        )
+
+    def test_pull_ack_acknowledges_returned_cursor(self, client):
+        fetch = {"events": [{"event_type": "tag-spike"}], "cursor": "abc", "has_more": True}
+        ack = {"consumer": "default", "cursor": "abc", "advanced": True}
+        client._request = Mock(side_effect=[fetch, ack])
+        result = client.feed_pull(FEED_ID, ack=True)
+        assert result["acknowledgement"]["advanced"] is True
+        assert client._request.call_args_list == [
+            call("v3/feeds/{}/events".format(FEED_ID), params={"consumer": "default"}),
+            call(
+                "v3/feeds/{}/events/ack".format(FEED_ID),
+                method="post",
+                json={"cursor": "abc", "consumer": "default"},
+            ),
+        ]
+
+    def test_pull_cursor_acknowledges_without_fetching(self, client):
+        client._request = Mock(return_value={"advanced": False, "consumer": "default"})
+        client.feed_pull(FEED_ID, cursor="abc")
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events/ack".format(FEED_ID),
+            method="post",
+            json={"cursor": "abc", "consumer": "default"},
+        )
+
+    def test_consumers_list_create_reset_and_delete(self, client):
+        client._request = Mock(return_value={"consumers": []})
+        client.feed_consumers(FEED_ID)
+        client._request.assert_called_with("v3/feeds/{}/consumers".format(FEED_ID))
+
+        client._request = Mock(return_value={"name": "worker-1"})
+        client.feed_consumers(FEED_ID, action="create", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers".format(FEED_ID),
+            method="post",
+            json={"consumer": "worker-1"},
+        )
+
+        client._request = Mock(return_value={"name": "worker-1", "status": "active"})
+        client.feed_consumers(FEED_ID, action="reset", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1/reset".format(FEED_ID),
+            method="post",
+        )
+
+        client._request = Mock(return_value="")
+        deleted = client.feed_consumers(FEED_ID, action="delete", consumer="worker-1")
+        assert deleted == {"feed_id": FEED_ID, "consumer": "worker-1", "deleted": True}
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1".format(FEED_ID),
+            method="delete",
+        )
+
+    def test_invalid_feed_and_consumer_are_rejected(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="UUID"):
+            client.feed_pull("not-a-feed")
+        with pytest.raises(ValueError, match="consumer"):
+            client.feed_consumers(FEED_ID, action="create", consumer="bad name")
+        with pytest.raises(ValueError, match="event type"):
+            client.feed_search(event_types=["session-received"])
+        client._request.assert_not_called()
+
+    def test_community_offering_does_not_call_the_api(self, client):
+        client.offering = "community"
+        client._request = Mock()
+        assert "not supported" in client.feed_search()["message"]
+        assert "not supported" in client.feed_pull(FEED_ID)["message"]
+        assert "not supported" in client.feed_consumers(FEED_ID)["message"]
+        client._request.assert_not_called()
