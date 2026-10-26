@@ -646,3 +646,130 @@ def psychic_generate_cmd(
         model=model,
     )
     click.echo(path)
+
+
+@click.group(name="feeds")
+def feeds():
+    """Search retained feed events, pull a batch, or manage consumers.
+
+    Feeds are created in the GreyNoise Visualizer. Search does not move a
+    consumer checkpoint. Pull reads the next batch for one consumer, and
+    --ack advances that checkpoint only after the batch is returned.
+    """
+
+
+@feeds.command(name="search")
+@click.option("--feed-id", "feed_ids", multiple=True, help="Limit the search to one or more feed UUIDs.")
+@click.option("--event-type", "event_types", multiple=True, help="Retained event type. Repeat to search several types.")
+@click.option("--ip", help="Filter events for an IP address.")
+@click.option("--cve", help="Filter events for a CVE identifier.")
+@click.option("--tag", help="Filter events for a GreyNoise tag.")
+@click.option("--classification", help="Filter events for a classification.")
+@click.option("--from", "from_time", help="Start time: relative (1h, 7d), UTC date, or RFC3339.")
+@click.option("--to", help="Exclusive end time: UTC date or RFC3339. Defaults to now.")
+@click.option("--cursor", help="Continue a previous search. Do not combine with other filters.")
+@click.option("--limit", type=click.IntRange(1, 1000), help="Page size from 1 to 1000. Defaults to 100.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_search(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_ids,
+    event_types,
+    ip,
+    cve,
+    tag,
+    classification,
+    from_time,
+    to,
+    cursor,
+    limit,
+):
+    """Search retained feed history. This does not move a pull checkpoint."""
+    return api_client.feed_search(
+        feed_ids=list(feed_ids) or None,
+        event_types=list(event_types) or None,
+        ip=ip,
+        cve=cve,
+        tag=tag,
+        classification=classification,
+        from_time=from_time,
+        to=to,
+        cursor=cursor,
+        limit=limit,
+    )
+
+
+@feeds.command(name="pull")
+@click.argument("feed_id")
+@click.option(
+    "--consumer", default="default", show_default=True, help="Durable consumer checkpoint to read or acknowledge."
+)
+@click.option("--limit", type=click.IntRange(1, 1000), help="Maximum events to fetch, from 1 to 1000.")
+@click.option("--ack", is_flag=True, help="Acknowledge the cursor returned by this fetch.")
+@click.option("--cursor", help="Acknowledge a previously fetched cursor without fetching again.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_pull(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_id,
+    consumer,
+    limit,
+    ack,
+    cursor,
+):
+    """Fetch the next batch for a feed consumer, or acknowledge a cursor."""
+    return api_client.feed_pull(feed_id, consumer=consumer, limit=limit, ack=ack, cursor=cursor)
+
+
+@feeds.command(name="consumers")
+@click.argument("feed_id")
+@click.option(
+    "--action",
+    type=click.Choice(["list", "create", "reset", "delete"]),
+    default="list",
+    show_default=True,
+    help="List consumers, or create, reset, or delete one checkpoint.",
+)
+@click.option("--consumer", help="Consumer name. Required for create, reset, and delete.")
+@_standard_cli_options
+@pass_api_client
+@click.pass_context
+@echo_result
+@handle_exceptions
+def feeds_consumers(
+    context,
+    api_client,
+    api_key,
+    input_file,
+    output_file,
+    output_format,
+    offering,
+    verbose,
+    feed_id,
+    action,
+    consumer,
+):
+    """List feed consumers, or create, reset, or delete one checkpoint."""
+    if action != "list" and not consumer:
+        raise click.UsageError("--consumer is required when --action is create, reset, or delete")
+    return api_client.feed_consumers(feed_id, action=action, consumer=consumer)

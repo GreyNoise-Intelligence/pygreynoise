@@ -199,19 +199,21 @@ class RoaringBitmapReader:
 
         cookie = struct.unpack("<I", cookie_data)[0]
 
-        if cookie not in [self.SERIAL_COOKIE_NO_RUNCONTAINER, self.SERIAL_COOKIE]:
-            raise ValueError(f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})")
-
+        run_flags = None
         if cookie == self.SERIAL_COOKIE_NO_RUNCONTAINER:
             # Cookie followed by container count (4 bytes)
             count_data = file.read(4)
             if len(count_data) < 4:
                 raise ValueError("Invalid bitmap: missing container count")
             self.num_containers = struct.unpack("<I", count_data)[0]
+        elif cookie & 0xFFFF == self.SERIAL_COOKIE:
+            self.num_containers = (cookie >> 16) + 1
+            flag_bytes = (self.num_containers + 7) // 8
+            run_flags = file.read(flag_bytes)
+            if len(run_flags) != flag_bytes:
+                raise ValueError("Invalid bitmap: missing run flags")
         else:
-            # For SERIAL_COOKIE, the upper 16 bits contain (num_containers - 1)
-            # This case is not used by psychic2 based on our analysis
-            raise NotImplementedError("Run containers format not implemented")
+            raise ValueError(f"Invalid Roaring bitmap cookie: {cookie} (0x{cookie:08x})")
 
         if self.num_containers == 0:
             return  # Empty bitmap
@@ -232,9 +234,8 @@ class RoaringBitmapReader:
                 raise ValueError("Insufficient data for cardinality")
             cardinalities.append(struct.unpack("<H", card_data)[0] + 1)
 
-        # Read offsets if present
-        # Check if we need to skip offsets
-        if self.num_containers >= self.NO_OFFSET_THRESHOLD:
+        # The no-run layout always includes offsets, even for small bitmaps.
+        if run_flags is None or self.num_containers >= self.NO_OFFSET_THRESHOLD:
             # Skip offsets - we don't use them, just read containers sequentially
             skip_size = self.num_containers * 4
             file.seek(skip_size, 1)  # Skip forward
@@ -244,8 +245,9 @@ class RoaringBitmapReader:
             key = keys[i]
             cardinality = cardinalities[i]
 
-            # Determine container type based on cardinality
-            if cardinality <= 4096:
+            if run_flags is not None and run_flags[i // 8] & (1 << (i % 8)):
+                self.containers[key] = self._read_run_container(file, i, cardinality)
+            elif cardinality <= 4096:
                 # Array container
                 values = set()
                 for _ in range(cardinality):
@@ -271,6 +273,28 @@ class RoaringBitmapReader:
                                 values.add(j * 64 + bit)
 
                 self.containers[key] = values
+
+    def _read_run_container(self, file: BinaryIO, index: int, cardinality: int) -> Set[int]:
+        """Read sorted runs whose lengths are stored minus one."""
+        count_data = file.read(2)
+        if len(count_data) != 2:
+            raise ValueError(f"Insufficient data for run count in container {index}")
+        run_count = struct.unpack("<H", count_data)[0]
+        values = set()
+        previous_end = -1
+        for _ in range(run_count):
+            run_data = file.read(4)
+            if len(run_data) != 4:
+                raise ValueError(f"Insufficient data for run container {index}")
+            start, length = struct.unpack("<HH", run_data)
+            end = start + length
+            if end > 0xFFFF or start <= previous_end:
+                raise ValueError(f"Invalid run in container {index}")
+            values.update(range(start, end + 1))
+            previous_end = end
+        if len(values) != cardinality:
+            raise ValueError(f"Invalid cardinality for run container {index}")
+        return values
 
     def contains(self, value: int) -> bool:
         """Check if a value is in the bitmap."""

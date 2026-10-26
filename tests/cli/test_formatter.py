@@ -7,6 +7,8 @@ import pytest
 
 from greynoise.cli.formatter import (
     ANSI_MARKUP,
+    feeds_consumers_formatter,
+    feeds_events_formatter,
     gnql_query_formatter,
     gnql_stats_formatter,
     ip_context_formatter,
@@ -487,3 +489,29 @@ class TestGNQLStatsFormatter(object):
     def test_format_gnql_stats(self, result, expected):
         """Format GNQL stats."""
         assert gnql_stats_formatter(result, verbose=False).strip("\n") == expected
+
+
+def test_format_feed_events_and_consumers():
+    """Feed text output includes event fields and consumer names."""
+    events = feeds_events_formatter(
+        {
+            "events": [
+                {
+                    "event_type": "tag-spike",
+                    "created_at": "2026-10-26T00:00:00Z",
+                    "payload": {"ip": "8.8.8.8", "tag": "Example"},
+                }
+            ],
+            "has_more": False,
+            "consumer": "default",
+        },
+        verbose=False,
+    )
+    assert "tag-spike" in events
+    assert "8.8.8.8" in events
+
+    consumers = feeds_consumers_formatter(
+        {"consumers": [{"name": "worker-1", "status": "active", "approximate_lag": 3}]},
+        verbose=False,
+    )
+    assert "worker-1" in consumers

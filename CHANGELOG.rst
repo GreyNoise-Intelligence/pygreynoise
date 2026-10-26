@@ -11,12 +11,15 @@ Version `3.2.0`_
   * Corrected proxy settings for Psychic downloads/generation and IP Timeline
   * Psychic downloads and daily timeline lookups use the configured API server
   * `RateLimitError` now includes the API's 429 explanation, and the CLI prints it
+  * Added Event Feed search, pull (fetch and optional acknowledge), and consumer management
 
 * CLI:
 
+  * `feeds search` searches retained feed history without moving a consumer checkpoint
+  * `feeds pull` fetches the next batch for a feed consumer and can acknowledge that batch
+  * `feeds consumers` lists consumers, or creates, resets, or deletes one checkpoint
   * `ip --psychic --days` looks up an IP in a Psychic bitmap covering the last N days
   * Psychic text output shows the bitmap date, and says when the IP was not in that file
-  * `psychic-download` and `psychic-generate` accept any model number and warn when it is not 1, 2, or 3
 
 * Dependencies:
 

@@ -1247,3 +1247,126 @@ class TestCacheBehavior:
         second_result = client.ip("8.8.8.8")
         assert second_result == mock_response
         assert client._request.call_count == 2
+
+
+FEED_ID = "11111111-1111-4111-8111-111111111111"
+
+
+class TestFeeds(object):
+    """Event Feed API methods."""
+
+    def test_search_sends_filters(self, client):
+        client._request = Mock(return_value={"events": [], "has_more": False})
+        result = client.feed_search(
+            feed_ids=[FEED_ID],
+            event_types=["tag-spike"],
+            ip="8.8.8.8",
+            from_time="24h",
+            limit=10,
+        )
+        assert result["has_more"] is False
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={
+                "feed_ids": [FEED_ID],
+                "event_types": ["tag-spike"],
+                "ip": "8.8.8.8",
+                "from": "24h",
+                "limit": 10,
+            },
+        )
+
+    def test_search_cursor_is_sent_alone(self, client):
+        client._request = Mock(return_value={"events": []})
+        client.feed_search(cursor="next-page", limit=25)
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={"cursor": "next-page", "limit": 25},
+        )
+
+    def test_search_cursor_rejects_other_filters(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="search cursor"):
+            client.feed_search(cursor="next-page", ip="8.8.8.8")
+        client._request.assert_not_called()
+
+    def test_pull_fetches_without_acknowledging(self, client):
+        client._request = Mock(return_value={"events": [{"event_type": "tag-spike"}], "cursor": "abc"})
+        result = client.feed_pull(FEED_ID, consumer="worker-1", limit=5)
+        assert "acknowledgement" not in result
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events".format(FEED_ID),
+            params={"consumer": "worker-1", "limit": 5},
+        )
+
+    def test_pull_ack_acknowledges_returned_cursor(self, client):
+        fetch = {"events": [{"event_type": "tag-spike"}], "cursor": "abc", "has_more": True}
+        ack = {"consumer": "default", "cursor": "abc", "advanced": True}
+        client._request = Mock(side_effect=[fetch, ack])
+        result = client.feed_pull(FEED_ID, ack=True)
+        assert result["acknowledgement"]["advanced"] is True
+        assert client._request.call_args_list == [
+            call("v3/feeds/{}/events".format(FEED_ID), params={"consumer": "default"}),
+            call(
+                "v3/feeds/{}/events/ack".format(FEED_ID),
+                method="post",
+                json={"cursor": "abc", "consumer": "default"},
+            ),
+        ]
+
+    def test_pull_cursor_acknowledges_without_fetching(self, client):
+        client._request = Mock(return_value={"advanced": False, "consumer": "default"})
+        client.feed_pull(FEED_ID, cursor="abc")
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events/ack".format(FEED_ID),
+            method="post",
+            json={"cursor": "abc", "consumer": "default"},
+        )
+
+    def test_consumers_list_create_reset_and_delete(self, client):
+        client._request = Mock(return_value={"consumers": []})
+        client.feed_consumers(FEED_ID)
+        client._request.assert_called_with("v3/feeds/{}/consumers".format(FEED_ID))
+
+        client._request = Mock(return_value={"name": "worker-1"})
+        client.feed_consumers(FEED_ID, action="create", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers".format(FEED_ID),
+            method="post",
+            json={"consumer": "worker-1"},
+        )
+
+        client._request = Mock(return_value={"name": "worker-1", "status": "active"})
+        client.feed_consumers(FEED_ID, action="reset", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1/reset".format(FEED_ID),
+            method="post",
+        )
+
+        client._request = Mock(return_value="")
+        deleted = client.feed_consumers(FEED_ID, action="delete", consumer="worker-1")
+        assert deleted == {"feed_id": FEED_ID, "consumer": "worker-1", "deleted": True}
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1".format(FEED_ID),
+            method="delete",
+        )
+
+    def test_invalid_feed_and_consumer_are_rejected(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="UUID"):
+            client.feed_pull("not-a-feed")
+        with pytest.raises(ValueError, match="consumer"):
+            client.feed_consumers(FEED_ID, action="create", consumer="bad name")
+        with pytest.raises(ValueError, match="event type"):
+            client.feed_search(event_types=["session-received"])
+        client._request.assert_not_called()
+
+    def test_community_offering_does_not_call_the_api(self, client):
+        client.offering = "community"
+        client._request = Mock()
+        assert "not supported" in client.feed_search()["message"]
+        assert "not supported" in client.feed_pull(FEED_ID)["message"]
+        assert "not supported" in client.feed_consumers(FEED_ID)["message"]
+        client._request.assert_not_called()

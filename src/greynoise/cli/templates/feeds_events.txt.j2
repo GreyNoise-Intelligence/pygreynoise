@@ -1,0 +1,73 @@
+{% import "macros.txt.j2" as macros with context %}
+{%- set max_rows = 100 if verbose else 25 %}
+{%- if result is string %}
+{{ result }}
+{%- elif result is mapping and result.get("message") and "events" not in result %}
+{{ result.message }}
+{%- elif result is mapping and result.get("advanced") is not none and "events" not in result %}
+----------------------------
+    <header>Feed Acknowledgement</header>
+----------------------------
+{%- for key in ["consumer", "advanced", "acknowledged_at", "updated_at"] %}
+{%- if result.get(key) is not none %}
+<key>{{ key | replace("_", " ") | title }}</key>: <value>{{ result.get(key) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- if result.get("cursor") %}
+<key>Cursor</key>: <value>{{ result.get("cursor") }}</value>
+{%- endif %}
+{%- elif result is mapping %}
+----------------------------
+    <header>Event Feeds</header>
+----------------------------
+{%- for key in ["consumer", "has_more"] %}
+{%- if result.get(key) is not none %}
+<key>{{ key | replace("_", " ") | title }}</key>: <value>{{ result.get(key) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- set retention = result.get("retention") %}
+{%- if retention is mapping %}
+{%- if retention.get("oldest_available_at") %}
+<key>Oldest Available</key>: <value>{{ retention.get("oldest_available_at") }}</value>
+{%- endif %}
+{%- if retention.get("gap_detected") %}
+<key>Gap Detected</key>: <value>true</value>
+{%- endif %}
+{%- endif %}
+{%- if result.get("cursor") %}
+<key>Cursor</key>: <value>{{ result.get("cursor") }}</value>
+{%- endif %}
+{%- set events = result.get("events") or [] %}
+<header>Events</header> ({{ events | length }})
+{%- for event in events[:max_rows] %}
+{%- set payload = event.get("payload") if event.get("payload") is mapping else {} %}
+  - <key>{{ event.get("event_type") or "event" }}</key> <value>{{ event.get("created_at") or "" }}</value>
+{%- if event.get("feed_id") %}
+    <key>Feed</key>: <value>{{ event.get("feed_id") }}</value>
+{%- endif %}
+{%- for field in ["ip", "cve", "tag", "classification", "old_classification", "new_classification"] %}
+{%- if payload.get(field) %}
+    <key>{{ field | replace("_", " ") | title }}</key>: <value>{{ payload.get(field) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- if verbose %}
+{{ payload | tojson }}
+{%- endif %}
+{%- endfor %}
+{%- if events | length > max_rows %}
+  <dim>… {{ events | length - max_rows }} more (use -v or -f json)</dim>
+{%- endif %}
+{%- set ack = result.get("acknowledgement") %}
+{%- if ack is mapping %}
+<header>Acknowledgement</header>
+<key>Advanced</key>: <value>{{ ack.get("advanced") }}</value>
+{%- if ack.get("acknowledged_at") %}
+<key>Acknowledged At</key>: <value>{{ ack.get("acknowledged_at") }}</value>
+{%- endif %}
+{%- if ack.get("message") %}
+{{ ack.get("message") }}
+{%- endif %}
+{%- endif %}
+{%- else %}
+{{ result | tojson }}
+{%- endif %}
