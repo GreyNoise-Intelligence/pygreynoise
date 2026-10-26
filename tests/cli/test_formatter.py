@@ -222,6 +222,67 @@ class TestIPContextFormatter:
         """Format IP context."""
         assert ip_context_formatter(result, verbose=False).strip("\n") == expected
 
+    @pytest.mark.parametrize(
+        "result, expected",
+        (
+            (
+                [
+                    {
+                        "ip": "202.89.66.67",
+                        "seen": False,
+                        "psychic_file_date": "2026-09-01",
+                        "date": "2026-09-01",
+                        "classification": "unknown",
+                    }
+                ],
+                ANSI_MARKUP.parse(textwrap.dedent("""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: 202.89.66.67
+
+                                  <header>Psychic Intelligence</header>
+                        -----------------------------------------------
+                        <key>Psychic File Date</key>: <value>2026-09-01</value>
+                        <key>Seen</key>: <value>False</value>
+                        202.89.66.67 was not found in the current Psychic lookup file.""")),
+            ),
+            (
+                [
+                    {
+                        "ip": "1.2.3.4",
+                        "seen": True,
+                        "psychic_file_date": "2026-09-01",
+                        "date": "2026-08-30",
+                        "3wh_completed": True,
+                        "classification": "malicious",
+                        "actor": "unknown",
+                        "tags": ["scanner"],
+                        "cves": [],
+                    }
+                ],
+                ANSI_MARKUP.parse(textwrap.dedent("""\
+                        ╔═══════════════════════════╗
+                        ║ <header>     Context 1 of 1      </header> ║
+                        ╚═══════════════════════════╝
+                        IP address: 1.2.3.4
+
+                                  <header>Psychic Intelligence</header>
+                        -----------------------------------------------
+                        <key>Psychic File Date</key>: <value>2026-09-01</value>
+                        <key>Seen</key>: <value>True</value>
+                        <key>Last Seen</key>: <value>2026-08-30</value>
+                        <key>Spoofable</key>: <value>True</value>
+                        <key>Classification</key>: <value>malicious</value>
+                        <key>Actor</key>: <value>unknown</value>
+                        <key>Tags</key>: <value>scanner</value>""")),
+            ),
+        ),
+    )
+    def test_format_psychic_ip_context(self, result, expected):
+        """Format Psychic IP lookup results with file date."""
+        assert ip_context_formatter(result, verbose=False).strip("\n") == expected
+
 
 class TestIPQuickCheckFormatter:
     """Test IP quick check formatter."""

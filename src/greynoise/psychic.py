@@ -25,8 +25,12 @@ except ImportError:
     maxminddb = None  # type: ignore[assignment]
 
 from greynoise import PSYCHIC_USER_AGENT
+from greynoise.exceptions import RateLimitError, RequestFailure
+from greynoise.util import request_proxies
 
 logger = logging.getLogger(__name__)
+
+KNOWN_PSYCHIC_MODELS = (1, 2, 3)
 
 MMDB_CSV_COLUMNS = {
     1: ["ip", "seen"],
@@ -42,6 +46,37 @@ MMDB_CSV_COLUMNS = {
         "cves",
     ],
 }
+
+
+def warn_unknown_psychic_model(model: int) -> None:
+    """Log a warning when *model* is outside the known Psychic models."""
+    if model not in KNOWN_PSYCHIC_MODELS:
+        logger.warning(
+            "Current Psychic models are %s; other model %s will be attempted.",
+            ", ".join(str(value) for value in KNOWN_PSYCHIC_MODELS),
+            model,
+        )
+
+
+def _psychic_response_body(response: requests.Response) -> Any:
+    """Return a JSON body when available, otherwise response text."""
+    try:
+        return response.json()
+    except ValueError:
+        return response.text or None
+
+
+def _ensure_psychic_response_ok(response: requests.Response, action: str) -> None:
+    """Raise RequestFailure with the API response when the request failed."""
+    if response.status_code == 200:
+        return
+
+    body = _psychic_response_body(response) or f"Failed to {action}: HTTP {response.status_code}"
+
+    if response.status_code == 429:
+        raise RateLimitError(response.status_code, body)
+
+    raise RequestFailure(response.status_code, body)
 
 
 MMDB_FIELD_ALIASES = {
@@ -363,7 +398,7 @@ class PsychicBitmapParser:
             # Store bitmaps for each date
             for i in range(date_count):
                 date_offset = struct.unpack(">H", f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
+                date = datetime(2024, 9, 1) + timedelta(days=date_offset)
                 date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
@@ -414,7 +449,7 @@ class PsychicBitmapParser:
 
             for i in range(date_count):
                 date_offset = struct.unpack(">H", f.read(2))[0]
-                date = self.start_date.replace(year=2024, month=9, day=1) + timedelta(days=date_offset)
+                date = datetime(2024, 9, 1) + timedelta(days=date_offset)
                 date_str = date.strftime("%Y-%m-%d")
                 self._log(f"Parsing data for date {date_str}")
 
@@ -437,7 +472,7 @@ class PsychicBitmapParser:
 
                 # Parse metadata for this date
                 self._log(f"Parsing metadata for date {date_str}")
-                self.date_metadata[date_str] = self._parse_metadata(f)
+                self.date_metadata[date_str] = self._parse_metadata(f, ip_mapping_version=0)
 
                 # Store the last date's data for compatibility
                 if i == date_count - 1:
@@ -452,9 +487,10 @@ class PsychicBitmapParser:
             self._log("Parsing Model 3 metadata")
             self.metadata = self._parse_metadata(f)
 
-    def _parse_metadata(self, f: BinaryIO) -> Dict[str, Any]:
+    def _parse_metadata(self, f: BinaryIO, ip_mapping_version: Optional[int] = None) -> Dict[str, Any]:
         """Parse Model 3 metadata from file."""
         metadata = {}
+        mapping_version = self.version if ip_mapping_version is None else ip_mapping_version
 
         # Actor list
         actor_count = struct.unpack(">H", f.read(2))[0]
@@ -489,7 +525,7 @@ class PsychicBitmapParser:
         metadata["ip_cves"] = {}
 
         # Version 0 uses separate sections, version 2 uses combined format
-        if self.version == 0:
+        if mapping_version == 0:
             # Version 0 format: separate sections for IP-Actor, IP-Tag,
             # and IP-CVE mappings
             # Read IP->Actor mappings
@@ -599,42 +635,6 @@ class PsychicBitmapParser:
             ip_int = int(ip)
         except ValueError:
             raise ValueError(f"Invalid IP address: {ip_str}")
-
-        # For multi-date format, check all dates
-        if self.version == 2 and self.model == 3:
-            results = []
-            for date_str, bitmaps in self.date_bitmaps.items():
-                if bitmaps["seen"].contains(ip_int):
-                    result = {
-                        "ip": ip_str,
-                        "date": date_str,
-                        "seen": True,
-                        "3wh_completed": bitmaps["3wh_completed"].contains(ip_int),
-                    }
-
-                    # Determine classification
-                    if bitmaps["benign"].contains(ip_int):
-                        result["classification"] = "benign"
-                    elif bitmaps["malicious"].contains(ip_int):
-                        result["classification"] = "malicious"
-                    elif bitmaps["suspicious"].contains(ip_int):
-                        result["classification"] = "suspicious"
-                    else:
-                        result["classification"] = "unknown"
-
-                    results.append(result)
-
-            # Return the first match or a not-found result
-            if results:
-                return results[0]  # Return first occurrence
-            else:
-                return {
-                    "ip": ip_str,
-                    "date": self.header["start_date"].strftime("%Y-%m-%d"),
-                    "seen": False,
-                    "3wh_completed": False,
-                    "classification": "unknown",
-                }
 
         result = {"ip": ip_str, "date": self.header["start_date"].strftime("%Y-%m-%d")}
 
@@ -911,32 +911,76 @@ class Psychic:
         cache_dir: Optional[str] = None,
         max_age_hours: int = 1,
         auto_download: bool = True,
+        proxy: Optional[str] = None,
+        api_server: Optional[str] = None,
     ):
         """
         Initialize Psychic bitmap client.
 
         :param api_key: GreyNoise API key
-        :param model: Model to use (1, 2, or 3)
+        :param model: Model to use (currently 1, 2, or 3; other values are attempted)
         :param cache_dir: Directory to cache bitmaps
         :param max_age_hours: Maximum age of cached data in hours
         :param auto_download: Automatically download bitmaps if not cached
+        :param proxy: Optional proxy URL for download and generate requests
+        :param api_server: GreyNoise API server base URL (default: production)
         """
-        if model not in [1, 2, 3]:
-            raise ValueError("Model must be 1, 2, or 3")
+        warn_unknown_psychic_model(model)
 
         self.api_key = api_key
         self.model = model
         self.auto_download = auto_download
         self.cache = PsychicCache(cache_dir, max_age_hours)
+        server = (api_server or "https://api.greynoise.io").rstrip("/")
+        self.base_url = "{}/v1/psychic".format(server)
         self.session = requests.Session()
         self.session.headers.update({"key": api_key, "User-Agent": PSYCHIC_USER_AGENT})
+        proxies = request_proxies(proxy)
+        if proxies is not None:
+            self.session.proxies.update(proxies)
 
         self._parser = None
         self._last_loaded_date = None
+        self._last_loaded_start_date = None
+        self._last_loaded_end_date = None
 
         # Try to load current bitmap
         if auto_download:
             self._ensure_current_bitmap()
+
+    def _psychic_file_date_label(self) -> Optional[str]:
+        """Return a display label for the loaded Psychic bitmap date or range."""
+        if self._last_loaded_start_date and self._last_loaded_end_date:
+            if self._last_loaded_start_date == self._last_loaded_end_date:
+                return self._last_loaded_start_date
+            return f"{self._last_loaded_start_date} to {self._last_loaded_end_date}"
+        return self._last_loaded_date
+
+    def load_generated_bitmap(self, start_date: str, end_date: str) -> None:
+        """Generate and load a Psychic bitmap for a date range."""
+        logger.info(
+            "Generating bitmap for model %s, date range %s to %s",
+            self.model,
+            start_date,
+            end_date,
+        )
+        data = self._generate_bitmap(start_date, end_date)
+        self._parser = PsychicBitmapParser(data)
+        self._last_loaded_start_date = start_date
+        self._last_loaded_end_date = end_date
+        self._last_loaded_date = end_date
+
+    def load_generated_bitmap_for_days(self, days: int) -> None:
+        """Generate and load a Psychic bitmap for the last *days* through today."""
+        if days < 1:
+            raise ValueError("days must be at least 1")
+
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days - 1)
+        self.load_generated_bitmap(
+            start_date.strftime("%Y-%m-%d"),
+            end_date.strftime("%Y-%m-%d"),
+        )
 
     def _get_today_date(self) -> str:
         """Get today's date in YYYY-MM-DD format."""
@@ -944,33 +988,25 @@ class Psychic:
 
     def _download_bitmap(self, date: str) -> bytes:
         """Download bitmap for a specific date."""
-        url = self.PSYCHIC_BASE_URL
+        url = self.base_url
         payload = {"model": str(self.model), "date": date}
 
         logger.debug(f"Downloading bitmap from {url}")
 
         response = self.session.post(url, json=payload, timeout=300)  # 5 minute timeout for large files
-        response.raise_for_status()
-
-        if response.status_code == 200:
-            return response.content
-        else:
-            raise Exception(f"Failed to download bitmap: HTTP {response.status_code}")
+        _ensure_psychic_response_ok(response, "download bitmap")
+        return response.content
 
     def _download_mmdb(self, date: str) -> bytes:
         """Download mmdb for a specific date."""
-        url = self.PSYCHIC_BASE_URL
+        url = self.base_url
         payload = {"model": str(self.model), "date": date, "format": "mmdb"}
 
         logger.debug(f"Downloading mmdb from {url}")
 
         response = self.session.post(url, json=payload, timeout=300)  # 5 minute timeout for large files
-        response.raise_for_status()
-
-        if response.status_code == 200:
-            return response.content
-        else:
-            raise Exception(f"Failed to download mmdb: HTTP {response.status_code}")
+        _ensure_psychic_response_ok(response, "download mmdb")
+        return response.content
 
     def download_mmdb(self, date: str, output_path: Optional[str] = None) -> str:
         """
@@ -1050,7 +1086,7 @@ class Psychic:
 
     def _generate_bitmap(self, start_date: str, end_date: str) -> bytes:
         """Generate bitmap for a date range."""
-        url = self.PSYCHIC_BASE_URL
+        url = self.base_url
         payload = {
             "model": str(self.model),
             "start_date": start_date,
@@ -1060,12 +1096,8 @@ class Psychic:
         logger.debug(f"Generating bitmap from {url}")
 
         response = self.session.post(url, json=payload, timeout=600)  # 10 minute timeout for generation
-        response.raise_for_status()
-
-        if response.status_code == 200:
-            return response.content
-        else:
-            raise Exception(f"Failed to generate bitmap: HTTP {response.status_code}")
+        _ensure_psychic_response_ok(response, "generate bitmap")
+        return response.content
 
     def _ensure_current_bitmap(self) -> None:
         """Ensure we have current bitmap data loaded."""
@@ -1084,6 +1116,8 @@ class Psychic:
             logger.debug(f"Loading cached bitmap for {today}")
             self._parser = PsychicBitmapParser(cached_data)
             self._last_loaded_date = today
+            self._last_loaded_start_date = today
+            self._last_loaded_end_date = today
             return
 
         # Download new bitmap
@@ -1097,6 +1131,8 @@ class Psychic:
             # Parse the data
             self._parser = PsychicBitmapParser(data)
             self._last_loaded_date = today
+            self._last_loaded_start_date = today
+            self._last_loaded_end_date = today
 
             logger.info(f"Successfully loaded bitmap for {today}")
 
@@ -1117,7 +1153,11 @@ class Psychic:
             else:
                 raise RuntimeError("No bitmap loaded. Set auto_download=True or call load_bitmap()")
 
-        return self._parser.lookup_ip(ip)
+        result = self._parser.lookup_ip(ip)
+        psychic_file_date = self._psychic_file_date_label()
+        if psychic_file_date:
+            result["psychic_file_date"] = psychic_file_date
+        return result
 
     def lookup_ips(self, ips: List[str]) -> List[Dict[str, Any]]:
         """
@@ -1153,6 +1193,8 @@ class Psychic:
             logger.debug(f"Loading cached bitmap for {date}")
             self._parser = PsychicBitmapParser(cached_data)
             self._last_loaded_date = date
+            self._last_loaded_start_date = date
+            self._last_loaded_end_date = date
             return
 
         # Download bitmap
@@ -1166,6 +1208,8 @@ class Psychic:
             # Parse the data
             self._parser = PsychicBitmapParser(data)
             self._last_loaded_date = date
+            self._last_loaded_start_date = date
+            self._last_loaded_end_date = date
 
             logger.info(f"Successfully loaded bitmap for {date}")
 

@@ -21,6 +21,7 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.greynoise_timeline import get_greynoise_timeline
 from greynoise.util import (
     normalize_rfc3339_datetime,
+    request_proxies,
     validate_cve_id,
     validate_ip,
     validate_timeline_days,
@@ -79,6 +80,11 @@ class BaseAPIClient:
 
         urllib3 retries transient **5xx** responses only. **429 Too Many Requests** is
         intentionally excluded.
+
+        When ``config.proxy`` is set, it is applied to ``session.proxies`` so every
+        request on this session uses it. An empty or unset proxy leaves the session
+        alone so ``HTTP_PROXY`` / ``HTTPS_PROXY`` from the environment still apply
+        (``trust_env`` remains enabled).
         """
         session = requests.Session()
 
@@ -92,6 +98,10 @@ class BaseAPIClient:
         adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=10)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
+
+        proxies = request_proxies(self.config.proxy)
+        if proxies is not None:
+            session.proxies.update(proxies)
 
         return session
 
@@ -120,8 +130,15 @@ class BaseAPIClient:
         if params is None:
             params = {}
 
-        # Use config proxy when no proxy is explicitly passed
-        proxy = proxy or self.config.proxy
+        # Default proxy lives on session.proxies (set in _setup_session). An explicit
+        # *proxy* argument overrides for this call only. Never pass an empty proxies
+        # dict — that can suppress HTTP_PROXY / HTTPS_PROXY from the environment.
+        if proxy is not None:
+            effective_proxy = proxy
+            proxies = request_proxies(proxy)
+        else:
+            effective_proxy = self.config.proxy
+            proxies = None
 
         user_agent_parts = ["GreyNoise/{}".format(__version__)]
         if self.config.integration_name:
@@ -142,35 +159,26 @@ class BaseAPIClient:
             LOGGER.debug("Sending API request...method: %s", method)
             LOGGER.debug("Sending API request...params: %s", params)
             LOGGER.debug("Sending API request...files: %s", files)
-            LOGGER.debug("Sending API request...proxy: %s", proxy)
+            LOGGER.debug("Sending API request...proxy: %s", effective_proxy)
             if params:
                 full_url = "{}?{}".format(url, urlencode(params))
             else:
                 full_url = url
             LOGGER.debug("Full request URL with parameters: %s", full_url)
 
+        request_kwargs = {
+            "headers": req_headers,
+            "timeout": self.config.timeout,
+            "params": params,
+            "json": json,
+            "files": files,
+        }
+        if proxies is not None:
+            request_kwargs["proxies"] = proxies
+
         request_method = getattr(self.session, method)
         try:
-            if proxy:
-                proxies = {protocol: proxy for protocol in ("http", "https")}
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                    proxies=proxies,
-                )
-            else:
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                )
+            response = request_method(url, **request_kwargs)
 
             content_type = response.headers.get("Content-Type", "")
             resp_headers = response.headers
@@ -193,7 +201,7 @@ class BaseAPIClient:
             LOGGER.debug("API response received %s", response.status_code)
 
             if response.status_code == 429:
-                raise RateLimitError()
+                raise RateLimitError(response.status_code, body)
             if response.status_code >= 400 and response.status_code != 404:
                 raise RequestFailure(response.status_code, body)
 
@@ -330,12 +338,14 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=config.psychic_cache_dir,
                 max_age_hours=config.psychic_max_age_hours,
                 auto_download=True,
+                proxy=config.proxy,
+                api_server=config.api_server,
             )
             LOGGER.info("Psychic enabled")
 
     def _get_psychic_for_download(self, model: Optional[int] = None):
         """Return a Psychic client for download operations, creating one if needed."""
-        from greynoise.psychic import Psychic
+        from greynoise.psychic import Psychic, warn_unknown_psychic_model
 
         requested_model = model if model is not None else (self.config.psychic_model or 1)
 
@@ -346,11 +356,46 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=self.config.psychic_cache_dir,
                 max_age_hours=self.config.psychic_max_age_hours,
                 auto_download=False,
+                proxy=self.config.proxy,
+                api_server=self.config.api_server,
             )
         elif model is not None:
+            warn_unknown_psychic_model(model)
             self._psychic.model = requested_model
 
         return self._psychic
+
+    def _ensure_psychic_enabled(self, auto_download: bool = True):
+        """Initialize Psychic client on demand (e.g. CLI ``--psychic``)."""
+        if self._psychic is not None:
+            return self._psychic
+
+        from greynoise.psychic import Psychic
+
+        model = self.config.psychic_model or 1
+        self._psychic = Psychic(
+            api_key=self.config.api_key,
+            model=model,
+            cache_dir=self.config.psychic_cache_dir,
+            max_age_hours=self.config.psychic_max_age_hours,
+            auto_download=auto_download,
+            proxy=self.config.proxy,
+            api_server=self.config.api_server,
+        )
+        LOGGER.info("Psychic enabled")
+        return self._psychic
+
+    def psychic_load_days(self, days: int) -> None:
+        """
+        Generate and load a Psychic bitmap for the last *days* through today.
+
+        :param days: Number of days to include, counting today
+        :type days: int
+        :raises: RuntimeError if Psychic cannot be initialized
+        :raises: ValueError if *days* is less than 1
+        """
+        psychic = self._ensure_psychic_enabled(auto_download=False)
+        psychic.load_generated_bitmap_for_days(days)
 
     def psychic_download(
         self,
@@ -1133,13 +1178,16 @@ class GreyNoise(BaseAPIClient):
                 user_agent_parts.append("({})".format(self.config.integration_name))
             user_agent = " ".join(user_agent_parts)
 
+            api_server = (self.config.api_server or "https://api.greynoise.io").rstrip("/")
             response = get_greynoise_timeline(
                 ip=ip_address,
                 api_key=self.config.api_key,
                 days=days,
                 granularity="1d",
                 max_workers=4,
+                base_url="{}/v3".format(api_server),
                 user_agent=user_agent,
+                proxy=self.config.proxy,
             )
 
         return response
@@ -1246,10 +1294,7 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError(
-                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
-                "or GREYNOISE_PSYCHIC environment variable"
-            )
+            self._ensure_psychic_enabled()
 
         return self._psychic.lookup_ip(ip_address)
 

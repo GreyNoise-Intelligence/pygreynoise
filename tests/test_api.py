@@ -6,7 +6,7 @@ import cachetools
 import pytest
 
 from greynoise.api import APIConfig, GreyNoise
-from greynoise.exceptions import RequestFailure
+from greynoise.exceptions import RateLimitError, RequestFailure
 
 
 @pytest.fixture
@@ -878,8 +878,120 @@ def test_api_client_initialization():
     client = GreyNoise(config)
     assert client.config == config
     assert client.session is not None
+    assert client.session.proxies == {
+        "http": "http://proxy.example.com",
+        "https": "http://proxy.example.com",
+    }
     assert client.ip_quick_check_cache is not None
     assert client.ip_context_cache is not None
+
+
+def test_api_client_empty_proxy_leaves_session_proxies_unset():
+    """An empty configured proxy must not clear environment proxy support."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+    assert client.session.proxies == {}
+    assert client.session.trust_env is True
+
+
+def test_api_client_request_omits_empty_proxies_kwarg():
+    """_request must not pass proxies={} when no proxy is configured."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy=None,
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping")
+        assert mock_get.call_count == 1
+        _, kwargs = mock_get.call_args
+        assert "proxies" not in kwargs
+
+
+def test_api_client_request_proxy_override():
+    """An explicit proxy argument overrides the session for that request."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://session-proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping", proxy="http://override-proxy.example.com")
+        _, kwargs = mock_get.call_args
+        assert kwargs["proxies"] == {
+            "http": "http://override-proxy.example.com",
+            "https": "http://override-proxy.example.com",
+        }
+
+
+def test_psychic_receives_proxy_and_api_server_from_config():
+    """GreyNoise must pass configured proxy and api_server into Psychic."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        psychic=False,
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.psychic.Psychic") as mock_psychic:
+        mock_psychic.return_value = Mock()
+        client._ensure_psychic_enabled(auto_download=False)
+        mock_psychic.assert_called_once()
+        kwargs = mock_psychic.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["api_server"] == "https://custom.greynoise.example"
+
+
+def test_timelinedaily_passes_proxy_and_base_url():
+    """Daily timeline fetches must honor configured proxy and api_server."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.api.get_greynoise_timeline", return_value={"data": []}) as mock_timeline:
+        client.timelinedaily("8.8.8.8", days=7)
+        mock_timeline.assert_called_once()
+        kwargs = mock_timeline.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["base_url"] == "https://custom.greynoise.example/v3"
+        assert kwargs["days"] == 7
 
 
 def test_api_client_request_retry():
@@ -973,6 +1085,25 @@ class TestErrorHandling:
             client.ip("8.8.8.8")
         assert exc_info.value.args[0] == 429
         assert exc_info.value.args[1] == {"error": "Rate limit exceeded"}
+
+    def test_rate_limit_error_carries_response_body(self, client):
+        """A 429 response surfaces the explanation the API sent."""
+        body = {"message": "Your plan does not include this endpoint", "status": "error"}
+
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.json = Mock(return_value=body)
+
+        with patch.object(client.session, "get", return_value=mock_response):
+            with pytest.raises(RateLimitError) as exc_info:
+                client._request("test-endpoint")
+
+        error = exc_info.value
+        assert error.status_code == 429
+        assert error.body == body
+        assert error.message == "Your plan does not include this endpoint"
+        assert str(error) == "rate limit exceeded (HTTP 429): Your plan does not include this endpoint"
 
     def test_network_timeout(self, client):
         """Test handling of network timeouts."""

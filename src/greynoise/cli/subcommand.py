@@ -19,7 +19,21 @@ from greynoise.cli.decorator import (
 )
 from greynoise.cli.formatter import ANSI_MARKUP
 from greynoise.cli.helper import get_ip_addresses, get_queries
+from greynoise.psychic import KNOWN_PSYCHIC_MODELS
 from greynoise.util import CONFIG_FILE, DEFAULT_CONFIG, save_config
+
+
+def _warn_unknown_psychic_model_cli(model):
+    """Warn on stderr when a non-standard Psychic model is requested."""
+    if model is None or model in KNOWN_PSYCHIC_MODELS:
+        return
+    click.echo(
+        "Warning: Current Psychic models are {}; other model {} will be attempted.".format(
+            ", ".join(str(value) for value in KNOWN_PSYCHIC_MODELS),
+            model,
+        ),
+        err=True,
+    )
 
 
 @click.command()
@@ -102,6 +116,12 @@ def help_(context):
 @ip_lookup_command
 @click.option("-v", "--verbose", count=True, help="Verbose output")
 @click.option("-p", "--psychic", is_flag=True, help="Use Psychic to get more information")
+@click.option(
+    "-d",
+    "--days",
+    type=click.IntRange(1),
+    help="Generate Psychic bitmap for the last N days through today (requires --psychic)",
+)
 def ip(
     context,
     api_client,
@@ -113,10 +133,16 @@ def ip(
     ip_address,
     offering,
     psychic,
+    days,
 ):
     """Query GreyNoise for all information on a given IP."""
+    if days is not None and not psychic:
+        raise click.UsageError("--days requires --psychic")
+
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     if psychic:
+        if days is not None:
+            api_client.psychic_load_days(days)
         results = [api_client.psychic_lookup(ip_address=ip_address) for ip_address in ip_addresses]
     else:
         results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
@@ -537,8 +563,8 @@ def callback_ip_cmd(
 @click.option(
     "-m",
     "--model",
-    type=click.Choice(["1", "2", "3"]),
-    help="Psychic model to use (default: from config or 1)",
+    type=click.INT,
+    help="Psychic model to use (default: from config or 1; currently 1, 2, or 3)",
 )
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
@@ -562,12 +588,13 @@ def psychic_download_cmd(
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")
 
-    model_int = int(model) if model is not None else None
+    if model is not None:
+        _warn_unknown_psychic_model_cli(model)
     path = api_client.psychic_download(
         date=date,
         file_format=file_format,
         output_path=".",
-        model=model_int,
+        model=model,
     )
     click.echo(path)
 
@@ -588,8 +615,8 @@ def psychic_download_cmd(
 @click.option(
     "-m",
     "--model",
-    type=click.Choice(["1", "2", "3"]),
-    help="Psychic model to use (default: from config or 1)",
+    type=click.INT,
+    help="Psychic model to use (default: from config or 1; currently 1, 2, or 3)",
 )
 @click.option("-k", "--api-key", help="Key to include in API requests")
 @click.option(
@@ -610,11 +637,12 @@ def psychic_generate_cmd(
     model,
 ):
     """Generate a Psychic bitmap (.bin) for a date range and write it to the current directory."""
-    model_int = int(model) if model is not None else None
+    if model is not None:
+        _warn_unknown_psychic_model_cli(model)
     path = api_client.psychic_generate(
         start_date=start_date,
         end_date=end_date,
         output_path=".",
-        model=model_int,
+        model=model,
     )
     click.echo(path)
