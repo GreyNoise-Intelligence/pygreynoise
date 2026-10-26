@@ -2316,9 +2316,10 @@ class TestRecallAndCallback(object):
             ],
         )
         assert result.exit_code == -1
-        warning_output = result.stderr or result.output
-        assert "Current Psychic models are 1, 2, 3" in warning_output
-        assert "other model 4 will be attempted" in warning_output
+        # Click 8.1 leaves stderr mixed into output unless mix_stderr=False, and
+        # reading result.stderr raises. Click 8.2+ puts the same text in output.
+        assert "Current Psychic models are 1, 2, 3" in result.output
+        assert "other model 4 will be attempted" in result.output
         assert any(record.message == "API error: invalid model" for record in caplog.records)
         api_client.psychic_download.assert_called_once_with(
             date="2026-06-17",
