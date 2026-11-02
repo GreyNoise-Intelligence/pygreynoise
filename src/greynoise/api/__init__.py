@@ -1,12 +1,15 @@
 """GreyNoise API client."""
 
+import contextlib
 import logging
+import os
 import re
 import time
+import uuid
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode, urljoin
 
 import cachetools
@@ -57,12 +60,36 @@ class APIConfig:
     psychic_max_age_hours: Optional[int] = 1
 
 
+@dataclass
+class FileResult:
+    """Outcome of a pre-built file download (:meth:`GreyNoise.callback_file`, :meth:`GreyNoise.gnql_file`).
+
+    ``status`` is ``ok`` when the file was written, and ``provisioning`` when the
+    server is still building the file and the caller should retry after
+    ``retry_after`` seconds. Nothing is written unless ``status`` is ``ok``.
+    ``feed_status`` is the GNQL subscription's build status. A field the server
+    did not report is ``None``; callback files report no ``truncated``.
+    """
+
+    STATUS_OK = "ok"
+    STATUS_PROVISIONING = "provisioning"
+
+    status: str
+    generated_at: Optional[str] = None
+    row_count: Optional[int] = None
+    total_count: Optional[int] = None
+    truncated: Optional[bool] = None
+    feed_status: Optional[str] = None
+    retry_after: Optional[int] = None
+
+
 class BaseAPIClient:
     """Base class for API clients with common functionality."""
 
     def __init__(self, config: APIConfig):
         self.config = config
         self.session = self._setup_session()
+        self._file_session = self._setup_file_session()
         self._setup_cache()
 
     def close(self) -> None:
@@ -73,6 +100,21 @@ class BaseAPIClient:
         :class:`requests.Session`. Safe to call multiple times.
         """
         self.session.close()
+        self._file_session.close()
+
+    @staticmethod
+    def _setup_file_session() -> requests.Session:
+        """Set up a session for file downloads that retries connections but not responses.
+
+        File endpoints answer 503 with a ``Retry-After`` of a minute or more; retrying
+        those in urllib3 would block for minutes and hide the status from the caller.
+        """
+        session = requests.Session()
+        retry = Retry(total=3, backoff_factor=1, status_forcelist=[], respect_retry_after_header=False)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        return session
 
     def _setup_session(self) -> requests.Session:
         """Set up a session with retry logic and connection pooling.
@@ -100,6 +142,15 @@ class BaseAPIClient:
         self.ip_quick_check_cache = initialize_cache(self.config.cache_max_size, self.config.cache_ttl)
         self.ip_context_cache = initialize_cache(self.config.cache_max_size, self.config.cache_ttl)
 
+    def _default_headers(self) -> Dict[str, str]:
+        user_agent_parts = ["GreyNoise/{}".format(__version__)]
+        if self.config.integration_name:
+            user_agent_parts.append("({})".format(self.config.integration_name))
+        return {
+            "User-Agent": " ".join(user_agent_parts),
+            "key": self.config.api_key,
+        }
+
     def _request(
         self,
         endpoint: str,
@@ -123,14 +174,7 @@ class BaseAPIClient:
         # Use config proxy when no proxy is explicitly passed
         proxy = proxy or self.config.proxy
 
-        user_agent_parts = ["GreyNoise/{}".format(__version__)]
-        if self.config.integration_name:
-            user_agent_parts.append("({})".format(self.config.integration_name))
-
-        req_headers = {
-            "User-Agent": " ".join(user_agent_parts),
-            "key": self.config.api_key,
-        }
+        req_headers = self._default_headers()
         if extra_headers:
             req_headers.update(extra_headers)
 
@@ -298,10 +342,15 @@ class GreyNoise(BaseAPIClient):
     EP_CALLBACK_LIST = "v1/callback/ips"
     EP_CALLBACK_EXPORT_IPS = "v1/callback/export-ips"
     EP_CALLBACK_OVERVIEW = "v1/callback/overview"
+    EP_FILES_CALLBACK = "v3/files/callback"
+    EP_FILES_CALLBACK_METADATA = "v3/files/callback/metadata"
+    EP_FILES_GNQL = "v3/files/gnql"
+    EP_FILES_GNQL_METADATA = "v3/files/gnql/metadata"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
 
     IP_MULTI_CHECK_CHUNK_SIZE = 10000
+    FILE_CHUNK_SIZE = 1 << 20
     #: Max status polls after upload (inclusive of re-checking the upload response as poll 0).
     ANALYZE_MAX_POLL_ATTEMPTS = 360
     #: Seconds to wait between analyze job status polls.
@@ -1646,3 +1695,198 @@ class GreyNoise(BaseAPIClient):
             ips=ips,
         )
         return self._request(self.EP_CALLBACK_OVERVIEW, method="post", json=payload or {})
+
+    def callback_file(
+        self,
+        output,
+        *,
+        days: int = 7,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Download the pre-built callback IP file (``GET /v3/files/callback``), a CSV
+        in the CrowdStrike Falcon NG-SIEM lookup file layout.
+
+        The body is streamed to ``output``, a file path or a binary file object.
+        A path is written atomically and left untouched unless the result
+        status is ``ok``; a file object may hold partial data if the download
+        fails mid-stream.
+
+        :param output: Path or binary file object to write the file to.
+        :param days: Lookback window in days, 1 to 7.
+        :param integration: Integration name and version, e.g. ``crowdstrike-ngsiem/3.1.0``,
+            sent as ``X-GreyNoise-Integration``.
+        :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
+            (default: the client's ``timeout``).
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = {"days": days, **_FILE_FORMAT}
+        return self._files_request(self.EP_FILES_CALLBACK, params, output, integration, timeout)
+
+    def callback_file_metadata(
+        self,
+        *,
+        days: int = 7,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Describe the file :meth:`callback_file` would serve, without downloading it
+        (``GET /v3/files/callback/metadata``).
+
+        Takes the same parameters as :meth:`callback_file` and returns ``status``
+        ``ok`` or ``provisioning``, with ``generated_at`` and ``row_count``.
+
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = {"days": days, **_FILE_FORMAT}
+        return self._files_request(self.EP_FILES_CALLBACK_METADATA, params, None, integration, timeout)
+
+    def gnql_file(
+        self,
+        query: str,
+        output,
+        *,
+        limit: Optional[int] = None,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Download the pre-built GNQL SIEM feed file for ``query`` (``GET /v3/files/gnql``),
+        a CSV in the CrowdStrike Falcon NG-SIEM lookup file layout.
+
+        The first request for a query subscribes to it and returns a
+        ``provisioning`` result until the file is built. ``row_count`` and
+        ``truncated`` describe the rows served after ``limit`` and the server's
+        size cap; ``total_count`` is the number of rows the query matched. Output
+        handling is as for :meth:`callback_file`.
+
+        :param query: GNQL query the file is built from.
+        :param output: Path or binary file object to write the file to.
+        :param limit: Maximum number of rows to serve.
+        :param integration: Integration name and version, sent as ``X-GreyNoise-Integration``.
+        :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
+            (default: the client's ``timeout``).
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = _gnql_file_params(query, limit)
+        return self._files_request(self.EP_FILES_GNQL, params, output, integration, timeout)
+
+    def gnql_file_metadata(
+        self,
+        query: str,
+        *,
+        limit: Optional[int] = None,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Describe the file :meth:`gnql_file` would serve, without downloading it
+        (``GET /v3/files/gnql/metadata``).
+
+        Takes the same parameters as :meth:`gnql_file` and returns the same fields,
+        with ``status`` ``ok`` or ``provisioning``. Like a download, the first
+        request for a query subscribes to it, and requests count toward the
+        query's fetch rate limit.
+
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = _gnql_file_params(query, limit)
+        return self._files_request(self.EP_FILES_GNQL_METADATA, params, None, integration, timeout)
+
+    def _files_request(self, endpoint, params, output, integration, timeout) -> FileResult:
+        headers = self._default_headers()
+        if integration:
+            headers["X-GreyNoise-Integration"] = integration
+        proxies = {protocol: self.config.proxy for protocol in ("http", "https")} if self.config.proxy else None
+
+        LOGGER.debug("Requesting file from %s with params %s", endpoint, params)
+        try:
+            with self._file_session.get(
+                _api_request_url(self.config.api_server, endpoint),
+                headers=headers,
+                params=params,
+                timeout=timeout or self.config.timeout,
+                proxies=proxies,
+                stream=True,
+            ) as response:
+                result = _file_result(response)
+                if result.status == FileResult.STATUS_OK and output is not None:
+                    _write_stream(response.iter_content(self.FILE_CHUNK_SIZE), output)
+                return result
+        except requests.exceptions.RequestException as e:
+            LOGGER.error("File request failed: %s", str(e))
+            raise RequestFailure(0, str(e))
+
+
+_FILE_FORMAT = {"format": "csv", "profile": "ngsiem"}
+
+
+def _file_result(response: requests.Response) -> FileResult:
+    """Map a file response to a :class:`FileResult`, raising on error statuses."""
+    status_code = response.status_code
+    if status_code == 200:
+        status = FileResult.STATUS_OK
+    elif status_code == 202:
+        status = FileResult.STATUS_PROVISIONING
+    else:
+        if "application/json" in response.headers.get("Content-Type", ""):
+            try:
+                body = response.json()
+            except ValueError:
+                body = response.text
+        else:
+            body = response.text
+        if status_code == 429:
+            raise RateLimitError(status_code, body)
+        raise RequestFailure(status_code, body)
+
+    headers = response.headers
+    return FileResult(
+        status=status,
+        generated_at=headers.get("X-GreyNoise-Generated-At"),
+        row_count=_header_int(headers.get("X-GreyNoise-Row-Count")),
+        total_count=_header_int(headers.get("X-GreyNoise-Total-Count")),
+        truncated=_header_bool(headers.get("X-GreyNoise-Truncated")),
+        retry_after=_header_int(headers.get("Retry-After")),
+        feed_status=headers.get("X-GreyNoise-Feed-Status"),
+    )
+
+
+def _gnql_file_params(query, limit) -> Dict[str, Any]:
+    params = {"query": query, **_FILE_FORMAT}
+    if limit is not None:
+        params["limit"] = limit
+    return params
+
+
+def _header_bool(value: Optional[str]) -> Optional[bool]:
+    if value is None:
+        return None
+    return value.strip().lower() == "true"
+
+
+def _header_int(value: Optional[str]) -> Optional[int]:
+    if value is None or not value.strip().isdigit():
+        return None
+    return int(value)
+
+
+def _write_stream(chunks, output) -> None:
+    """Write ``chunks`` to a binary file object, or atomically to a path."""
+    if hasattr(output, "write"):
+        for chunk in chunks:
+            output.write(chunk)
+        return
+
+    tmp_path = "{}.{}.part".format(output, uuid.uuid4().hex)
+    try:
+        with open(tmp_path, "xb") as f:
+            for chunk in chunks:
+                f.write(chunk)
+        os.replace(tmp_path, output)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        raise

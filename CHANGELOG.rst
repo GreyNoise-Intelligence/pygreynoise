@@ -2,9 +2,18 @@
 Changelog
 =========
 
-Version `3.1.0`_
+Version `dev`_
 ================
 **Date**: unreleased
+
+* API client:
+
+  * Added `callback_file` and `gnql_file` functions to download the pre-built callback and GNQL SIEM files (``/v3/files/callback``, ``/v3/files/gnql``), returning a `FileResult`
+  * Added `callback_file_metadata` and `gnql_file_metadata` functions to describe the pre-built files without downloading them (``/v3/files/callback/metadata``, ``/v3/files/gnql/metadata``)
+
+Version `3.1.0`_
+================
+**Date**: July 09, 2026
 
 * API client:
 
@@ -529,4 +538,5 @@ Version `0.2.0`_
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
 .. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...v3.0.2
 .. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...v3.0.3
-.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...HEAD
+.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...v3.1.0
+.. _`dev`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.1.0...HEAD
