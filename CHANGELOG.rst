@@ -4,7 +4,7 @@ Changelog
 
 Version `3.2.0`_
 ================
-**Date**: October 26, 2026
+**Date**: November 4, 2026
 
 * API client:
 
@@ -12,20 +12,27 @@ Version `3.2.0`_
   * Psychic downloads and daily timeline lookups use the configured API server
   * `RateLimitError` now includes the API's 429 explanation, and the CLI prints it
   * Added Event Feed search, pull (fetch and optional acknowledge), and consumer management
+  * `ip`, `quick`, and `ip_multi` send `workspace_labels`, defaulting to `greynoise,community`
+  * Added `callback_file` and `gnql_file` functions to download the pre-built callback and GNQL SIEM files
+  * Added `callback_file_metadata` and `gnql_file_metadata` functions to describe the pre-built files without downloading them
 
 * CLI:
 
   * `feeds search` searches retained feed history without moving a consumer checkpoint
   * `feeds pull` fetches the next batch for a feed consumer and can acknowledge that batch
   * `feeds consumers` lists consumers, or creates, resets, or deletes one checkpoint
+  * `ip`, `quick`, and `ip-multi` accept `--workspace-labels` and pass the value through to the API
+  * IP text output lists the `source_workspaces` returned for the scopes that were queried
   * `ip --psychic --days` looks up an IP in a Psychic bitmap covering the last N days
   * Psychic text output shows the bitmap date, and says when the IP was not in that file
+  * `psychic-download` and `psychic-generate` accept any model number and warn when it is not 1, 2, or 3
 
 * Dependencies:
 
-  * Updated `Click` to 8.5.0 on Python 3.10 and newer (8.1.8 remains the latest release for Python 3.8 and 3.9)
+  * Runtime dependencies now declare a minimum version instead of an exact pin, so applications can install a newer compatible release
+  * Updated `Click` to 8.5.0 on Python 3.10 and newer
   * Updated `click-repl` to 0.4.1 on Python 3.9 and newer
-  * Updated `cachetools` to 7.2.5 on Python 3.10 and newer
+  * Updated `cachetools` to 7.2.8 on Python 3.10 and newer
   * Updated `maxminddb` to 3.2.0 on Python 3.10 and newer
   * Updated `more-itertools` to 11.2.1 on Python 3.11 and newer
 
