@@ -7,6 +7,7 @@ from datetime import datetime
 import click
 
 from greynoise.__version__ import __version__
+from greynoise.api import DEFAULT_WORKSPACE_LABELS
 from greynoise.cli.decorator import (
     cve_command,
     echo_result,
@@ -122,6 +123,15 @@ def help_(context):
     type=click.IntRange(1),
     help="Generate Psychic bitmap for the last N days through today (requires --psychic)",
 )
+@click.option(
+    "--workspace-labels",
+    default=DEFAULT_WORKSPACE_LABELS,
+    show_default=True,
+    help=(
+        "Comma-separated dataset scopes sent as the workspace_labels query parameter. "
+        "Not applied to --psychic lookups."
+    ),
+)
 def ip(
     context,
     api_client,
@@ -134,6 +144,7 @@ def ip(
     offering,
     psychic,
     days,
+    workspace_labels,
 ):
     """Query GreyNoise for all information on a given IP."""
     if days is not None and not psychic:
@@ -145,7 +156,9 @@ def ip(
             api_client.psychic_load_days(days)
         results = [api_client.psychic_lookup(ip_address=ip_address) for ip_address in ip_addresses]
     else:
-        results = [api_client.ip(ip_address=ip_address) for ip_address in ip_addresses]
+        results = [
+            api_client.ip(ip_address=ip_address, workspace_labels=workspace_labels) for ip_address in ip_addresses
+        ]
     return results
 
 
@@ -179,6 +192,12 @@ def query(
 
 
 @ip_lookup_command
+@click.option(
+    "--workspace-labels",
+    default=DEFAULT_WORKSPACE_LABELS,
+    show_default=True,
+    help="Comma-separated dataset scopes sent as the workspace_labels query parameter.",
+)
 def quick(
     context,
     api_client,
@@ -188,16 +207,23 @@ def quick(
     output_format,
     ip_address,
     offering,
+    workspace_labels,
 ):
     """Quickly check whether or not one or many IPs are "noise"."""
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = []
     if ip_addresses:
-        results.extend(api_client.quick(ip_addresses=ip_addresses))
+        results.extend(api_client.quick(ip_addresses=ip_addresses, workspace_labels=workspace_labels))
     return results
 
 
 @ip_lookup_command
+@click.option(
+    "--workspace-labels",
+    default=DEFAULT_WORKSPACE_LABELS,
+    show_default=True,
+    help="Comma-separated dataset scopes sent as the workspace_labels query parameter.",
+)
 def ip_multi(
     context,
     api_client,
@@ -207,6 +233,7 @@ def ip_multi(
     output_format,
     ip_address,
     offering,
+    workspace_labels,
 ):
     """
     Perform Context lookup for multiple IPs at once.\n
@@ -217,7 +244,7 @@ def ip_multi(
     ip_addresses = get_ip_addresses(context, input_file, ip_address)
     results = []
     if ip_addresses:
-        results.extend(api_client.ip_multi(ip_addresses=ip_addresses))
+        results.extend(api_client.ip_multi(ip_addresses=ip_addresses, workspace_labels=workspace_labels))
     return results
 
 

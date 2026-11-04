@@ -741,6 +741,23 @@ operating system, etc.::
       }
     }
 
+Pre-built files
+---------------
+
+GreyNoise builds SIEM lookup files server-side and refreshes them hourly. ``callback_file``
+downloads the callback IP file and ``gnql_file`` downloads the file for a GNQL query. Both
+stream the file to a path or binary file object and return a ``FileResult``::
+
+    >>> api_client.gnql_file('last_seen:1d -classification:unknown', 'feed.csv', limit=100000)
+    FileResult(status='ok', generated_at='2026-10-29T10:00:00Z', row_count=100000, total_count=250000, truncated=True, feed_status='enabled', retry_after=None)
+
+The first request for a new query subscribes to it and returns status ``provisioning`` until
+the file is built; retry after ``result.retry_after`` seconds. Integrations should identify
+themselves with ``integration='name/version'``. ``callback_file_metadata`` and ``gnql_file_metadata``
+take the same arguments as the download functions (without ``output``) and return
+the same fields without downloading the file. Error responses raise ``RequestFailure``
+(``RateLimitError`` for HTTP 429) with the status code and error body as arguments.
+
 
 Command line interface
 ======================

@@ -70,6 +70,7 @@ EXAMPLE_IP_CONTEXT = {
         },
         "seen": True,
         "spoofable": False,
+        "source_workspaces": ["greynoise", "community"],
         "tags": [{"name": "<tag#1>"}, {"name": "<tag#2>"}, {"name": "<tag#3>"}],
         "vpn": False,
         "vpn_service": "",
@@ -91,6 +92,7 @@ EXAMPLE_IP_CONTEXT_OUTPUT = ANSI_MARKUP.parse(textwrap.dedent("""\
         <key>BOT</key>: <value>False</value>
         <key>VPN</key>: <value>False</value>
         <key>TOR</key>: <value>False</value>
+        <key>Source Workspaces</key>: <value>greynoise, community</value>
         [TAGS]
         - <value><tag#1></value>
         - <value><tag#2></value>

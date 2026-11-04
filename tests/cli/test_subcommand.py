@@ -348,7 +348,7 @@ class TestIP(object):
 
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
-        api_client.ip.assert_called_once_with(ip_address="8.8.8.8")
+        api_client.ip.assert_called_once_with(ip_address="8.8.8.8", workspace_labels="greynoise,community")
         api_client.callback_ip.assert_not_called()
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
@@ -361,7 +361,21 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["-f", "json", ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
-        api_client.ip.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address, workspace_labels="greynoise,community")
+
+    def test_ip_workspace_labels_passed_through(self, api_client):
+        """Custom scopes are forwarded to the API client unchanged."""
+        runner = CliRunner()
+        api_client.ip.return_value = {"ip": "8.8.8.8"}
+
+        result = runner.invoke(
+            subcommand.ip,
+            ["-f", "json", "--workspace-labels", "personal,not-a-scope", "8.8.8.8"],
+        )
+
+        assert result.exit_code == 0
+        api_client.ip.assert_called_once_with(ip_address="8.8.8.8", workspace_labels="personal,not-a-scope")
+        api_client.psychic_lookup.assert_not_called()
 
     def test_ip_psychic_with_days(self, api_client):
         """Psychic IP lookup generates a bitmap for the requested day range."""
@@ -397,7 +411,7 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["-f", "json", "-i", StringIO(ip_address)])
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
-        api_client.ip.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address, workspace_labels="greynoise,community")
 
     @pytest.mark.parametrize("ip_address, expected_response", [("8.8.8.8", {})])
     def test_stdin_input(self, api_client, ip_address, expected_response):
@@ -409,7 +423,7 @@ class TestIP(object):
         result = runner.invoke(subcommand.ip, ["-f", "json"], input=ip_address)
         assert result.exit_code == 0
         assert result.output.strip("\n") == json.dumps([expected_response], indent=4, sort_keys=True)
-        api_client.ip.assert_called_with(ip_address=ip_address)
+        api_client.ip.assert_called_with(ip_address=ip_address, workspace_labels="greynoise,community")
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -692,7 +706,23 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.quick.assert_called_with(ip_addresses=[ip_address])
+        api_client.quick.assert_called_with(ip_addresses=[ip_address], workspace_labels="greynoise,community")
+
+    def test_quick_workspace_labels_passed_through(self, api_client):
+        """Custom scopes are forwarded to the API client unchanged."""
+        runner = CliRunner()
+        api_client.quick.return_value = [{"ip": "8.8.8.8"}]
+
+        result = runner.invoke(
+            subcommand.quick,
+            ["-f", "json", "--workspace-labels", "personal,not-a-scope", "8.8.8.8"],
+        )
+
+        assert result.exit_code == 0
+        api_client.quick.assert_called_once_with(
+            ip_addresses=["8.8.8.8"],
+            workspace_labels="personal,not-a-scope",
+        )
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -723,7 +753,7 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.quick.assert_called_with(ip_addresses=ip_addresses)
+        api_client.quick.assert_called_with(ip_addresses=ip_addresses, workspace_labels="greynoise,community")
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -754,7 +784,7 @@ class TestQuick(object):
         result = runner.invoke(subcommand.quick, ["-f", "json"], input="\n".join(ip_addresses))
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.quick.assert_called_with(ip_addresses=ip_addresses)
+        api_client.quick.assert_called_with(ip_addresses=ip_addresses, workspace_labels="greynoise,community")
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
@@ -890,7 +920,23 @@ class TestIPMulti(object):
         result = runner.invoke(subcommand.ip_multi, ["-f", output_format, ip_address])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.ip_multi.assert_called_with(ip_addresses=[ip_address])
+        api_client.ip_multi.assert_called_with(ip_addresses=[ip_address], workspace_labels="greynoise,community")
+
+    def test_ip_multi_workspace_labels_passed_through(self, api_client):
+        """Custom scopes are forwarded to the API client unchanged."""
+        runner = CliRunner()
+        api_client.ip_multi.return_value = [{"ip": "8.8.8.8"}]
+
+        result = runner.invoke(
+            subcommand.ip_multi,
+            ["-f", "json", "--workspace-labels", "personal,not-a-scope", "8.8.8.8"],
+        )
+
+        assert result.exit_code == 0
+        api_client.ip_multi.assert_called_once_with(
+            ip_addresses=["8.8.8.8"],
+            workspace_labels="personal,not-a-scope",
+        )
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -937,7 +983,7 @@ class TestIPMulti(object):
         result = runner.invoke(subcommand.ip_multi, ["-f", "json", "-i", StringIO("\n".join(ip_addresses))])
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
+        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses, workspace_labels="greynoise,community")
 
     @pytest.mark.parametrize(
         "ip_addresses, mock_response, expected",
@@ -968,7 +1014,7 @@ class TestIPMulti(object):
         result = runner.invoke(subcommand.ip_multi, ["-f", "json"], input="\n".join(ip_addresses))
         assert result.exit_code == 0
         assert result.output.strip("\n") == expected
-        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses)
+        api_client.ip_multi.assert_called_with(ip_addresses=ip_addresses, workspace_labels="greynoise,community")
 
     def test_no_ip_address_passed(self, api_client):
         """Usage is returned if no IP address or input file is passed."""
