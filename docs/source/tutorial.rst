@@ -1101,8 +1101,10 @@ other filters::
    $ greynoise feeds search --event-type tag-spike --ip 8.8.8.8 --from 24h --limit 100
 
 ``feeds pull`` fetches the next batch for one consumer. The checkpoint stays put
-unless ``--ack`` is set. ``--cursor`` acknowledges a previously fetched batch
-without fetching again::
+unless ``--ack`` is set. Text output for a pull without ``--ack`` shows the first
+25 events (100 with ``-v``). An acknowledged pull prints the full batch and states
+that the checkpoint advanced past every event in it. ``--cursor`` acknowledges a
+previously fetched batch without fetching again::
 
    $ greynoise feeds pull <feed_uuid> --consumer worker-1 --limit 100 --ack
 

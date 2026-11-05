@@ -742,7 +742,11 @@ def feeds_search(
     "--consumer", default="default", show_default=True, help="Durable consumer checkpoint to read or acknowledge."
 )
 @click.option("--limit", type=click.IntRange(1, 1000), help="Maximum events to fetch, from 1 to 1000.")
-@click.option("--ack", is_flag=True, help="Acknowledge the cursor returned by this fetch.")
+@click.option(
+    "--ack",
+    is_flag=True,
+    help="Acknowledge the cursor returned by this fetch. Text output lists every event in that batch.",
+)
 @click.option("--cursor", help="Acknowledge a previously fetched cursor without fetching again.")
 @_standard_cli_options
 @pass_api_client

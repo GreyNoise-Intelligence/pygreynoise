@@ -517,3 +517,40 @@ def test_format_feed_events_and_consumers():
         verbose=False,
     )
     assert "worker-1" in consumers
+
+
+def test_acknowledged_feed_pull_prints_the_full_batch():
+    """Acknowledging a pull must not hide events the checkpoint moved past."""
+    events = [
+        {"event_type": "tag-spike", "created_at": "2026-10-26T00:00:00Z", "payload": {"ip": "10.0.0.%s" % index}}
+        for index in range(30)
+    ]
+    truncated = feeds_events_formatter({"events": events, "has_more": True, "consumer": "worker-1"}, verbose=False)
+    assert "10.0.0.24" in truncated
+    assert "10.0.0.25" not in truncated
+    assert "5 more" in truncated
+
+    acknowledged = feeds_events_formatter(
+        {
+            "events": events,
+            "has_more": True,
+            "consumer": "worker-1",
+            "acknowledgement": {"advanced": True, "consumer": "worker-1"},
+        },
+        verbose=False,
+    )
+    assert "10.0.0.0" in acknowledged
+    assert "10.0.0.29" in acknowledged
+    assert "5 more" not in acknowledged
+    assert "advanced past all 30 events" in acknowledged
+
+    not_advanced = feeds_events_formatter(
+        {
+            "events": events,
+            "acknowledgement": {"advanced": False, "message": "No cursor was returned to acknowledge"},
+        },
+        verbose=False,
+    )
+    assert "10.0.0.25" not in not_advanced
+    assert "5 more" in not_advanced
+    assert "advanced past all" not in not_advanced

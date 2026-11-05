@@ -38,8 +38,11 @@
 <key>Cursor</key>: <value>{{ result.get("cursor") }}</value>
 {%- endif %}
 {%- set events = result.get("events") or [] %}
+{%- set ack = result.get("acknowledgement") %}
+{%- set show_full_batch = ack is mapping and ack.get("advanced") != false %}
+{%- set row_limit = events | length if show_full_batch else max_rows %}
 <header>Events</header> ({{ events | length }})
-{%- for event in events[:max_rows] %}
+{%- for event in events[:row_limit] %}
 {%- set payload = event.get("payload") if event.get("payload") is mapping else {} %}
   - <key>{{ event.get("event_type") or "event" }}</key> <value>{{ event.get("created_at") or "" }}</value>
 {%- if event.get("feed_id") %}
@@ -54,10 +57,9 @@
 {{ payload | tojson }}
 {%- endif %}
 {%- endfor %}
-{%- if events | length > max_rows %}
-  <dim>… {{ events | length - max_rows }} more (use -v or -f json)</dim>
+{%- if events | length > row_limit %}
+  <dim>… {{ events | length - row_limit }} more (use -v or -f json)</dim>
 {%- endif %}
-{%- set ack = result.get("acknowledgement") %}
 {%- if ack is mapping %}
 <header>Acknowledgement</header>
 <key>Advanced</key>: <value>{{ ack.get("advanced") }}</value>
@@ -66,6 +68,9 @@
 {%- endif %}
 {%- if ack.get("message") %}
 {{ ack.get("message") }}
+{%- endif %}
+{%- if ack.get("advanced") %}
+<dim>The consumer checkpoint advanced past all {{ events | length }} events in this batch.</dim>
 {%- endif %}
 {%- endif %}
 {%- else %}
