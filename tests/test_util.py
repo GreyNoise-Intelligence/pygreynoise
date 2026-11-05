@@ -12,6 +12,7 @@ from greynoise.util import (
     CONFIG_FILE,
     load_config,
     normalize_rfc3339_datetime,
+    request_proxies,
     save_config,
     validate_ip,
     validate_similar_min_score,
@@ -19,6 +20,26 @@ from greynoise.util import (
     validate_timeline_field_value,
     validate_timeline_granularity,
 )
+
+
+class TestRequestProxies(object):
+    """request_proxies helper for requests proxies kwargs."""
+
+    @pytest.mark.parametrize("proxy", [None, "", "   ", "\t"])
+    def test_empty_returns_none(self, proxy):
+        assert request_proxies(proxy) is None
+
+    def test_url_maps_http_and_https(self):
+        assert request_proxies("http://proxy.example:8080") == {
+            "http": "http://proxy.example:8080",
+            "https": "http://proxy.example:8080",
+        }
+
+    def test_strips_whitespace(self):
+        assert request_proxies("  http://proxy.example:8080  ") == {
+            "http": "http://proxy.example:8080",
+            "https": "http://proxy.example:8080",
+        }
 
 
 class TestNormalizeRfc3339Datetime(object):

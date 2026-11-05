@@ -29,6 +29,28 @@ DEFAULT_CONFIG = {
 _OPTIONAL_EMPTY_OMIT_KEYS = frozenset({"proxy", "psychic_cache_dir"})
 
 
+def request_proxies(proxy):
+    """Build a ``requests`` proxies mapping from a configured proxy URL.
+
+    Empty or whitespace-only values return ``None`` so callers can omit the
+    ``proxies`` argument and leave session and environment proxy settings
+    (``HTTP_PROXY`` / ``HTTPS_PROXY``) intact. Passing an empty dict to
+    ``requests`` is treated as an explicit empty override and can suppress
+    environment proxies.
+
+    :param proxy: Proxy URL (e.g. ``http://proxy.example:8080``), or empty.
+    :type proxy: str or None
+    :returns: ``{"http": url, "https": url}`` when *proxy* is set, else ``None``.
+    :rtype: dict or None
+    """
+    if proxy is None:
+        return None
+    proxy_url = str(proxy).strip()
+    if not proxy_url:
+        return None
+    return {"http": proxy_url, "https": proxy_url}
+
+
 def _omit_empty_optional_config_options(config_parser):
     """Remove optional greynoise keys whose value is blank."""
     if not config_parser.has_section("greynoise"):

@@ -21,11 +21,11 @@ sys.path.insert(0, os.path.abspath("."))
 # -- Project information -----------------------------------------------------
 
 project = "greynoise"
-copyright = "2018-2025, GreyNoise Intelligence"
+copyright = "2018-2026, GreyNoise Intelligence"
 author = "GreyNoise Intelligence"
 
 # The full version, including alpha/beta/rc tags
-release = "3.1.0"
+release = "3.2.0"
 
 
 # -- General configuration ---------------------------------------------------

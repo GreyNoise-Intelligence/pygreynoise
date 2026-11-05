@@ -2,9 +2,43 @@
 Changelog
 =========
 
+Version `3.2.0`_
+================
+**Date**: November 4, 2026
+
+* API client:
+
+  * Corrected proxy settings for Psychic downloads/generation and IP Timeline
+  * Psychic downloads and daily timeline lookups use the configured API server
+  * `RateLimitError` now includes the API's 429 explanation, and the CLI prints it
+  * Added Event Feed search, pull (fetch and optional acknowledge), and consumer management
+  * `ip`, `quick`, and `ip_multi` send `workspace_labels`, defaulting to `greynoise,community`
+  * Added `callback_file` and `gnql_file` functions to download the pre-built callback and GNQL SIEM files
+  * Added `callback_file_metadata` and `gnql_file_metadata` functions to describe the pre-built files without downloading them
+
+* CLI:
+
+  * `feeds search` searches retained feed history without moving a consumer checkpoint
+  * `feeds pull` fetches the next batch for a feed consumer and can acknowledge that batch
+  * `feeds consumers` lists consumers, or creates, resets, or deletes one checkpoint
+  * `ip`, `quick`, and `ip-multi` accept `--workspace-labels` and pass the value through to the API
+  * IP text output lists the `source_workspaces` returned for the scopes that were queried
+  * `ip --psychic --days` looks up an IP in a Psychic bitmap covering the last N days
+  * Psychic text output shows the bitmap date, and says when the IP was not in that file
+  * `psychic-download` and `psychic-generate` accept any model number and warn when it is not 1, 2, or 3
+
+* Dependencies:
+
+  * Runtime dependencies now declare a minimum version instead of an exact pin, so applications can install a newer compatible release
+  * Updated `Click` to 8.5.0 on Python 3.10 and newer
+  * Updated `click-repl` to 0.4.1 on Python 3.9 and newer
+  * Updated `cachetools` to 7.2.8 on Python 3.10 and newer
+  * Updated `maxminddb` to 3.2.0 on Python 3.10 and newer
+  * Updated `more-itertools` to 11.2.1 on Python 3.11 and newer
+
 Version `3.1.0`_
 ================
-**Date**: unreleased
+**Date**: July 9, 2026
 
 * API client:
 
@@ -529,4 +563,5 @@ Version `0.2.0`_
 .. _`3.0.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.0...v3.0.1
 .. _`3.0.2`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.1...v3.0.2
 .. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...v3.0.3
-.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...HEAD
+.. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...v3.1.0
+.. _`3.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.1.0...3.2.0
