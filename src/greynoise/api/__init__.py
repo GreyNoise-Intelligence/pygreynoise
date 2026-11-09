@@ -1,12 +1,15 @@
 """GreyNoise API client."""
 
+import contextlib
 import logging
+import os
 import re
 import time
+import uuid
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode, urljoin
 
 import cachetools
@@ -21,6 +24,7 @@ from greynoise.exceptions import RateLimitError, RequestFailure
 from greynoise.greynoise_timeline import get_greynoise_timeline
 from greynoise.util import (
     normalize_rfc3339_datetime,
+    request_proxies,
     validate_cve_id,
     validate_ip,
     validate_timeline_days,
@@ -29,6 +33,9 @@ from greynoise.util import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+#: Dataset scopes queried when ``workspace_labels`` is omitted.
+DEFAULT_WORKSPACE_LABELS = "greynoise,community"
 
 
 def _api_request_url(api_server: Optional[str], endpoint: str) -> str:
@@ -57,12 +64,36 @@ class APIConfig:
     psychic_max_age_hours: Optional[int] = 1
 
 
+@dataclass
+class FileResult:
+    """Outcome of a pre-built file download (:meth:`GreyNoise.callback_file`, :meth:`GreyNoise.gnql_file`).
+
+    ``status`` is ``ok`` when the file was written, and ``provisioning`` when the
+    server is still building the file and the caller should retry after
+    ``retry_after`` seconds. Nothing is written unless ``status`` is ``ok``.
+    ``feed_status`` is the GNQL subscription's build status. A field the server
+    did not report is ``None``; callback files report no ``truncated``.
+    """
+
+    STATUS_OK = "ok"
+    STATUS_PROVISIONING = "provisioning"
+
+    status: str
+    generated_at: Optional[str] = None
+    row_count: Optional[int] = None
+    total_count: Optional[int] = None
+    truncated: Optional[bool] = None
+    feed_status: Optional[str] = None
+    retry_after: Optional[int] = None
+
+
 class BaseAPIClient:
     """Base class for API clients with common functionality."""
 
     def __init__(self, config: APIConfig):
         self.config = config
         self.session = self._setup_session()
+        self._file_session = self._setup_file_session()
         self._setup_cache()
 
     def close(self) -> None:
@@ -73,12 +104,32 @@ class BaseAPIClient:
         :class:`requests.Session`. Safe to call multiple times.
         """
         self.session.close()
+        self._file_session.close()
+
+    @staticmethod
+    def _setup_file_session() -> requests.Session:
+        """Set up a session for file downloads that retries connections but not responses.
+
+        File endpoints answer 503 with a ``Retry-After`` of a minute or more; retrying
+        those in urllib3 would block for minutes and hide the status from the caller.
+        """
+        session = requests.Session()
+        retry = Retry(total=3, backoff_factor=1, status_forcelist=[], respect_retry_after_header=False)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        return session
 
     def _setup_session(self) -> requests.Session:
         """Set up a session with retry logic and connection pooling.
 
         urllib3 retries transient **5xx** responses only. **429 Too Many Requests** is
         intentionally excluded.
+
+        When ``config.proxy`` is set, it is applied to ``session.proxies`` so every
+        request on this session uses it. An empty or unset proxy leaves the session
+        alone so ``HTTP_PROXY`` / ``HTTPS_PROXY`` from the environment still apply
+        (``trust_env`` remains enabled).
         """
         session = requests.Session()
 
@@ -93,12 +144,25 @@ class BaseAPIClient:
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
+        proxies = request_proxies(self.config.proxy)
+        if proxies is not None:
+            session.proxies.update(proxies)
+
         return session
 
     def _setup_cache(self) -> None:
         """Initialize cache with configured parameters."""
         self.ip_quick_check_cache = initialize_cache(self.config.cache_max_size, self.config.cache_ttl)
         self.ip_context_cache = initialize_cache(self.config.cache_max_size, self.config.cache_ttl)
+
+    def _default_headers(self) -> Dict[str, str]:
+        user_agent_parts = ["GreyNoise/{}".format(__version__)]
+        if self.config.integration_name:
+            user_agent_parts.append("({})".format(self.config.integration_name))
+        return {
+            "User-Agent": " ".join(user_agent_parts),
+            "key": self.config.api_key,
+        }
 
     def _request(
         self,
@@ -120,17 +184,17 @@ class BaseAPIClient:
         if params is None:
             params = {}
 
-        # Use config proxy when no proxy is explicitly passed
-        proxy = proxy or self.config.proxy
+        # Default proxy lives on session.proxies (set in _setup_session). An explicit
+        # *proxy* argument overrides for this call only. Never pass an empty proxies
+        # dict — that can suppress HTTP_PROXY / HTTPS_PROXY from the environment.
+        if proxy is not None:
+            effective_proxy = proxy
+            proxies = request_proxies(proxy)
+        else:
+            effective_proxy = self.config.proxy
+            proxies = None
 
-        user_agent_parts = ["GreyNoise/{}".format(__version__)]
-        if self.config.integration_name:
-            user_agent_parts.append("({})".format(self.config.integration_name))
-
-        req_headers = {
-            "User-Agent": " ".join(user_agent_parts),
-            "key": self.config.api_key,
-        }
+        req_headers = self._default_headers()
         if extra_headers:
             req_headers.update(extra_headers)
 
@@ -142,35 +206,26 @@ class BaseAPIClient:
             LOGGER.debug("Sending API request...method: %s", method)
             LOGGER.debug("Sending API request...params: %s", params)
             LOGGER.debug("Sending API request...files: %s", files)
-            LOGGER.debug("Sending API request...proxy: %s", proxy)
+            LOGGER.debug("Sending API request...proxy: %s", effective_proxy)
             if params:
                 full_url = "{}?{}".format(url, urlencode(params))
             else:
                 full_url = url
             LOGGER.debug("Full request URL with parameters: %s", full_url)
 
+        request_kwargs = {
+            "headers": req_headers,
+            "timeout": self.config.timeout,
+            "params": params,
+            "json": json,
+            "files": files,
+        }
+        if proxies is not None:
+            request_kwargs["proxies"] = proxies
+
         request_method = getattr(self.session, method)
         try:
-            if proxy:
-                proxies = {protocol: proxy for protocol in ("http", "https")}
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                    proxies=proxies,
-                )
-            else:
-                response = request_method(
-                    url,
-                    headers=req_headers,
-                    timeout=self.config.timeout,
-                    params=params,
-                    json=json,
-                    files=files,
-                )
+            response = request_method(url, **request_kwargs)
 
             content_type = response.headers.get("Content-Type", "")
             resp_headers = response.headers
@@ -193,7 +248,7 @@ class BaseAPIClient:
             LOGGER.debug("API response received %s", response.status_code)
 
             if response.status_code == 429:
-                raise RateLimitError()
+                raise RateLimitError(response.status_code, body)
             if response.status_code >= 400 and response.status_code != 404:
                 raise RequestFailure(response.status_code, body)
 
@@ -264,6 +319,67 @@ def initialize_cache(cache_max_size, cache_ttl):
     return cache
 
 
+_FEED_EVENT_TYPES = frozenset(
+    {
+        "ip-classification-change",
+        "cve-status-change",
+        "cve-activity-spike",
+        "vendor-cve-spike",
+        "tag-spike",
+        "new-callback-ip",
+        "new-callback-file",
+        "credential-observed",
+    }
+)
+_FEED_CONSUMER_ACTIONS = frozenset({"list", "create", "reset", "delete"})
+_FEED_CONSUMER_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def _validate_feed_id(feed_id):
+    """Require a feed UUID."""
+    if feed_id is None or not str(feed_id).strip():
+        raise ValueError("feed_id is required")
+    try:
+        uuid.UUID(str(feed_id))
+    except ValueError:
+        raise ValueError("feed_id must be a UUID")
+    return str(feed_id)
+
+
+def _validate_feed_consumer(consumer, required=True):
+    """Require a durable consumer name when *required* is true."""
+    if consumer is None or str(consumer).strip() == "":
+        if required:
+            raise ValueError("consumer is required")
+        return None
+    name = str(consumer)
+    if len(name) > 128 or not _FEED_CONSUMER_NAME.match(name):
+        raise ValueError(
+            "consumer must be 1-128 characters, start with a letter or number, "
+            "and contain only letters, numbers, periods, underscores, or hyphens"
+        )
+    return name
+
+
+def _validate_feed_limit(limit):
+    """Accept a page size of 1 to 1000."""
+    if limit is None:
+        return None
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1 or limit > 1000:
+        raise ValueError("limit must be an integer from 1 to 1000")
+    return limit
+
+
+def _validate_feed_event_types(event_types):
+    """Accept retained event type names."""
+    if not event_types:
+        return None
+    unknown = [event_type for event_type in event_types if event_type not in _FEED_EVENT_TYPES]
+    if unknown:
+        raise ValueError("Unknown event type: {}".format(", ".join(unknown)))
+    return list(event_types)
+
+
 class GreyNoise(BaseAPIClient):
     """GreyNoise API client.
 
@@ -298,10 +414,21 @@ class GreyNoise(BaseAPIClient):
     EP_CALLBACK_LIST = "v1/callback/ips"
     EP_CALLBACK_EXPORT_IPS = "v1/callback/export-ips"
     EP_CALLBACK_OVERVIEW = "v1/callback/overview"
+    EP_FEED_SEARCH = "v3/feeds/events/search"
+    EP_FEED_EVENTS = "v3/feeds/{feed_id}/events"
+    EP_FEED_ACK = "v3/feeds/{feed_id}/events/ack"
+    EP_FEED_CONSUMERS = "v3/feeds/{feed_id}/consumers"
+    EP_FEED_CONSUMER = "v3/feeds/{feed_id}/consumers/{consumer}"
+    EP_FEED_CONSUMER_RESET = "v3/feeds/{feed_id}/consumers/{consumer}/reset"
+    EP_FILES_CALLBACK = "v3/files/callback"
+    EP_FILES_CALLBACK_METADATA = "v3/files/callback/metadata"
+    EP_FILES_GNQL = "v3/files/gnql"
+    EP_FILES_GNQL_METADATA = "v3/files/gnql/metadata"
     EP_NOT_IMPLEMENTED = "v2/request/{subcommand}"
     UNKNOWN_CODE_MESSAGE = "Code message unknown: {}"
 
     IP_MULTI_CHECK_CHUNK_SIZE = 10000
+    FILE_CHUNK_SIZE = 1 << 20
     #: Max status polls after upload (inclusive of re-checking the upload response as poll 0).
     ANALYZE_MAX_POLL_ATTEMPTS = 360
     #: Seconds to wait between analyze job status polls.
@@ -330,12 +457,14 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=config.psychic_cache_dir,
                 max_age_hours=config.psychic_max_age_hours,
                 auto_download=True,
+                proxy=config.proxy,
+                api_server=config.api_server,
             )
             LOGGER.info("Psychic enabled")
 
     def _get_psychic_for_download(self, model: Optional[int] = None):
         """Return a Psychic client for download operations, creating one if needed."""
-        from greynoise.psychic import Psychic
+        from greynoise.psychic import Psychic, warn_unknown_psychic_model
 
         requested_model = model if model is not None else (self.config.psychic_model or 1)
 
@@ -346,11 +475,46 @@ class GreyNoise(BaseAPIClient):
                 cache_dir=self.config.psychic_cache_dir,
                 max_age_hours=self.config.psychic_max_age_hours,
                 auto_download=False,
+                proxy=self.config.proxy,
+                api_server=self.config.api_server,
             )
         elif model is not None:
+            warn_unknown_psychic_model(model)
             self._psychic.model = requested_model
 
         return self._psychic
+
+    def _ensure_psychic_enabled(self, auto_download: bool = True):
+        """Initialize Psychic client on demand (e.g. CLI ``--psychic``)."""
+        if self._psychic is not None:
+            return self._psychic
+
+        from greynoise.psychic import Psychic
+
+        model = self.config.psychic_model or 1
+        self._psychic = Psychic(
+            api_key=self.config.api_key,
+            model=model,
+            cache_dir=self.config.psychic_cache_dir,
+            max_age_hours=self.config.psychic_max_age_hours,
+            auto_download=auto_download,
+            proxy=self.config.proxy,
+            api_server=self.config.api_server,
+        )
+        LOGGER.info("Psychic enabled")
+        return self._psychic
+
+    def psychic_load_days(self, days: int) -> None:
+        """
+        Generate and load a Psychic bitmap for the last *days* through today.
+
+        :param days: Number of days to include, counting today
+        :type days: int
+        :raises: RuntimeError if Psychic cannot be initialized
+        :raises: ValueError if *days* is less than 1
+        """
+        psychic = self._ensure_psychic_enabled(auto_download=False)
+        psychic.load_generated_bitmap_for_days(days)
 
     def psychic_download(
         self,
@@ -601,33 +765,47 @@ class GreyNoise(BaseAPIClient):
 
         return {"data": data, "request_metadata": meta}
 
-    def ip(self, ip_address):  # pylint: disable=C0103
+    @staticmethod
+    def _workspace_labels(workspace_labels: Optional[str]) -> str:
+        """Resolve dataset scopes, using the library default when omitted."""
+        if workspace_labels is None:
+            return DEFAULT_WORKSPACE_LABELS
+        return workspace_labels
+
+    def ip(self, ip_address, workspace_labels=None):  # pylint: disable=C0103
         """Get context associated with an IP address.
 
         :param ip_address: IP address to use in the look-up.
         :type ip_address: str
+        :param workspace_labels: Comma-separated dataset scopes (``workspace_labels``).
+            Sent as given. When omitted, ``greynoise,community`` is sent.
+        :type workspace_labels: str
         :return: Context for the IP address.
         :rtype: dict
 
         When caching is enabled, successful-looking responses are cached;
         error-shaped bodies (typically with a ``message`` field) are not.
+        Cache entries are keyed by IP address and ``workspace_labels``.
 
         """
         LOGGER.debug("Getting context for %s...", ip_address)
         validate_ip(ip_address)
+        labels = self._workspace_labels(workspace_labels)
+        cache_key = (ip_address, labels)
 
         endpoint = self.EP_IP.format(ip_address=ip_address)
+        params = {"workspace_labels": labels}
 
         if self.config.use_cache:
             cache = self.ip_context_cache
-            if ip_address in cache:
-                response = cache[ip_address]
+            if cache_key in cache:
+                response = cache[cache_key]
             else:
-                response = self._request(endpoint)
+                response = self._request(endpoint, params=params)
                 if self._ip_lookup_response_cacheable(response):
-                    cache[ip_address] = response
+                    cache[cache_key] = response
         else:
-            response = self._request(endpoint)
+            response = self._request(endpoint, params=params)
         if "ip" not in response:
             response["ip"] = ip_address
             response["business_service_intelligence"] = {"found": False}
@@ -708,12 +886,15 @@ class GreyNoise(BaseAPIClient):
         self,
         ip_addresses: Union[str, List[str]],
         include_invalid: bool = False,
+        workspace_labels: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Get activity associated with one or more IP addresses.
 
         Args:
             ip_addresses: One or more IP addresses to look up
             include_invalid: Whether to include invalid IPs in results
+            workspace_labels: Comma-separated dataset scopes (``workspace_labels``).
+                Sent as given. When omitted, ``greynoise,community`` is sent.
 
         Returns:
             List of results for each IP address
@@ -724,6 +905,7 @@ class GreyNoise(BaseAPIClient):
         if isinstance(ip_addresses, str):
             ip_addresses = ip_addresses.split(",")
 
+        labels = self._workspace_labels(workspace_labels)
         LOGGER.debug("Getting noise status for %s IPs...", len(ip_addresses))
 
         valid_ip_addresses = [
@@ -732,7 +914,12 @@ class GreyNoise(BaseAPIClient):
 
         def process_chunk(chunk: List[str]) -> Dict[str, List[Any]]:
             """Process a chunk of IP addresses."""
-            api_result = self._request(self.EP_NOISE_MULTI, method="post", json={"ips": chunk})
+            api_result = self._request(
+                self.EP_NOISE_MULTI,
+                params={"workspace_labels": labels},
+                method="post",
+                json={"ips": chunk},
+            )
             return self._coerce_bulk_ip_post_response(api_result)
 
         # Process valid IPs in parallel batches
@@ -740,7 +927,7 @@ class GreyNoise(BaseAPIClient):
             # Keep the same ordering as in the input
             LOGGER.debug("Using cache for quick lookup")
             ordered_results = OrderedDict(
-                (ip_address, self.ip_quick_check_cache.get(ip_address)) for ip_address in valid_ip_addresses
+                (ip_address, self.ip_quick_check_cache.get((ip_address, labels))) for ip_address in valid_ip_addresses
             )
             api_ip_addresses = [ip_address for ip_address, result in ordered_results.items() if result is None]
 
@@ -775,7 +962,7 @@ class GreyNoise(BaseAPIClient):
                 ip_address = result["ip"]
                 ordered_results[ip_address] = result
                 if self.config.use_cache:
-                    self.ip_quick_check_cache[ip_address] = result
+                    self.ip_quick_check_cache[(ip_address, labels)] = result
 
             for item in ips_not_found:
                 result = {
@@ -791,7 +978,7 @@ class GreyNoise(BaseAPIClient):
                 }
                 ordered_results[item] = result
                 if self.config.use_cache:
-                    self.ip_quick_check_cache[item] = result
+                    self.ip_quick_check_cache[(item, labels)] = result
 
         if include_invalid:
             for ip_address in ip_addresses:
@@ -812,22 +999,30 @@ class GreyNoise(BaseAPIClient):
 
         return results
 
-    def ip_multi(self, ip_addresses, include_invalid=False):  # pylint: disable=R0912
+    def ip_multi(self, ip_addresses, include_invalid=False, workspace_labels=None):  # pylint: disable=R0912
         """Get activity associated with one or more IP addresses.
 
         :param ip_addresses: One or more IP addresses to use in the look-up.
         :type ip_addresses: str | list
+        :param include_invalid: True or False
+        :type include_invalid: bool
+        :param workspace_labels: Comma-separated dataset scopes (``workspace_labels``).
+            Sent as given. When omitted, ``greynoise,community`` is sent.
+        :type workspace_labels: str
         :return: Bulk status information for IP addresses.
         :rtype: dict
 
-        :param include_invalid: True or False
-        :type include_invalid: bool
-
         """
+        labels = self._workspace_labels(workspace_labels)
 
         def process_chunk(chunk: List[str]) -> Dict[str, List[Any]]:
             """Process a chunk of IP addresses."""
-            api_result = self._request(self.EP_NOISE_CONTEXT_MULTI, method="post", json={"ips": chunk})
+            api_result = self._request(
+                self.EP_NOISE_CONTEXT_MULTI,
+                params={"workspace_labels": labels},
+                method="post",
+                json={"ips": chunk},
+            )
             return self._coerce_bulk_ip_post_response(api_result)
 
         if self.offering == "community":  # pylint: disable=R1702
@@ -847,7 +1042,7 @@ class GreyNoise(BaseAPIClient):
                 # Keep the same ordering as in the input
                 LOGGER.debug("Using cache for ip_multi lookup")
                 ordered_results = OrderedDict(
-                    (ip_address, self.ip_context_cache.get(ip_address)) for ip_address in valid_ip_addresses
+                    (ip_address, self.ip_context_cache.get((ip_address, labels))) for ip_address in valid_ip_addresses
                 )
                 api_ip_addresses = [ip_address for ip_address, result in ordered_results.items() if result is None]
 
@@ -1133,13 +1328,16 @@ class GreyNoise(BaseAPIClient):
                 user_agent_parts.append("({})".format(self.config.integration_name))
             user_agent = " ".join(user_agent_parts)
 
+            api_server = (self.config.api_server or "https://api.greynoise.io").rstrip("/")
             response = get_greynoise_timeline(
                 ip=ip_address,
                 api_key=self.config.api_key,
                 days=days,
                 granularity="1d",
                 max_workers=4,
+                base_url="{}/v3".format(api_server),
                 user_agent=user_agent,
+                proxy=self.config.proxy,
             )
 
         return response
@@ -1246,10 +1444,7 @@ class GreyNoise(BaseAPIClient):
         :raises: RuntimeError if psychic is not enabled
         """
         if not self._psychic:
-            raise RuntimeError(
-                "Psychic is not enabled. Initialize GreyNoise with psychic=True in config "
-                "or GREYNOISE_PSYCHIC environment variable"
-            )
+            self._ensure_psychic_enabled()
 
         return self._psychic.lookup_ip(ip_address)
 
@@ -1646,3 +1841,334 @@ class GreyNoise(BaseAPIClient):
             ips=ips,
         )
         return self._request(self.EP_CALLBACK_OVERVIEW, method="post", json=payload or {})
+
+    def feed_search(
+        self,
+        feed_ids=None,
+        event_types=None,
+        ip=None,
+        cve=None,
+        tag=None,
+        classification=None,
+        from_time=None,
+        to=None,
+        cursor=None,
+        limit=None,
+    ):
+        """Search retained feed events without moving a pull checkpoint.
+
+        An empty call searches enabled non-session feeds over the previous hour.
+        Pass ``cursor`` alone (plus optional ``limit``) to continue a previous page.
+        See https://docs.greynoise.io/reference/searchfeedevents
+        """
+        if self.offering == "community":
+            return {"message": "Event feed search is not supported with Community offering"}
+
+        limit = _validate_feed_limit(limit)
+        criteria = {
+            "feed_ids": list(feed_ids) if feed_ids else None,
+            "event_types": _validate_feed_event_types(event_types),
+            "ip": ip or None,
+            "cve": cve or None,
+            "tag": tag or None,
+            "classification": classification or None,
+            "from": from_time or None,
+            "to": to or None,
+        }
+        if cursor:
+            if any(value for value in criteria.values()):
+                raise ValueError("A search cursor cannot be combined with other search filters")
+            payload = {"cursor": cursor}
+        else:
+            if criteria["feed_ids"] is not None:
+                if len(criteria["feed_ids"]) > 100:
+                    raise ValueError("feed_ids accepts at most 100 ids")
+                criteria["feed_ids"] = [_validate_feed_id(feed_id) for feed_id in criteria["feed_ids"]]
+            payload = {key: value for key, value in criteria.items() if value is not None}
+        if limit is not None:
+            payload["limit"] = limit
+
+        LOGGER.debug("Searching retained feed events...")
+        return self._request(self.EP_FEED_SEARCH, method="post", json=payload)
+
+    def feed_pull(self, feed_id, consumer="default", limit=None, ack=False, cursor=None):
+        """Fetch the next feed batch, or acknowledge a batch that was already fetched.
+
+        Fetching does not move the consumer checkpoint. Pass ``ack=True`` to
+        acknowledge the cursor returned by this fetch after the batch is in hand.
+        Pass ``cursor`` to acknowledge a previously fetched batch without fetching again.
+        See https://docs.greynoise.io/docs/using-the-feeds-api-to-retrieve-events
+        """
+        if self.offering == "community":
+            return {"message": "Event feed pull is not supported with Community offering"}
+
+        feed_id = _validate_feed_id(feed_id)
+        consumer_name = _validate_feed_consumer(consumer or "default")
+        limit = _validate_feed_limit(limit)
+        if cursor:
+            return self._feed_acknowledge(feed_id, cursor, consumer_name)
+
+        params = {"consumer": consumer_name}
+        if limit is not None:
+            params["limit"] = limit
+        LOGGER.debug("Fetching feed events feed_id=%s consumer=%s", feed_id, consumer_name)
+        response = self._request(self.EP_FEED_EVENTS.format(feed_id=feed_id), params=params)
+        if not ack or not isinstance(response, dict):
+            return response
+
+        fetched_cursor = response.get("cursor")
+        response = dict(response)
+        if fetched_cursor:
+            response["acknowledgement"] = self._feed_acknowledge(feed_id, fetched_cursor, consumer_name)
+        else:
+            response["acknowledgement"] = {
+                "advanced": False,
+                "message": "No cursor was returned to acknowledge",
+            }
+        return response
+
+    def _feed_acknowledge(self, feed_id, cursor, consumer):
+        """Advance a consumer checkpoint to a fetch cursor."""
+        if not cursor or not str(cursor).strip():
+            raise ValueError("cursor is required to acknowledge a feed batch")
+        payload = {"cursor": cursor, "consumer": consumer}
+        return self._request(
+            self.EP_FEED_ACK.format(feed_id=feed_id),
+            method="post",
+            json=payload,
+        )
+
+    def feed_consumers(self, feed_id, action="list", consumer=None):
+        """List, create, reset, or delete durable feed consumers.
+
+        ``list`` is the default and does not need ``consumer``. ``create``,
+        ``reset``, and ``delete`` require a consumer name. A new consumer starts
+        at the beginning of retained history. Reset replays that history. Delete
+        removes one checkpoint and does not affect other consumers.
+        """
+        if self.offering == "community":
+            return {"message": "Event feed consumers are not supported with Community offering"}
+
+        feed_id = _validate_feed_id(feed_id)
+        action_name = (action or "list").lower()
+        if action_name not in _FEED_CONSUMER_ACTIONS:
+            raise ValueError("action must be one of: list, create, reset, delete")
+
+        if action_name == "list":
+            return self._request(self.EP_FEED_CONSUMERS.format(feed_id=feed_id))
+
+        consumer_name = _validate_feed_consumer(consumer)
+        if action_name == "create":
+            return self._request(
+                self.EP_FEED_CONSUMERS.format(feed_id=feed_id),
+                method="post",
+                json={"consumer": consumer_name},
+            )
+        if action_name == "reset":
+            return self._request(
+                self.EP_FEED_CONSUMER_RESET.format(feed_id=feed_id, consumer=consumer_name),
+                method="post",
+            )
+
+        response = self._request(
+            self.EP_FEED_CONSUMER.format(feed_id=feed_id, consumer=consumer_name),
+            method="delete",
+        )
+        if response == "" or response is None:
+            return {"feed_id": feed_id, "consumer": consumer_name, "deleted": True}
+        return response
+
+    def callback_file(
+        self,
+        output,
+        *,
+        days: int = 7,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Download the pre-built callback IP file (``GET /v3/files/callback``), a CSV
+        in the CrowdStrike Falcon NG-SIEM lookup file layout.
+
+        The body is streamed to ``output``, a file path or a binary file object.
+        A path is written atomically and left untouched unless the result
+        status is ``ok``; a file object may hold partial data if the download
+        fails mid-stream.
+
+        :param output: Path or binary file object to write the file to.
+        :param days: Lookback window in days, 1 to 7.
+        :param integration: Integration name and version, e.g. ``crowdstrike-ngsiem/3.1.0``,
+            sent as ``X-GreyNoise-Integration``.
+        :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
+            (default: the client's ``timeout``).
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = {"days": days, **_FILE_FORMAT}
+        return self._files_request(self.EP_FILES_CALLBACK, params, output, integration, timeout)
+
+    def callback_file_metadata(
+        self,
+        *,
+        days: int = 7,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Describe the file :meth:`callback_file` would serve, without downloading it
+        (``GET /v3/files/callback/metadata``).
+
+        Takes the same parameters as :meth:`callback_file` and returns ``status``
+        ``ok`` or ``provisioning``, with ``generated_at`` and ``row_count``.
+
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = {"days": days, **_FILE_FORMAT}
+        return self._files_request(self.EP_FILES_CALLBACK_METADATA, params, None, integration, timeout)
+
+    def gnql_file(
+        self,
+        query: str,
+        output,
+        *,
+        limit: Optional[int] = None,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Download the pre-built GNQL SIEM feed file for ``query`` (``GET /v3/files/gnql``),
+        a CSV in the CrowdStrike Falcon NG-SIEM lookup file layout.
+
+        The first request for a query subscribes to it and returns a
+        ``provisioning`` result until the file is built. ``row_count`` and
+        ``truncated`` describe the rows served after ``limit`` and the server's
+        size cap; ``total_count`` is the number of rows the query matched. Output
+        handling is as for :meth:`callback_file`.
+
+        :param query: GNQL query the file is built from.
+        :param output: Path or binary file object to write the file to.
+        :param limit: Maximum number of rows to serve.
+        :param integration: Integration name and version, sent as ``X-GreyNoise-Integration``.
+        :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
+            (default: the client's ``timeout``).
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = _gnql_file_params(query, limit)
+        return self._files_request(self.EP_FILES_GNQL, params, output, integration, timeout)
+
+    def gnql_file_metadata(
+        self,
+        query: str,
+        *,
+        limit: Optional[int] = None,
+        integration: Optional[str] = None,
+        timeout: Union[float, Tuple[float, float], None] = None,
+    ) -> FileResult:
+        """Describe the file :meth:`gnql_file` would serve, without downloading it
+        (``GET /v3/files/gnql/metadata``).
+
+        Takes the same parameters as :meth:`gnql_file` and returns the same fields,
+        with ``status`` ``ok`` or ``provisioning``. Like a download, the first
+        request for a query subscribes to it, and requests count toward the
+        query's fetch rate limit.
+
+        :raises RateLimitError: On HTTP 429.
+        :raises RequestFailure: On any other error response or connection failure.
+        """
+        params = _gnql_file_params(query, limit)
+        return self._files_request(self.EP_FILES_GNQL_METADATA, params, None, integration, timeout)
+
+    def _files_request(self, endpoint, params, output, integration, timeout) -> FileResult:
+        headers = self._default_headers()
+        if integration:
+            headers["X-GreyNoise-Integration"] = integration
+        proxies = {protocol: self.config.proxy for protocol in ("http", "https")} if self.config.proxy else None
+
+        LOGGER.debug("Requesting file from %s with params %s", endpoint, params)
+        try:
+            with self._file_session.get(
+                _api_request_url(self.config.api_server, endpoint),
+                headers=headers,
+                params=params,
+                timeout=timeout or self.config.timeout,
+                proxies=proxies,
+                stream=True,
+            ) as response:
+                result = _file_result(response)
+                if result.status == FileResult.STATUS_OK and output is not None:
+                    _write_stream(response.iter_content(self.FILE_CHUNK_SIZE), output)
+                return result
+        except requests.exceptions.RequestException as e:
+            LOGGER.error("File request failed: %s", str(e))
+            raise RequestFailure(0, str(e))
+
+
+_FILE_FORMAT = {"format": "csv", "profile": "ngsiem"}
+
+
+def _file_result(response: requests.Response) -> FileResult:
+    """Map a file response to a :class:`FileResult`, raising on error statuses."""
+    status_code = response.status_code
+    if status_code == 200:
+        status = FileResult.STATUS_OK
+    elif status_code == 202:
+        status = FileResult.STATUS_PROVISIONING
+    else:
+        if "application/json" in response.headers.get("Content-Type", ""):
+            try:
+                body = response.json()
+            except ValueError:
+                body = response.text
+        else:
+            body = response.text
+        if status_code == 429:
+            raise RateLimitError(status_code, body)
+        raise RequestFailure(status_code, body)
+
+    headers = response.headers
+    return FileResult(
+        status=status,
+        generated_at=headers.get("X-GreyNoise-Generated-At"),
+        row_count=_header_int(headers.get("X-GreyNoise-Row-Count")),
+        total_count=_header_int(headers.get("X-GreyNoise-Total-Count")),
+        truncated=_header_bool(headers.get("X-GreyNoise-Truncated")),
+        retry_after=_header_int(headers.get("Retry-After")),
+        feed_status=headers.get("X-GreyNoise-Feed-Status"),
+    )
+
+
+def _gnql_file_params(query, limit) -> Dict[str, Any]:
+    params = {"query": query, **_FILE_FORMAT}
+    if limit is not None:
+        params["limit"] = limit
+    return params
+
+
+def _header_bool(value: Optional[str]) -> Optional[bool]:
+    if value is None:
+        return None
+    return value.strip().lower() == "true"
+
+
+def _header_int(value: Optional[str]) -> Optional[int]:
+    if value is None or not value.strip().isdigit():
+        return None
+    return int(value)
+
+
+def _write_stream(chunks, output) -> None:
+    """Write ``chunks`` to a binary file object, or atomically to a path."""
+    if hasattr(output, "write"):
+        for chunk in chunks:
+            output.write(chunk)
+        return
+
+    tmp_path = "{}.{}.part".format(output, uuid.uuid4().hex)
+    try:
+        with open(tmp_path, "xb") as f:
+            for chunk in chunks:
+                f.write(chunk)
+        os.replace(tmp_path, output)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        raise

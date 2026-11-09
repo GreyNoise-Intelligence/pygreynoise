@@ -408,6 +408,21 @@ this (this method also supports the include_invalid flag::
       }
     ]
 
+Dataset scopes
+--------------
+
+``ip``, ``quick``, and ``ip_multi`` send a ``workspace_labels`` query parameter.
+When the argument is omitted, the client sends ``greynoise,community``. Pass a
+comma-separated string to choose a different set. The values are forwarded as
+given; the API accepts ``greynoise``, ``community``, and ``personal``::
+
+    >>> api_client.ip('8.8.8.8', workspace_labels='greynoise')
+
+``quick`` and ``ip_multi`` take the same argument. A response includes
+``internet_scanner_intelligence.source_workspaces`` for the scopes that contained
+the IP. Successful lookups are cached by IP address and label set, so a later
+call with a different set is not served from the earlier result.
+
 Any IP can also be checked to see if there are any Similar IPs in the Noise Dataset::
 
     >>> api_client.similar('45.83.66.65')
@@ -469,8 +484,10 @@ Run a query
 ~~~~~~~~~~~
 
 A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the GreyNoise
-dataset. For example, to get context information related to activity has been classified
-as malicious and tagged as a Bluekeep Exploit::
+dataset. Pass ``exclude_fields`` as a comma-separated string or a list of field names
+to omit those fields from the response (the API ``exclude`` parameter). For example, to
+get context information related to activity that has been classified as malicious and
+tagged as a Bluekeep Exploit::
 
     >>> api_client.query('last_seen:1d classification:"suspicious" actor:"NiceCrawler"')
     {
@@ -741,6 +758,60 @@ operating system, etc.::
       }
     }
 
+Event feeds
+-----------
+
+Retained feed events can be searched without moving a consumer checkpoint. Feeds are
+created in the GreyNoise Visualizer. An empty search covers enabled non-session feeds
+over the previous hour. ``event_types`` is limited to ``ip-classification-change``,
+``cve-status-change``, ``cve-activity-spike``, ``vendor-cve-spike``, ``tag-spike``,
+``new-callback-ip``, ``new-callback-file``, and ``credential-observed``::
+
+    >>> api_client.feed_search(event_types=['tag-spike'], ip='8.8.8.8', from_time='24h', limit=100)
+
+Pass the returned ``cursor`` by itself, with an optional ``limit``, to read the next page.
+``feed_pull`` reads the next batch for one consumer and does not advance that checkpoint
+unless ``ack=True``. ``cursor`` acknowledges a batch that was already fetched::
+
+    >>> api_client.feed_pull('<feed_uuid>', consumer='worker-1', limit=100, ack=True)
+
+``feed_consumers`` lists checkpoints, or creates, resets, or deletes one. A new consumer
+starts at the beginning of retained history. Reset replays that history. Delete removes
+only that checkpoint::
+
+    >>> api_client.feed_consumers('<feed_uuid>', action='create', consumer='worker-1')
+
+These methods are not available with the community offering.
+
+Pre-built files
+---------------
+
+GreyNoise builds SIEM lookup files server-side and refreshes them hourly. Both downloads
+request the only file the API serves (CSV, NG-SIEM profile), stream the body to a path or
+a binary file object, and return a ``FileResult``. A path is written to a temporary file
+and moved into place only when the status is ``ok``, so a failed download leaves an
+existing file in place.
+
+``callback_file`` downloads the callback IP file. ``days`` is the lookback window, from
+1 to 7, and defaults to 7. Callback files do not report ``truncated``::
+
+    >>> api_client.callback_file('callback.csv', days=7)
+    FileResult(status='ok', generated_at='2026-10-29T10:00:00Z', row_count=100000, total_count=None, truncated=None, feed_status=None, retry_after=None)
+
+``gnql_file`` downloads the file for a GNQL query::
+
+    >>> api_client.gnql_file('last_seen:1d -classification:unknown', 'feed.csv', limit=100000)
+    FileResult(status='ok', generated_at='2026-10-29T10:00:00Z', row_count=100000, total_count=250000, truncated=True, feed_status='enabled', retry_after=None)
+
+The first request for a new query subscribes to it and returns status ``provisioning``
+until the file is built. Nothing is written in that case; retry after
+``result.retry_after`` seconds. Integrations should identify themselves with
+``integration='name/version'``, which is sent as ``X-GreyNoise-Integration``.
+``callback_file_metadata`` and ``gnql_file_metadata`` take the same arguments as the
+download functions (without ``output``) and return the same fields without downloading
+the file. Error responses raise ``RequestFailure`` (``RateLimitError`` for HTTP 429)
+with the status code and the API's explanation.
+
 
 Command line interface
 ======================
@@ -761,12 +832,14 @@ subcommands, use the *--help* option::
       analyze           Analyze the IP addresses in a log file, stdin, etc.
       callback          GreyNoise Callback — scanner callback intelligence...
       cve               Retrieve Details of a CVE.
+      feeds             Search retained feed events, pull a batch, or manage...
       filter            Filter the noise from a log file, stdin, etc.
       help              Show this message and exit.
       ip                Query GreyNoise for all information on a given IP.
       ip-multi          Perform Context lookup for multiple IPs at once.
       persona-details   Retrieve Details of a Sensor Persona.
       psychic-download  Download a Psychic bitmap (.bin), MMDB, or CSV file...
+      psychic-generate  Generate a Psychic bitmap (.bin) for a date range...
       query             Run a GNQL (GreyNoise Query Language) query.
       quick             Quickly check whether or not one or many IPs are...
       recall            GreyNoise Recall — GNQL activity over time.
@@ -937,6 +1010,19 @@ this (a comma separated list is also supported::
     Last Updated: 2025-05-23T13:11:02Z
     Reference: https://developers.google.com/speed/public-dns/docs/isp#alternative
 
+``ip``, ``quick``, and ``ip-multi`` accept ``--workspace-labels``. The default is
+``greynoise,community``. The value is sent unchanged, and text output lists the
+``source_workspaces`` the API returned::
+
+   $ greynoise ip 8.8.8.8 --workspace-labels greynoise
+
+``ip --psychic`` looks the address up in a Psychic bitmap instead of calling the IP
+lookup API. ``--days`` builds that bitmap for the last N days through today and
+requires ``--psychic``. Text output shows the bitmap date, and says when the IP was
+not in that file. ``--workspace-labels`` is not applied to a Psychic lookup::
+
+   $ greynoise ip 1.2.3.4 --psychic --days 7
+
 Check for Similar IPs to a given IP::
 
    $ greynoise similar 69.160.160.55
@@ -1003,6 +1089,40 @@ Check the Timeline of a given IP::
       2025-05-11     1              suspicious     
       2025-04-27     1              suspicious     
 
+Event feeds
+-----------
+
+``feeds search`` reads retained history and does not move a consumer checkpoint.
+Repeat ``--feed-id`` and ``--event-type`` to pass more than one value. ``--from``
+accepts a relative window such as ``24h`` or ``7d``, a UTC date, or an RFC3339
+timestamp. ``--cursor`` continues a previous page and cannot be combined with
+other filters::
+
+   $ greynoise feeds search --event-type tag-spike --ip 8.8.8.8 --from 24h --limit 100
+
+``feeds pull`` fetches the next batch for one consumer. The checkpoint stays put
+unless ``--ack`` is set. Text output for a pull without ``--ack`` shows the first
+25 events (100 with ``-v``). An acknowledged pull prints the full batch and states
+that the checkpoint advanced past every event in it. ``--cursor`` acknowledges a
+previously fetched batch without fetching again::
+
+   $ greynoise feeds pull <feed_uuid> --consumer worker-1 --limit 100 --ack
+
+``feeds consumers`` lists checkpoints for a feed. ``--action create`` starts a
+consumer at the beginning of retained history, ``reset`` replays that history,
+and ``delete`` removes one checkpoint::
+
+   $ greynoise feeds consumers <feed_uuid> --action create --consumer worker-1
+
+Psychic files
+-------------
+
+``psychic-download`` writes a bitmap (``.bin``), MMDB, or CSV for one date into
+the current directory. ``psychic-generate`` builds a bitmap for a date range::
+
+   $ greynoise psychic-download --format mmdb --date 2026-10-26
+   $ greynoise psychic-generate --start-date 2026-10-20 --end-date 2026-10-26
+
 GNQL
 ----
 
@@ -1010,7 +1130,7 @@ Run a query
 ~~~~~~~~~~~
 
 A GNQL (GreyNoise Query Language) query can be executed to dig deeper into the GreyNoise
-dataset. For example, to get context information related to activity has been classified
+dataset. For example, to get context information related to activity that has been classified
 as malicious and tagged as a Bluekeep Exploit::
 
    $ greynoise query "classification:malicious tags:Bluekeep Exploit"
@@ -1067,6 +1187,8 @@ as malicious and tagged as a Bluekeep Exploit::
 
    This is the default command, that is, you can save some typing by just
    writing ``greynoise <query>`` instead of ``greynoise query <query>``.
+
+   ``--exclude`` is a comma-separated list of fields to omit from the results.
 
 
 Get statistics

@@ -1,12 +1,18 @@
 """GreyNoise API client test cases."""
 
+import gzip
+import http.server
+import io
+import json
+import threading
 from unittest.mock import Mock, call, patch
 
 import cachetools
 import pytest
+import requests
 
-from greynoise.api import APIConfig, GreyNoise
-from greynoise.exceptions import RequestFailure
+from greynoise.api import APIConfig, FileResult, GreyNoise
+from greynoise.exceptions import RateLimitError, RequestFailure
 
 
 @pytest.fixture
@@ -313,7 +319,10 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         response = client.ip(ip_address)
-        client._request.assert_called_with("v3/ip/{}".format(ip_address))
+        client._request.assert_called_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "greynoise,community"},
+        )
         assert response == expected_response
 
     def test_ip_with_cache(self, client):
@@ -323,7 +332,10 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("v3/ip/{}".format(ip_address))
+        client._request.assert_called_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "greynoise,community"},
+        )
 
         client._request.reset_mock()
         client.ip(ip_address)
@@ -337,11 +349,17 @@ class TestIP(object):
 
         client._request = Mock(return_value=expected_response)
         client.ip(ip_address)
-        client._request.assert_called_with("v3/ip/{}".format(ip_address))
+        client._request.assert_called_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "greynoise,community"},
+        )
 
         client._request.reset_mock()
         client.ip(ip_address)
-        client._request.assert_called_with("v3/ip/{}".format(ip_address))
+        client._request.assert_called_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "greynoise,community"},
+        )
 
     def test_invalid_ip(self, client):
         """Get invalid IP address information."""
@@ -353,6 +371,55 @@ class TestIP(object):
         assert str(exception.value) == "Invalid IP address: {!r}".format(invalid_ip)
 
         client._request.assert_not_called()
+
+    def test_ip_workspace_labels_passed_through(self, client):
+        """Custom scopes are sent unchanged."""
+        ip_address = "8.8.8.8"
+        client._request = Mock(return_value={"ip": ip_address})
+
+        client.ip(ip_address, workspace_labels="personal,not-a-scope")
+
+        client._request.assert_called_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "personal,not-a-scope"},
+        )
+
+    def test_ip_default_labels_share_cache_with_explicit_value(self, client):
+        """Omitting workspace_labels sends and caches greynoise,community."""
+        ip_address = "8.8.8.8"
+        client._request = Mock(return_value={"ip": ip_address})
+
+        client.ip(ip_address)
+        client.ip(ip_address, workspace_labels="greynoise,community")
+
+        client._request.assert_called_once_with(
+            "v3/ip/{}".format(ip_address),
+            params={"workspace_labels": "greynoise,community"},
+        )
+
+    def test_ip_cache_is_scoped_by_workspace_labels(self, client):
+        """Different dataset scopes do not share a cached IP response."""
+        ip_address = "8.8.8.8"
+        client._request = Mock(side_effect=[{"ip": ip_address, "n": 1}, {"ip": ip_address, "n": 2}])
+
+        first = client.ip(ip_address, workspace_labels="greynoise")
+        second = client.ip(ip_address, workspace_labels="community")
+
+        assert first["n"] == 1
+        assert second["n"] == 2
+        assert client._request.call_count == 2
+
+        client.ip(ip_address, workspace_labels="greynoise")
+        assert client._request.call_count == 2
+
+
+def _with_default_workspace_labels(expected_request):
+    """Add the default workspace_labels query param to an expected API call."""
+    return call(
+        *expected_request.args,
+        params={"workspace_labels": "greynoise,community"},
+        **expected_request.kwargs,
+    )
 
 
 class TestQuick:
@@ -424,7 +491,7 @@ class TestQuick:
         """Get IP address noise status."""
         client._request = Mock(return_value=mock_response)
         results = client.quick(ip_addresses)
-        client._request.assert_has_calls([expected_request])
+        client._request.assert_has_calls([_with_default_workspace_labels(expected_request)])
         assert results == expected_results
 
     @pytest.mark.parametrize(
@@ -505,7 +572,7 @@ class TestQuick:
         # First call should hit the API
         client._request = Mock(return_value=mock_response)
         first_results = client.quick(ip_addresses)
-        client._request.assert_has_calls([expected_request])
+        client._request.assert_has_calls([_with_default_workspace_labels(expected_request)])
 
         # Reset the mock
         client._request.reset_mock()
@@ -522,8 +589,11 @@ class TestQuick:
             ip_addresses = [ip_addresses]
         valid_ips = [ip for ip in ip_addresses if ip != "not-an-ip" and not ip.startswith("not-an-ip")]
         for ip in valid_ips:
-            assert ip in client.ip_quick_check_cache
-            assert client.ip_quick_check_cache[ip] == next((item for item in first_results if item["ip"] == ip), None)
+            cache_key = (ip, "greynoise,community")
+            assert cache_key in client.ip_quick_check_cache
+            assert client.ip_quick_check_cache[cache_key] == next(
+                (item for item in first_results if item["ip"] == ip), None
+            )
 
     @pytest.mark.parametrize(
         "ip_addresses, expected_request, mock_response",
@@ -603,11 +673,48 @@ class TestQuick:
         client = client_without_cache
         client._request = Mock(return_value=mock_response)
         client.quick(ip_addresses)
-        client._request.assert_has_calls([expected_request])
+        client._request.assert_has_calls([_with_default_workspace_labels(expected_request)])
 
         client._request.reset_mock()
         client.quick(ip_addresses)
-        client._request.assert_has_calls([expected_request])
+        client._request.assert_has_calls([_with_default_workspace_labels(expected_request)])
+
+    def test_quick_workspace_labels_passed_through(self, client):
+        """Custom scopes are sent unchanged and cached separately."""
+        client._request = Mock(
+            side_effect=[
+                {"data": [{"ip": "8.8.8.8", "n": 1}]},
+                {"data": [{"ip": "8.8.8.8", "n": 2}]},
+            ]
+        )
+
+        first = client.quick(["8.8.8.8"], workspace_labels="personal,not-a-scope")
+        second = client.quick(["8.8.8.8"], workspace_labels="greynoise")
+
+        assert first == [{"ip": "8.8.8.8", "n": 1}]
+        assert second == [{"ip": "8.8.8.8", "n": 2}]
+        assert client._request.call_args_list[0] == call(
+            "v3/ip?quick=true",
+            params={"workspace_labels": "personal,not-a-scope"},
+            method="post",
+            json={"ips": ["8.8.8.8"]},
+        )
+        client.quick(["8.8.8.8"], workspace_labels="personal,not-a-scope")
+        assert client._request.call_count == 2
+
+    def test_ip_multi_workspace_labels_passed_through(self, client):
+        """Bulk context lookup sends workspace_labels as a query parameter."""
+        client._request = Mock(return_value={"data": [{"ip": "8.8.8.8"}]})
+
+        results = client.ip_multi(["8.8.8.8"], workspace_labels="community,personal")
+
+        assert results == [{"ip": "8.8.8.8"}]
+        client._request.assert_called_with(
+            "v3/ip",
+            params={"workspace_labels": "community,personal"},
+            method="post",
+            json={"ips": ["8.8.8.8"]},
+        )
 
 
 class TestSensorActivity(object):
@@ -878,8 +985,120 @@ def test_api_client_initialization():
     client = GreyNoise(config)
     assert client.config == config
     assert client.session is not None
+    assert client.session.proxies == {
+        "http": "http://proxy.example.com",
+        "https": "http://proxy.example.com",
+    }
     assert client.ip_quick_check_cache is not None
     assert client.ip_context_cache is not None
+
+
+def test_api_client_empty_proxy_leaves_session_proxies_unset():
+    """An empty configured proxy must not clear environment proxy support."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+    assert client.session.proxies == {}
+    assert client.session.trust_env is True
+
+
+def test_api_client_request_omits_empty_proxies_kwarg():
+    """_request must not pass proxies={} when no proxy is configured."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy=None,
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping")
+        assert mock_get.call_count == 1
+        _, kwargs = mock_get.call_args
+        assert "proxies" not in kwargs
+
+
+def test_api_client_request_proxy_override():
+    """An explicit proxy argument overrides the session for that request."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://api.greynoise.io",
+        timeout=30,
+        proxy="http://session-proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {"Content-Type": "application/json"}
+    mock_response.json = Mock(return_value={"ok": True})
+
+    with patch.object(client.session, "get", return_value=mock_response) as mock_get:
+        client._request("ping", proxy="http://override-proxy.example.com")
+        _, kwargs = mock_get.call_args
+        assert kwargs["proxies"] == {
+            "http": "http://override-proxy.example.com",
+            "https": "http://override-proxy.example.com",
+        }
+
+
+def test_psychic_receives_proxy_and_api_server_from_config():
+    """GreyNoise must pass configured proxy and api_server into Psychic."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        psychic=False,
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.psychic.Psychic") as mock_psychic:
+        mock_psychic.return_value = Mock()
+        client._ensure_psychic_enabled(auto_download=False)
+        mock_psychic.assert_called_once()
+        kwargs = mock_psychic.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["api_server"] == "https://custom.greynoise.example"
+
+
+def test_timelinedaily_passes_proxy_and_base_url():
+    """Daily timeline fetches must honor configured proxy and api_server."""
+    config = APIConfig(
+        api_key="test-api-key",
+        api_server="https://custom.greynoise.example",
+        timeout=30,
+        proxy="http://proxy.example.com",
+        offering="enterprise",
+        use_cache=True,
+    )
+    client = GreyNoise(config)
+
+    with patch("greynoise.api.get_greynoise_timeline", return_value={"data": []}) as mock_timeline:
+        client.timelinedaily("8.8.8.8", days=7)
+        mock_timeline.assert_called_once()
+        kwargs = mock_timeline.call_args.kwargs
+        assert kwargs["proxy"] == "http://proxy.example.com"
+        assert kwargs["base_url"] == "https://custom.greynoise.example/v3"
+        assert kwargs["days"] == 7
 
 
 def test_api_client_request_retry():
@@ -974,6 +1193,25 @@ class TestErrorHandling:
         assert exc_info.value.args[0] == 429
         assert exc_info.value.args[1] == {"error": "Rate limit exceeded"}
 
+    def test_rate_limit_error_carries_response_body(self, client):
+        """A 429 response surfaces the explanation the API sent."""
+        body = {"message": "Your plan does not include this endpoint", "status": "error"}
+
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.json = Mock(return_value=body)
+
+        with patch.object(client.session, "get", return_value=mock_response):
+            with pytest.raises(RateLimitError) as exc_info:
+                client._request("test-endpoint")
+
+        error = exc_info.value
+        assert error.status_code == 429
+        assert error.body == body
+        assert error.message == "Your plan does not include this endpoint"
+        assert str(error) == "rate limit exceeded (HTTP 429): Your plan does not include this endpoint"
+
     def test_network_timeout(self, client):
         """Test handling of network timeouts."""
         client._request = Mock(side_effect=RequestFailure(504, {"error": "Gateway timeout"}))
@@ -1010,7 +1248,7 @@ class TestCacheBehavior:
         client._request = Mock(return_value=mock_response)
         first_result = client.ip("8.8.8.8")
         assert first_result == mock_response
-        assert "8.8.8.8" in client.ip_context_cache
+        assert ("8.8.8.8", "greynoise,community") in client.ip_context_cache
 
         # Wait for TTL to expire
         import time
@@ -1040,8 +1278,8 @@ class TestCacheBehavior:
         client._request = Mock(return_value=mock_response1)
         result1 = client.ip("8.8.8.8")
         assert result1 == mock_response1
-        assert "8.8.8.8" in client.ip_context_cache
-        assert client.ip_context_cache["8.8.8.8"] == mock_response1
+        assert ("8.8.8.8", "greynoise,community") in client.ip_context_cache
+        assert client.ip_context_cache[("8.8.8.8", "greynoise,community")] == mock_response1
 
         # Second request - should be cached
         mock_response2 = {
@@ -1052,8 +1290,8 @@ class TestCacheBehavior:
         client._request = Mock(return_value=mock_response2)
         result2 = client.ip("1.1.1.1")
         assert result2 == mock_response2
-        assert "1.1.1.1" in client.ip_context_cache
-        assert client.ip_context_cache["1.1.1.1"] == mock_response2
+        assert ("1.1.1.1", "greynoise,community") in client.ip_context_cache
+        assert client.ip_context_cache[("1.1.1.1", "greynoise,community")] == mock_response2
         assert len(client.ip_context_cache) == 2
 
         # Third request - should cause first item to be evicted
@@ -1065,14 +1303,14 @@ class TestCacheBehavior:
         client._request = Mock(return_value=mock_response3)
         result3 = client.ip("9.9.9.9")
         assert result3 == mock_response3
-        assert "9.9.9.9" in client.ip_context_cache
-        assert client.ip_context_cache["9.9.9.9"] == mock_response3
+        assert ("9.9.9.9", "greynoise,community") in client.ip_context_cache
+        assert client.ip_context_cache[("9.9.9.9", "greynoise,community")] == mock_response3
 
         # Verify cache state
         assert len(client.ip_context_cache) == 2
-        assert "8.8.8.8" not in client.ip_context_cache  # First item should be evicted
-        assert "1.1.1.1" in client.ip_context_cache  # Second item should remain
-        assert "9.9.9.9" in client.ip_context_cache  # Third item should remain
+        assert ("8.8.8.8", "greynoise,community") not in client.ip_context_cache  # First item should be evicted
+        assert ("1.1.1.1", "greynoise,community") in client.ip_context_cache  # Second item should remain
+        assert ("9.9.9.9", "greynoise,community") in client.ip_context_cache  # Third item should remain
 
         # Verify cache hits
         client._request.reset_mock()
@@ -1116,3 +1354,481 @@ class TestCacheBehavior:
         second_result = client.ip("8.8.8.8")
         assert second_result == mock_response
         assert client._request.call_count == 2
+
+
+FEED_ID = "11111111-1111-4111-8111-111111111111"
+
+
+class TestFeeds(object):
+    """Event Feed API methods."""
+
+    def test_search_sends_filters(self, client):
+        client._request = Mock(return_value={"events": [], "has_more": False})
+        result = client.feed_search(
+            feed_ids=[FEED_ID],
+            event_types=["tag-spike"],
+            ip="8.8.8.8",
+            from_time="24h",
+            limit=10,
+        )
+        assert result["has_more"] is False
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={
+                "feed_ids": [FEED_ID],
+                "event_types": ["tag-spike"],
+                "ip": "8.8.8.8",
+                "from": "24h",
+                "limit": 10,
+            },
+        )
+
+    def test_search_cursor_is_sent_alone(self, client):
+        client._request = Mock(return_value={"events": []})
+        client.feed_search(cursor="next-page", limit=25)
+        client._request.assert_called_once_with(
+            "v3/feeds/events/search",
+            method="post",
+            json={"cursor": "next-page", "limit": 25},
+        )
+
+    def test_search_cursor_rejects_other_filters(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="search cursor"):
+            client.feed_search(cursor="next-page", ip="8.8.8.8")
+        client._request.assert_not_called()
+
+    def test_pull_fetches_without_acknowledging(self, client):
+        client._request = Mock(return_value={"events": [{"event_type": "tag-spike"}], "cursor": "abc"})
+        result = client.feed_pull(FEED_ID, consumer="worker-1", limit=5)
+        assert "acknowledgement" not in result
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events".format(FEED_ID),
+            params={"consumer": "worker-1", "limit": 5},
+        )
+
+    def test_pull_ack_acknowledges_returned_cursor(self, client):
+        fetch = {"events": [{"event_type": "tag-spike"}], "cursor": "abc", "has_more": True}
+        ack = {"consumer": "default", "cursor": "abc", "advanced": True}
+        client._request = Mock(side_effect=[fetch, ack])
+        result = client.feed_pull(FEED_ID, ack=True)
+        assert result["acknowledgement"]["advanced"] is True
+        assert client._request.call_args_list == [
+            call("v3/feeds/{}/events".format(FEED_ID), params={"consumer": "default"}),
+            call(
+                "v3/feeds/{}/events/ack".format(FEED_ID),
+                method="post",
+                json={"cursor": "abc", "consumer": "default"},
+            ),
+        ]
+
+    def test_pull_cursor_acknowledges_without_fetching(self, client):
+        client._request = Mock(return_value={"advanced": False, "consumer": "default"})
+        client.feed_pull(FEED_ID, cursor="abc")
+        client._request.assert_called_once_with(
+            "v3/feeds/{}/events/ack".format(FEED_ID),
+            method="post",
+            json={"cursor": "abc", "consumer": "default"},
+        )
+
+    def test_consumers_list_create_reset_and_delete(self, client):
+        client._request = Mock(return_value={"consumers": []})
+        client.feed_consumers(FEED_ID)
+        client._request.assert_called_with("v3/feeds/{}/consumers".format(FEED_ID))
+
+        client._request = Mock(return_value={"name": "worker-1"})
+        client.feed_consumers(FEED_ID, action="create", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers".format(FEED_ID),
+            method="post",
+            json={"consumer": "worker-1"},
+        )
+
+        client._request = Mock(return_value={"name": "worker-1", "status": "active"})
+        client.feed_consumers(FEED_ID, action="reset", consumer="worker-1")
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1/reset".format(FEED_ID),
+            method="post",
+        )
+
+        client._request = Mock(return_value="")
+        deleted = client.feed_consumers(FEED_ID, action="delete", consumer="worker-1")
+        assert deleted == {"feed_id": FEED_ID, "consumer": "worker-1", "deleted": True}
+        client._request.assert_called_with(
+            "v3/feeds/{}/consumers/worker-1".format(FEED_ID),
+            method="delete",
+        )
+
+    def test_invalid_feed_and_consumer_are_rejected(self, client):
+        client._request = Mock()
+        with pytest.raises(ValueError, match="UUID"):
+            client.feed_pull("not-a-feed")
+        with pytest.raises(ValueError, match="consumer"):
+            client.feed_consumers(FEED_ID, action="create", consumer="bad name")
+        with pytest.raises(ValueError, match="event type"):
+            client.feed_search(event_types=["session-received"])
+        client._request.assert_not_called()
+
+    def test_community_offering_does_not_call_the_api(self, client):
+        client.offering = "community"
+        client._request = Mock()
+        assert "not supported" in client.feed_search()["message"]
+        assert "not supported" in client.feed_pull(FEED_ID)["message"]
+        assert "not supported" in client.feed_consumers(FEED_ID)["message"]
+        client._request.assert_not_called()
+
+
+def _file_response(status_code, body=b"", headers=None):
+    response = requests.Response()
+    response.status_code = status_code
+    response.headers.update(headers or {})
+    response.raw = io.BytesIO(body)
+    return response
+
+
+class _BrokenStream(io.BytesIO):
+    def read(self, *args, **kwargs):
+        raise requests.exceptions.ChunkedEncodingError("connection reset")
+
+
+FILE_ENDPOINTS = [
+    pytest.param(
+        lambda c, output, **kw: c.callback_file(output, **kw),
+        "https://api.greynoise.io/v3/files/callback",
+        {"days": 7, "format": "csv", "profile": "ngsiem"},
+        id="callback",
+    ),
+    pytest.param(
+        lambda c, output, **kw: c.gnql_file("last_seen:1d", output, **kw),
+        "https://api.greynoise.io/v3/files/gnql",
+        {"query": "last_seen:1d", "format": "csv", "profile": "ngsiem"},
+        id="gnql",
+    ),
+]
+
+
+@pytest.mark.parametrize("download, url, params", FILE_ENDPOINTS)
+class TestFiles:
+    """Pre-built file downloads (``/v3/files``)."""
+
+    def test_ok_writes_path(self, client, tmp_path, download, url, params):
+        body = b"source.ip\r\n198.51.100.42\r\n"
+        headers = {
+            "X-GreyNoise-Generated-At": "2026-10-29T10:00:00Z",
+            "X-GreyNoise-Row-Count": "1",
+            "X-GreyNoise-Total-Count": "5",
+            "X-GreyNoise-Truncated": "true",
+        }
+        client._file_session.get = Mock(return_value=_file_response(200, body, headers))
+        output = tmp_path / "feed.csv"
+
+        result = download(client, str(output), integration="crowdstrike-ngsiem/3.1.0")
+
+        assert result == FileResult(
+            status="ok",
+            generated_at="2026-10-29T10:00:00Z",
+            row_count=1,
+            total_count=5,
+            truncated=True,
+        )
+        assert output.read_bytes() == body
+        assert [p.name for p in tmp_path.iterdir()] == ["feed.csv"]
+        args, kwargs = client._file_session.get.call_args
+        assert args == (url,)
+        assert kwargs["params"] == params
+        assert kwargs["stream"] is True
+        assert kwargs["headers"]["key"] == "<api_key>"
+        assert kwargs["headers"]["X-GreyNoise-Integration"] == "crowdstrike-ngsiem/3.1.0"
+
+    def test_ok_writes_file_object(self, client, download, url, params):
+        client._file_session.get = Mock(return_value=_file_response(200, b"source.ip\r\n"))
+        output = io.BytesIO()
+
+        result = download(client, output)
+
+        assert result == FileResult(status="ok")
+        assert output.getvalue() == b"source.ip\r\n"
+        assert "X-GreyNoise-Integration" not in client._file_session.get.call_args[1]["headers"]
+
+    @pytest.mark.parametrize("header, expected", [(None, None), ("false", False), ("true", True)])
+    def test_truncated_reported_only_when_sent(self, client, download, url, params, header, expected):
+        headers = {} if header is None else {"X-GreyNoise-Truncated": header}
+        client._file_session.get = Mock(return_value=_file_response(200, headers=headers))
+
+        result = download(client, io.BytesIO())
+
+        assert result.truncated is expected
+
+    def test_provisioning(self, client, tmp_path, download, url, params):
+        body = json.dumps({"status": "provisioning"}).encode()
+        headers = {"Retry-After": "60", "Content-Type": "application/json"}
+        client._file_session.get = Mock(return_value=_file_response(202, body, headers))
+        output = tmp_path / "feed.csv"
+
+        result = download(client, str(output))
+
+        assert result == FileResult(status="provisioning", retry_after=60)
+        assert not output.exists()
+
+    @pytest.mark.parametrize(
+        "status_code, error",
+        [
+            (400, {"error": "query is required"}),
+            (401, {"message": "invalid key"}),
+            (403, {"error": "feature not allowed"}),
+            (500, {"error": "failed to retrieve feed"}),
+            (503, {"error": "retry later"}),
+        ],
+    )
+    def test_error(self, client, tmp_path, download, url, params, status_code, error):
+        response = _file_response(status_code, json.dumps(error).encode(), {"Content-Type": "application/json"})
+        client._file_session.get = Mock(return_value=response)
+        output = tmp_path / "feed.csv"
+
+        with pytest.raises(RequestFailure) as exc:
+            download(client, str(output))
+
+        assert exc.value.args == (status_code, error)
+        assert not output.exists()
+
+    def test_rate_limited(self, client, tmp_path, download, url, params):
+        body = json.dumps({"error": "fetched too often"}).encode()
+        client._file_session.get = Mock(return_value=_file_response(429, body, {"Content-Type": "application/json"}))
+
+        with pytest.raises(RateLimitError) as exc:
+            download(client, str(tmp_path / "feed.csv"))
+
+        assert exc.value.args == (429, {"error": "fetched too often"})
+
+    def test_connection_error(self, client, tmp_path, download, url, params):
+        client._file_session.get = Mock(side_effect=requests.exceptions.ConnectionError("refused"))
+
+        with pytest.raises(RequestFailure) as exc:
+            download(client, str(tmp_path / "feed.csv"))
+
+        assert exc.value.args == (0, "refused")
+
+    def test_interrupted_stream_keeps_previous_file(self, client, tmp_path, download, url, params):
+        response = _file_response(200)
+        response.raw = _BrokenStream()
+        client._file_session.get = Mock(return_value=response)
+        output = tmp_path / "feed.csv"
+        output.write_bytes(b"previous")
+
+        with pytest.raises(RequestFailure):
+            download(client, str(output))
+
+        assert output.read_bytes() == b"previous"
+        assert [p.name for p in tmp_path.iterdir()] == ["feed.csv"]
+
+
+class TestCallbackFileMetadata:
+    """Callback file metadata (``/v3/files/callback/metadata``)."""
+
+    def test_ok(self, client):
+        body = {
+            "format": "csv",
+            "profile": "ngsiem",
+            "days": 3,
+            "generated_at": "2026-10-29T10:00:00Z",
+            "size_bytes": 1024,
+            "row_count": 12,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "X-GreyNoise-Generated-At": "2026-10-29T10:00:00Z",
+            "X-GreyNoise-Row-Count": "12",
+        }
+        client._file_session.get = Mock(return_value=_file_response(200, json.dumps(body).encode(), headers))
+
+        result = client.callback_file_metadata(days=3, integration="crowdstrike-ngsiem/3.1.0")
+
+        assert result == FileResult(status="ok", generated_at="2026-10-29T10:00:00Z", row_count=12)
+        args, kwargs = client._file_session.get.call_args
+        assert args == ("https://api.greynoise.io/v3/files/callback/metadata",)
+        assert kwargs["params"] == {"days": 3, "format": "csv", "profile": "ngsiem"}
+        assert kwargs["headers"]["X-GreyNoise-Integration"] == "crowdstrike-ngsiem/3.1.0"
+
+    def test_building(self, client):
+        headers = {"Content-Type": "application/json", "Retry-After": "30"}
+        response = _file_response(202, json.dumps({"status": "building"}).encode(), headers)
+        client._file_session.get = Mock(return_value=response)
+
+        result = client.callback_file_metadata()
+
+        assert result == FileResult(status="provisioning", retry_after=30)
+
+    @pytest.mark.parametrize(
+        "status_code, exception",
+        [(400, RequestFailure), (403, RequestFailure), (429, RateLimitError), (503, RequestFailure)],
+    )
+    def test_error(self, client, status_code, exception):
+        error = {"error": "nope"}
+        response = _file_response(status_code, json.dumps(error).encode(), {"Content-Type": "application/json"})
+        client._file_session.get = Mock(return_value=response)
+
+        with pytest.raises(exception) as exc:
+            client.callback_file_metadata()
+
+        assert exc.value.args == (status_code, error)
+
+
+class TestGNQLFileMetadata:
+    """GNQL file metadata (``/v3/files/gnql/metadata``)."""
+
+    def test_ok(self, client):
+        body = {
+            "status": "enabled",
+            "query": "last_seen:1d",
+            "generated_at": "2026-10-29T10:00:00Z",
+            "row_count": 500,
+            "total_count": 900,
+            "truncated": True,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "X-GreyNoise-Generated-At": "2026-10-29T10:00:00Z",
+            "X-GreyNoise-Row-Count": "500",
+            "X-GreyNoise-Total-Count": "900",
+            "X-GreyNoise-Truncated": "true",
+            "X-GreyNoise-Feed-Status": "enabled",
+        }
+        client._file_session.get = Mock(return_value=_file_response(200, json.dumps(body).encode(), headers))
+
+        result = client.gnql_file_metadata("last_seen:1d", limit=500, integration="crowdstrike-ngsiem/3.1.0")
+
+        assert result == FileResult(
+            status="ok",
+            generated_at="2026-10-29T10:00:00Z",
+            row_count=500,
+            total_count=900,
+            truncated=True,
+            feed_status="enabled",
+        )
+        args, kwargs = client._file_session.get.call_args
+        assert args == ("https://api.greynoise.io/v3/files/gnql/metadata",)
+        assert kwargs["params"] == {"query": "last_seen:1d", "format": "csv", "profile": "ngsiem", "limit": 500}
+        assert kwargs["headers"]["X-GreyNoise-Integration"] == "crowdstrike-ngsiem/3.1.0"
+
+    def test_provisioning(self, client):
+        headers = {"Content-Type": "application/json", "Retry-After": "60", "X-GreyNoise-Feed-Status": "provisioning"}
+        response = _file_response(202, json.dumps({"status": "provisioning"}).encode(), headers)
+        client._file_session.get = Mock(return_value=response)
+
+        result = client.gnql_file_metadata("last_seen:1d")
+
+        assert result == FileResult(status="provisioning", retry_after=60, feed_status="provisioning")
+
+    @pytest.mark.parametrize(
+        "status_code, exception",
+        [(400, RequestFailure), (403, RequestFailure), (429, RateLimitError), (503, RequestFailure)],
+    )
+    def test_error(self, client, status_code, exception):
+        error = {"error": "nope"}
+        response = _file_response(status_code, json.dumps(error).encode(), {"Content-Type": "application/json"})
+        client._file_session.get = Mock(return_value=response)
+
+        with pytest.raises(exception) as exc:
+            client.gnql_file_metadata("last_seen:1d")
+
+        assert exc.value.args == (status_code, error)
+
+
+class TestFileParams:
+    """File download request parameters."""
+
+    def test_limit(self, client):
+        client._file_session.get = Mock(return_value=_file_response(202))
+
+        client.gnql_file("last_seen:1d", io.BytesIO(), limit=500)
+
+        assert client._file_session.get.call_args[1]["params"]["limit"] == 500
+
+    def test_proxy(self, client):
+        client.config.proxy = "http://proxy:3128"
+        client._file_session.get = Mock(return_value=_file_response(202))
+
+        client.callback_file(io.BytesIO(), days=3)
+
+        kwargs = client._file_session.get.call_args[1]
+        assert kwargs["proxies"] == {"http": "http://proxy:3128", "https": "http://proxy:3128"}
+        assert kwargs["params"]["days"] == 3
+
+    def test_timeout(self, client):
+        client._file_session.get = Mock(return_value=_file_response(202))
+
+        client.gnql_file("last_seen:1d", io.BytesIO())
+        assert client._file_session.get.call_args[1]["timeout"] == 120
+
+        client.gnql_file("last_seen:1d", io.BytesIO(), timeout=(10, 300))
+        assert client._file_session.get.call_args[1]["timeout"] == (10, 300)
+
+
+class _FileServer(http.server.BaseHTTPRequestHandler):
+    hits = []
+
+    def do_GET(self):
+        _FileServer.hits.append(self.path)
+        if self.path.startswith("/v3/files/gnql"):
+            body = gzip.compress(b"source.ip\r\n198.51.100.42\r\n")
+            self.send_response(200)
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        elif self.path.startswith("/v3/files/callback") and "days=1" in self.path:
+            self.send_response(200)
+            self.send_header("Content-Length", "1000")
+            self.end_headers()
+            self.wfile.write(b"source.ip\r\n")
+        else:
+            body = json.dumps({"error": "retry later"}).encode()
+            self.send_response(503)
+            self.send_header("Retry-After", "60")
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def file_server_client():
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FileServer)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    _FileServer.hits = []
+    client = GreyNoise(APIConfig(api_key="<api_key>", api_server="http://127.0.0.1:{}".format(server.server_port)))
+    yield client
+    client.close()
+    server.shutdown()
+    server.server_close()
+
+
+class TestFilesOverHTTP:
+    """File downloads against a local HTTP server, through the real session."""
+
+    def test_gzip_is_decoded(self, file_server_client, tmp_path):
+        output = tmp_path / "feed.csv"
+
+        result = file_server_client.gnql_file("last_seen:1d", str(output))
+
+        assert result.status == "ok"
+        assert output.read_bytes() == b"source.ip\r\n198.51.100.42\r\n"
+
+    def test_short_body_fails_without_writing(self, file_server_client, tmp_path):
+        output = tmp_path / "feed.csv"
+
+        with pytest.raises(RequestFailure):
+            file_server_client.callback_file(str(output), days=1)
+
+        assert list(tmp_path.iterdir()) == []
+
+    def test_unavailable_is_not_retried(self, file_server_client, tmp_path):
+        with pytest.raises(RequestFailure) as exc:
+            file_server_client.callback_file(str(tmp_path / "feed.csv"))
+
+        assert exc.value.args == (503, {"error": "retry later"})
+        assert len(_FileServer.hits) == 1

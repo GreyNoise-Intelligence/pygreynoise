@@ -35,6 +35,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
+from greynoise.util import request_proxies
+
 LOGGER = logging.getLogger(__name__)
 
 # Map API field names to display names
@@ -65,6 +67,7 @@ def fetch_tags_mapping(
     api_key: str,
     base_url: str = "https://api.greynoise.io/v3",
     user_agent: str = "greynoise-timeline-function",
+    proxy: Optional[str] = None,
 ) -> Dict[str, str]:
     """
     Fetch tag ID to name mapping from GreyNoise API.
@@ -77,6 +80,7 @@ def fetch_tags_mapping(
         api_key (str): GreyNoise API key for authentication
         base_url (str): Base API URL (default: "https://api.greynoise.io/v3")
         user_agent (str): User-Agent header value (default: "greynoise-timeline-function")
+        proxy (Optional[str]): Proxy URL for the request (empty/None leaves env proxies alone)
 
     Returns:
         Dict[str, str]: Dictionary mapping tag IDs to tag names. Returns empty dict on error.
@@ -98,10 +102,14 @@ def fetch_tags_mapping(
     """
     headers = {"Accept": "application/json", "key": api_key, "User-Agent": user_agent}
     tags_url = f"{base_url}/tags"
+    request_kwargs = {"headers": headers, "timeout": 10}
+    proxies = request_proxies(proxy)
+    if proxies is not None:
+        request_kwargs["proxies"] = proxies
 
     try:
         LOGGER.debug("Fetching tags mapping from %s", tags_url)
-        response = requests.get(tags_url, headers=headers, timeout=10)
+        response = requests.get(tags_url, **request_kwargs)
         response.raise_for_status()
         tags_data = response.json()
         LOGGER.debug("Tags mapping response: %s", tags_data)
@@ -128,6 +136,7 @@ def fetch_field_timeline(
     granularity: str = "1d",
     base_url: str = "https://api.greynoise.io/v3",
     user_agent: str = "greynoise-timeline-function",
+    proxy: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Fetch timeline data for a specific field from GreyNoise API.
@@ -143,6 +152,7 @@ def fetch_field_timeline(
         granularity (str): Time granularity - '1d' for daily, '1h' for hourly (default: '1d')
         base_url (str): Base API URL (default: "https://api.greynoise.io/v3")
         user_agent (str): User-Agent header value (default: "greynoise-timeline-function")
+        proxy (Optional[str]): Proxy URL for the request (empty/None leaves env proxies alone)
 
     Returns:
         Optional[Dict[str, Any]]: API response containing metadata and results, or None on error.
@@ -187,9 +197,13 @@ def fetch_field_timeline(
     """
     headers = {"Accept": "application/json", "key": api_key, "User-Agent": user_agent}
     url = f"{base_url}/noise/ips/{ip}/timeline?days={days}&field={field}&granularity={granularity}"
+    request_kwargs = {"headers": headers, "timeout": 30}
+    proxies = request_proxies(proxy)
+    if proxies is not None:
+        request_kwargs["proxies"] = proxies
 
     try:
-        response = requests.get(url, headers=headers, timeout=30)
+        response = requests.get(url, **request_kwargs)
         response.raise_for_status()
         payload = response.json()
         if not payload:
@@ -290,6 +304,7 @@ def get_greynoise_timeline(  # noqa: C901
     max_workers: int = 5,
     base_url: str = "https://api.greynoise.io/v3",
     user_agent: str = "greynoise-timeline-function",
+    proxy: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
     Fetch and consolidate GreyNoise timeline data for multiple fields.
@@ -310,6 +325,7 @@ def get_greynoise_timeline(  # noqa: C901
         max_workers (int): Maximum concurrent API requests via ThreadPoolExecutor (default: 5)
         base_url (str): Base GreyNoise API URL (default: "https://api.greynoise.io/v3")
         user_agent (str): User-Agent header value (default: "greynoise-timeline-function")
+        proxy (Optional[str]): Proxy URL for API requests (empty/None leaves env proxies alone)
 
     Returns:
         List[Dict[str, Any]]: Sorted list of timeline entries (oldest to newest), where each entry is:
@@ -396,7 +412,7 @@ def get_greynoise_timeline(  # noqa: C901
     )
 
     # Fetch tags mapping
-    tags_dict = fetch_tags_mapping(api_key, base_url, user_agent)
+    tags_dict = fetch_tags_mapping(api_key, base_url, user_agent, proxy=proxy)
     if tags_dict:
         LOGGER.debug("Loaded %d tag id→name mappings", len(tags_dict))
     else:
@@ -422,6 +438,7 @@ def get_greynoise_timeline(  # noqa: C901
                 granularity,
                 base_url,
                 user_agent,
+                proxy,
             ): field
             for field in fields
         }

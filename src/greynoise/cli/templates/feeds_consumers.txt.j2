@@ -1,0 +1,40 @@
+{% import "macros.txt.j2" as macros with context %}
+{%- if result is string %}
+{{ result }}
+{%- elif result is mapping and result.get("message") and not result.get("consumers") and not result.get("name") %}
+{{ result.message }}
+{%- elif result is mapping and result.get("deleted") %}
+Deleted consumer <value>{{ result.get("consumer") }}</value> from feed <value>{{ result.get("feed_id") }}</value>
+{%- elif result is mapping and result.get("name") %}
+----------------------------
+    <header>Feed Consumer</header>
+----------------------------
+{%- for key in ["name", "status", "has_acknowledged", "acknowledged_sequence", "acknowledged_at", "updated_at", "approximate_lag"] %}
+{%- if result.get(key) is not none %}
+<key>{{ key | replace("_", " ") | title }}</key>: <value>{{ result.get(key) }}</value>
+{%- endif %}
+{%- endfor %}
+{%- elif result is mapping %}
+----------------------------
+    <header>Feed Consumers</header>
+----------------------------
+{%- set retention = result.get("retention") %}
+{%- if retention is mapping and retention.get("oldest_available_at") %}
+<key>Oldest Available</key>: <value>{{ retention.get("oldest_available_at") }}</value>
+{%- endif %}
+{%- set consumers = result.get("consumers") or [] %}
+{%- for consumer in consumers %}
+  - <value>{{ consumer.get("name") }}</value> <key>{{ consumer.get("status") or "" }}</key>
+{%- if consumer.get("approximate_lag") is not none %}
+    <key>Lag</key>: <value>{{ consumer.get("approximate_lag") }}</value>
+{%- endif %}
+{%- if consumer.get("acknowledged_at") %}
+    <key>Acknowledged</key>: <value>{{ consumer.get("acknowledged_at") }}</value>
+{%- endif %}
+{%- endfor %}
+{%- if not consumers %}
+<dim>No consumers</dim>
+{%- endif %}
+{%- else %}
+{{ result | tojson }}
+{%- endif %}
