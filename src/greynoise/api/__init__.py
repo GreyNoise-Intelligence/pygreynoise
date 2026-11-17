@@ -2031,11 +2031,12 @@ class GreyNoise(BaseAPIClient):
         output,
         *,
         limit: Optional[int] = None,
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
         """Download the pre-built GNQL SIEM feed file for ``query`` (``GET /v3/files/gnql``),
-        a CSV in the CrowdStrike Falcon NG-SIEM lookup file layout.
+        a CSV in the layout of the feed profile ``profile``.
 
         The first request for a query subscribes to it and returns a
         ``provisioning`` result until the file is built. ``row_count`` and
@@ -2046,13 +2047,17 @@ class GreyNoise(BaseAPIClient):
         :param query: GNQL query the file is built from.
         :param output: Path or binary file object to write the file to.
         :param limit: Maximum number of rows to serve.
+        :param profile: Feed profile that sets the file's layout, as ``<id>`` for its
+            latest version or ``<id>@<version>`` (default: ``ngsiem``). Each profile is
+            a separate subscription.
         :param integration: Integration name and version, sent as ``X-GreyNoise-Integration``.
+            It identifies the caller and does not change the file's layout.
         :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
             (default: the client's ``timeout``).
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = _gnql_file_params(query, limit)
+        params = _gnql_file_params(query, limit, profile)
         return self._files_request(self.EP_FILES_GNQL, params, output, integration, timeout)
 
     def gnql_file_metadata(
@@ -2060,6 +2065,7 @@ class GreyNoise(BaseAPIClient):
         query: str,
         *,
         limit: Optional[int] = None,
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
@@ -2074,7 +2080,7 @@ class GreyNoise(BaseAPIClient):
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = _gnql_file_params(query, limit)
+        params = _gnql_file_params(query, limit, profile)
         return self._files_request(self.EP_FILES_GNQL_METADATA, params, None, integration, timeout)
 
     def _files_request(self, endpoint, params, output, integration, timeout) -> FileResult:
@@ -2136,8 +2142,8 @@ def _file_result(response: requests.Response) -> FileResult:
     )
 
 
-def _gnql_file_params(query, limit) -> Dict[str, Any]:
-    params = {"query": query, **_FILE_FORMAT}
+def _gnql_file_params(query, limit, profile) -> Dict[str, Any]:
+    params = {"query": query, **_FILE_FORMAT, "profile": profile}
     if limit is not None:
         params["limit"] = limit
     return params

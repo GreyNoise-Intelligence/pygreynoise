@@ -1745,6 +1745,25 @@ class TestFileParams:
 
         assert client._file_session.get.call_args[1]["params"]["limit"] == 500
 
+    @pytest.mark.parametrize(
+        "request_file, kwargs, expected_profile",
+        [
+            (lambda c, **kw: c.gnql_file("last_seen:1d", io.BytesIO(), **kw), {}, "ngsiem"),
+            (lambda c, **kw: c.gnql_file("last_seen:1d", io.BytesIO(), **kw), {"profile": "anomali"}, "anomali"),
+            (lambda c, **kw: c.gnql_file_metadata("last_seen:1d", **kw), {}, "ngsiem"),
+            (lambda c, **kw: c.gnql_file_metadata("last_seen:1d", **kw), {"profile": "anomali@2"}, "anomali@2"),
+        ],
+        ids=["file-default", "file-profile", "metadata-default", "metadata-versioned-profile"],
+    )
+    def test_gnql_profile(self, client, request_file, kwargs, expected_profile):
+        client._file_session.get = Mock(return_value=_file_response(202))
+
+        request_file(client, integration="anomali-threatstream/1.0", **kwargs)
+
+        call_kwargs = client._file_session.get.call_args[1]
+        assert call_kwargs["params"] == {"query": "last_seen:1d", "format": "csv", "profile": expected_profile}
+        assert call_kwargs["headers"]["X-GreyNoise-Integration"] == "anomali-threatstream/1.0"
+
     def test_proxy(self, client):
         client.config.proxy = "http://proxy:3128"
         client._file_session.get = Mock(return_value=_file_response(202))
