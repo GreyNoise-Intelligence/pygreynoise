@@ -25,7 +25,7 @@ copyright = "2018-2026, GreyNoise Intelligence"
 author = "GreyNoise Intelligence"
 
 # The full version, including alpha/beta/rc tags
-release = "3.2.0"
+release = "3.2.1"
 
 
 # -- General configuration ---------------------------------------------------

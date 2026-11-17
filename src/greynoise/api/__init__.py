@@ -80,6 +80,7 @@ class FileResult:
 
     status: str
     generated_at: Optional[str] = None
+    file_profile: Optional[str] = None
     row_count: Optional[int] = None
     total_count: Optional[int] = None
     truncated: Optional[bool] = None
@@ -1983,11 +1984,13 @@ class GreyNoise(BaseAPIClient):
         output,
         *,
         days: int = 7,
+        format: str = "csv",
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
-        """Download the pre-built callback IP file (``GET /v3/files/callback``), a CSV
-        in the CrowdStrike Falcon NG-SIEM lookup file layout.
+        """Download the pre-built callback IP file (``GET /v3/files/callback``)
+        in ``format`` and the layout of the feed profile ``profile``.
 
         The body is streamed to ``output``, a file path or a binary file object.
         A path is written atomically and left untouched unless the result
@@ -1996,20 +1999,27 @@ class GreyNoise(BaseAPIClient):
 
         :param output: Path or binary file object to write the file to.
         :param days: Lookback window in days, 1 to 7.
+        :param format: File format to request (default: ``csv``).
+        :param profile: Feed profile that sets the file's layout, as ``<id>`` for its
+            latest version or ``<id>@<version>`` (default: ``ngsiem``). Each profile is
+            a separate subscription.
         :param integration: Integration name and version, e.g. ``crowdstrike-ngsiem/3.1.0``,
             sent as ``X-GreyNoise-Integration``.
+            It identifies the caller and does not change the file's layout.
         :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
             (default: the client's ``timeout``).
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = {"days": days, **_FILE_FORMAT}
+        params = {"days": days, "format": format, "profile": profile}
         return self._files_request(self.EP_FILES_CALLBACK, params, output, integration, timeout)
 
     def callback_file_metadata(
         self,
         *,
         days: int = 7,
+        format: str = "csv",
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
@@ -2022,7 +2032,7 @@ class GreyNoise(BaseAPIClient):
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = {"days": days, **_FILE_FORMAT}
+        params = {"days": days, "format": format, "profile": profile}
         return self._files_request(self.EP_FILES_CALLBACK_METADATA, params, None, integration, timeout)
 
     def gnql_file(
@@ -2031,11 +2041,13 @@ class GreyNoise(BaseAPIClient):
         output,
         *,
         limit: Optional[int] = None,
+        format: str = "csv",
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
-        """Download the pre-built GNQL SIEM feed file for ``query`` (``GET /v3/files/gnql``),
-        a CSV in the CrowdStrike Falcon NG-SIEM lookup file layout.
+        """Download the pre-built GNQL SIEM feed file for ``query`` (``GET /v3/files/gnql``)
+        in ``format`` and the layout of the feed profile ``profile``.
 
         The first request for a query subscribes to it and returns a
         ``provisioning`` result until the file is built. ``row_count`` and
@@ -2046,13 +2058,18 @@ class GreyNoise(BaseAPIClient):
         :param query: GNQL query the file is built from.
         :param output: Path or binary file object to write the file to.
         :param limit: Maximum number of rows to serve.
+        :param format: File format to request (default: ``csv``).
+        :param profile: Feed profile that sets the file's layout, as ``<id>`` for its
+            latest version or ``<id>@<version>`` (default: ``ngsiem``). Each profile is
+            a separate subscription.
         :param integration: Integration name and version, sent as ``X-GreyNoise-Integration``.
+            It identifies the caller and does not change the file's layout.
         :param timeout: Request timeout in seconds, or a ``(connect, read)`` tuple
             (default: the client's ``timeout``).
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = _gnql_file_params(query, limit)
+        params = _gnql_file_params(query, limit, format, profile)
         return self._files_request(self.EP_FILES_GNQL, params, output, integration, timeout)
 
     def gnql_file_metadata(
@@ -2060,6 +2077,8 @@ class GreyNoise(BaseAPIClient):
         query: str,
         *,
         limit: Optional[int] = None,
+        format: str = "csv",
+        profile: str = "ngsiem",
         integration: Optional[str] = None,
         timeout: Union[float, Tuple[float, float], None] = None,
     ) -> FileResult:
@@ -2074,7 +2093,7 @@ class GreyNoise(BaseAPIClient):
         :raises RateLimitError: On HTTP 429.
         :raises RequestFailure: On any other error response or connection failure.
         """
-        params = _gnql_file_params(query, limit)
+        params = _gnql_file_params(query, limit, format, profile)
         return self._files_request(self.EP_FILES_GNQL_METADATA, params, None, integration, timeout)
 
     def _files_request(self, endpoint, params, output, integration, timeout) -> FileResult:
@@ -2102,9 +2121,6 @@ class GreyNoise(BaseAPIClient):
             raise RequestFailure(0, str(e))
 
 
-_FILE_FORMAT = {"format": "csv", "profile": "ngsiem"}
-
-
 def _file_result(response: requests.Response) -> FileResult:
     """Map a file response to a :class:`FileResult`, raising on error statuses."""
     status_code = response.status_code
@@ -2128,6 +2144,7 @@ def _file_result(response: requests.Response) -> FileResult:
     return FileResult(
         status=status,
         generated_at=headers.get("X-GreyNoise-Generated-At"),
+        file_profile=headers.get("X-GreyNoise-Profile"),
         row_count=_header_int(headers.get("X-GreyNoise-Row-Count")),
         total_count=_header_int(headers.get("X-GreyNoise-Total-Count")),
         truncated=_header_bool(headers.get("X-GreyNoise-Truncated")),
@@ -2136,8 +2153,8 @@ def _file_result(response: requests.Response) -> FileResult:
     )
 
 
-def _gnql_file_params(query, limit) -> Dict[str, Any]:
-    params = {"query": query, **_FILE_FORMAT}
+def _gnql_file_params(query, limit, format, profile) -> Dict[str, Any]:
+    params = {"query": query, "format": format, "profile": profile}
     if limit is not None:
         params["limit"] = limit
     return params
