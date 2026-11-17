@@ -787,7 +787,7 @@ Pre-built files
 ---------------
 
 GreyNoise builds SIEM lookup files server-side and refreshes them hourly. Both downloads
-request the only file the API serves (CSV, NG-SIEM profile), stream the body to a path or
+request ``format`` (default ``csv``) in the layout of ``profile`` (default ``ngsiem``), stream the body to a path or
 a binary file object, and return a ``FileResult``. A path is written to a temporary file
 and moved into place only when the status is ``ok``, so a failed download leaves an
 existing file in place.

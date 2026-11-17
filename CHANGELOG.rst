@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version `3.2.1`_
+================
+**Date**: November 17, 2026
+
+* API client:
+
+  * `gnql_file`, `gnql_file_metadata`, `callback_file`, and `callback_file_metadata` accept `profile` and `format` params instead of hardcoded defaults.
+
 Version `3.2.0`_
 ================
 **Date**: November 4, 2026
@@ -565,3 +573,4 @@ Version `0.2.0`_
 .. _`3.0.3`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.2...v3.0.3
 .. _`3.1.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.0.3...v3.1.0
 .. _`3.2.0`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.1.0...3.2.0
+.. _`3.2.1`: https://github.com/GreyNoise-Intelligence/pygreynoise/compare/v3.2.0...3.2.1
